@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "颜色选择器组件",
+  "scenario": "web",
+  "lang": "zh",
+  "mode": "full",
+  "description": "功能丰富的颜色选择器组件，支持多种颜色格式和高级功能",
+  "spec": {
+    "tech": {
+      "language": "TypeScript",
+      "framework": "React"
+    },
+    "features": [
+      "HSV/HSL/RGB/HEX 颜色格式支持",
+      "颜色滑块和色轮选择",
+      "颜色历史记录",
+      "预设颜色调色板",
+      "颜色对比度检查",
+      "无障碍访问支持",
+      "键盘导航",
+      "自定义主题"
+    ],
+    "io": {
+      "input": "初始颜色值、配置选项、回调函数",
+      "output": "颜色选择器组件和选中的颜色值"
+    },
+    "codeRules": [
+      "使用 React Hook 和 Context API",
+      "实现完整的 TypeScript 类型定义",
+      "支持受控和非受控模式",
+      "包含 Storybook 文档",
+      "遵循 WCAG 无障碍标准",
+      "提供单元测试和集成测试",
+      "使用 CSS-in-JS 或 Tailwind CSS"
+    ]
+  },
+  "tags": ["color-picker", "react", "component", "accessibility", "typescript"],
+  "author": "EP Team",
+  "version": "1.0.0"
+}

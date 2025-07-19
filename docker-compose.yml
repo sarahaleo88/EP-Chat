@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # EP 主应用服务
+  ep-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: ep-enhanced-prompt
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - NEXT_TELEMETRY_DISABLED=1
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/generate"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ep-network
+    volumes:
+      # 挂载日志目录（可选）
+      - ./logs:/app/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ep.rule=Host(`ep.localhost`)"
+      - "traefik.http.services.ep.loadbalancer.server.port=3000"
+
+  # Redis 缓存服务（可选，用于缓存模板和响应）
+  redis:
+    image: redis:7-alpine
+    container_name: ep-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-ep-redis-pass}
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - ep-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Nginx 反向代理（可选，用于生产环境）
+  nginx:
+    image: nginx:alpine
+    container_name: ep-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ep-app
+    restart: unless-stopped
+    networks:
+      - ep-network
+    profiles:
+      - production
+
+# 网络配置
+networks:
+  ep-network:
+    driver: bridge
+    name: ep-network
+
+# 数据卷配置
+volumes:
+  redis-data:
+    driver: local
+    name: ep-redis-data
+
+# 开发环境覆盖配置
+# 使用: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+---
+version: '3.8'
+
+# 开发环境配置
+x-development: &development
+  services:
+    ep-app:
+      build:
+        target: builder
+      environment:
+        - NODE_ENV=development
+        - NEXT_TELEMETRY_DISABLED=1
+      volumes:
+        - .:/app
+        - /app/node_modules
+        - /app/.next
+      command: npm run dev
+      ports:
+        - "3000:3000"
+        - "9229:9229" # Node.js 调试端口
+
+# 生产环境配置
+x-production: &production
+  services:
+    ep-app:
+      deploy:
+        replicas: 2
+        resources:
+          limits:
+            cpus: '1.0'
+            memory: 1G
+          reservations:
+            cpus: '0.5'
+            memory: 512M
+        restart_policy:
+          condition: on-failure
+          delay: 5s
+          max_attempts: 3
+          window: 120s
+      logging:
+        driver: "json-file"
+        options:
+          max-size: "10m"
+          max-file: "3"

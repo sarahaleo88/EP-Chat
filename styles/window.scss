@@ -1,0 +1,56 @@
+// Window and layout styles for NextChat UI
+.window {
+  width: var(--window-width);
+  height: var(--window-height);
+  box-shadow: var(--shadow);
+  border-radius: 10px;
+  background-color: var(--white);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+}
+
+.window-header {
+  height: 40px;
+  background-color: var(--theme-color);
+  border-bottom: var(--border-in-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.window-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--second);
+  border-right: var(--border-in-light);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.window-content {
+  flex: 1;
+  background-color: var(--white);
+  display: flex;
+  flex-direction: column;
+}
+
+@media only screen and (max-width: 600px) {
+  .sidebar {
+    position: absolute;
+    left: -100%;
+    z-index: 1000;
+    height: 100%;
+  }
+  
+  .sidebar.show {
+    left: 0;
+  }
+}

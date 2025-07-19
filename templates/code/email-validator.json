@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "邮箱验证工具包",
+  "scenario": "code",
+  "lang": "zh",
+  "mode": "full",
+  "description": "完整的邮箱地址验证工具，支持标准和国际化域名验证",
+  "spec": {
+    "tech": {
+      "language": "TypeScript",
+      "framework": "N/A"
+    },
+    "features": [
+      "标准邮箱格式验证",
+      "国际化域名 (IDN) 支持",
+      "批量验证功能",
+      "可配置的严格/宽松模式",
+      "详细的错误信息和建议",
+      "性能优化的正则表达式",
+      "支持自定义验证规则"
+    ],
+    "io": {
+      "input": "string | string[] - 单个邮箱地址或邮箱地址数组",
+      "output": "{ isValid: boolean; errors?: string[]; suggestions?: string[]; details?: ValidationDetails }[]"
+    },
+    "codeRules": [
+      "使用严格的 TypeScript 类型定义",
+      "提供完整的中文 JSDoc 注释",
+      "包含 CLI 工具和使用示例",
+      "编写全面的单元测试",
+      "支持 ESM 和 CommonJS 模块",
+      "提供性能基准测试",
+      "遵循 Airbnb 代码规范"
+    ]
+  },
+  "tags": ["validation", "email", "typescript", "utility"],
+  "author": "EP Team",
+  "version": "1.0.0"
+}

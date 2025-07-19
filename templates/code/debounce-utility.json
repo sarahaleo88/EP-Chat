@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "防抖节流工具库",
+  "scenario": "code",
+  "lang": "zh",
+  "mode": "full",
+  "description": "高性能的防抖和节流函数工具库，支持多种使用场景",
+  "spec": {
+    "tech": {
+      "language": "TypeScript",
+      "framework": "N/A"
+    },
+    "features": [
+      "防抖 (debounce) 函数实现",
+      "节流 (throttle) 函数实现",
+      "支持立即执行模式",
+      "可取消的延迟执行",
+      "内存泄漏防护",
+      "React Hook 集成",
+      "性能监控和统计"
+    ],
+    "io": {
+      "input": "Function, delay: number, options?: { leading?: boolean; trailing?: boolean; maxWait?: number }",
+      "output": "{ (...args: any[]) => any; cancel: () => void; flush: () => any; pending: () => boolean }"
+    },
+    "codeRules": [
+      "使用泛型确保类型安全",
+      "提供详细的中文注释和示例",
+      "包含 React Hook 版本",
+      "编写性能测试用例",
+      "支持浏览器和 Node.js 环境",
+      "提供可视化演示页面",
+      "遵循函数式编程原则"
+    ]
+  },
+  "tags": ["debounce", "throttle", "performance", "utility", "react"],
+  "author": "EP Team",
+  "version": "1.0.0"
+}

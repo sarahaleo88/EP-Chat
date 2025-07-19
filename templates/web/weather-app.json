@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "天气预报应用",
+  "scenario": "web",
+  "lang": "zh",
+  "mode": "full",
+  "description": "现代化的天气预报 Web 应用，支持多城市查询和预报展示",
+  "spec": {
+    "tech": {
+      "language": "TypeScript",
+      "framework": "React + Next.js"
+    },
+    "features": [
+      "实时天气数据获取",
+      "7天天气预报",
+      "多城市搜索和管理",
+      "地理位置自动定位",
+      "响应式设计",
+      "深色/浅色主题切换",
+      "天气图标和动画",
+      "离线缓存支持"
+    ],
+    "io": {
+      "input": "城市名称、地理坐标或用户位置信息",
+      "output": "完整的天气信息界面，包含当前天气和预报数据"
+    },
+    "codeRules": [
+      "使用 React 18 和 Next.js 13+ App Router",
+      "集成天气 API (OpenWeatherMap 或类似)",
+      "使用 Tailwind CSS 实现响应式设计",
+      "实现 PWA 功能",
+      "包含完整的错误处理",
+      "支持国际化 (i18n)",
+      "提供详细的中文注释"
+    ]
+  },
+  "tags": ["weather", "react", "nextjs", "pwa", "responsive"],
+  "author": "EP Team",
+  "version": "1.0.0"
+}

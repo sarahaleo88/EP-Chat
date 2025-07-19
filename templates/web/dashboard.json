@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "管理后台仪表板",
+  "scenario": "web",
+  "lang": "zh",
+  "mode": "full",
+  "description": "现代化的管理后台仪表板，包含数据可视化和管理功能",
+  "spec": {
+    "tech": {
+      "language": "TypeScript",
+      "framework": "React + Next.js"
+    },
+    "features": [
+      "响应式仪表板布局",
+      "数据图表和可视化",
+      "用户权限管理",
+      "实时数据更新",
+      "搜索和筛选功能",
+      "数据导出功能",
+      "深色主题支持",
+      "移动端适配"
+    ],
+    "io": {
+      "input": "用户认证信息、API 数据、配置参数",
+      "output": "完整的管理后台界面和交互功能"
+    },
+    "codeRules": [
+      "使用 Next.js 13+ App Router",
+      "集成图表库 (Chart.js 或 Recharts)",
+      "实现 JWT 认证和权限控制",
+      "使用 React Query 进行数据管理",
+      "包含完整的表单验证",
+      "支持数据表格的增删改查",
+      "提供完整的 TypeScript 类型定义"
+    ]
+  },
+  "tags": ["dashboard", "admin", "react", "nextjs", "charts", "management"],
+  "author": "EP Team",
+  "version": "1.0.0"
+}
