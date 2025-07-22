@@ -7,6 +7,10 @@
   --shamrock-primary: #22c55e;
   --shamrock-secondary: #16a34a;
   --shamrock-accent: #4ade80;
+  --shamrock-soft: #86efac;
+  --shamrock-subtle: #bbf7d0;
+  --shamrock-focus: rgba(29, 147, 171, 0.15);
+  --shamrock-focus-border: rgba(29, 147, 171, 0.3);
   --background: #ffffff;
   --foreground: #0f172a;
   --muted: #f1f5f9;
@@ -24,6 +28,8 @@
   --border: #334155;
   --input: #1e293b;
   --ring: #4ade80;
+  --shamrock-focus: rgba(29, 147, 171, 0.15);
+  --shamrock-focus-border: rgba(29, 147, 171, 0.3);
 }
 
 /* 基础样式重置 */
@@ -70,6 +76,27 @@ body {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* 侧边栏视觉集成动画 */
+@keyframes sidebar-glow {
+  0%, 100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -492,4 +519,129 @@ body {
 ::-moz-selection {
   background-color: var(--shamrock-primary);
   color: white;
+}
+
+/* 聊天界面动画效果 */
+@keyframes message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 聊天界面特定样式 */
+.chat-message {
+  animation: message-slide-in 0.3s ease-out;
+}
+
+.chat-input:focus {
+  border-color: var(--shamrock-focus-border);
+  box-shadow:
+    0 0 0 3px var(--shamrock-focus),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.chat-input:focus-within {
+  border-color: var(--shamrock-focus-border);
+  box-shadow:
+    0 0 0 3px var(--shamrock-focus),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Subtle hover state for input */
+.chat-input:hover:not(:focus) {
+  border-color: var(--shamrock-subtle);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Placeholder styling */
+.chat-input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+.send-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 平滑滚动 */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* 聊天界面响应式设计 */
+@media (max-width: 768px) {
+  .chat-message {
+    max-width: 85% !important;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .window-content {
+    width: 100% !important;
+  }
+
+  /* 移动端输入区域优化 */
+  .chat-input {
+    font-size: 16px !important; /* 防止iOS缩放 */
+  }
+
+  /* 移动端消息气泡优化 */
+  .window {
+    flex-direction: column;
+  }
+
+  .window-content {
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-message {
+    max-width: 90% !important;
+  }
+
+  /* 小屏幕设备的输入区域 */
+  .chat-input {
+    padding: 12px 50px 12px 16px !important;
+    min-height: 44px !important;
+  }
+
+  .send-button {
+    width: 32px !important;
+    height: 32px !important;
+    right: 6px !important;
+  }
 }

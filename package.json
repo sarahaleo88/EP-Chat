@@ -11,7 +11,9 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "type-check": "tsc --noEmit",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "performance-test": "ts-node scripts/performance-test.ts",
+    "performance-eval": "npm run performance-test"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",

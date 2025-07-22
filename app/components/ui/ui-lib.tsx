@@ -78,6 +78,25 @@ export function Popover(props: {
   );
 }
 
+export function CenteredModal(props: {
+  children: JSX.Element;
+  content: JSX.Element;
+  open?: boolean;
+  onClose?: () => void;
+}) {
+  return (
+    <>
+      {props.children}
+      {props.open && (
+        <>
+          <div className={styles["popover-mask"]} onClick={props.onClose}></div>
+          <div className={styles["popover-content-centered"]}>{props.content}</div>
+        </>
+      )}
+    </>
+  );
+}
+
 export function Card(props: {
   children: React.ReactNode;
   className?: string;

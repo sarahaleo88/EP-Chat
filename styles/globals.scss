@@ -1,6 +1,12 @@
 @import "./animation.scss";
 @import "./window.scss";
 
+/* Streaming cursor animation */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 @mixin light {
   --theme: light;
 
@@ -41,6 +47,27 @@
 
   div:not(.no-dark) > svg {
     filter: invert(0.5);
+  }
+
+  /* Enhanced dark mode sidebar styling */
+  .sidebar {
+    background: linear-gradient(135deg, rgb(27, 38, 42) 0%, rgba(27, 38, 42, 0.95) 100%);
+    border-right: 1px solid rgba(29, 147, 171, 0.25);
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
+
+    &::before {
+      background: linear-gradient(to bottom,
+        rgba(29, 147, 171, 0.2) 0%,
+        rgba(29, 147, 171, 0.1) 50%,
+        rgba(29, 147, 171, 0.2) 100%);
+    }
+  }
+
+  .window-content::before {
+    background: linear-gradient(to bottom,
+      rgba(29, 147, 171, 0.1) 0%,
+      rgba(29, 147, 171, 0.05) 50%,
+      rgba(29, 147, 171, 0.1) 100%);
   }
 }
 
