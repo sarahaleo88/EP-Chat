@@ -6,10 +6,17 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+# Default permissions (least privilege)
+permissions:
+  contents: read
+
 jobs:
   test:
     name: 🧪 Test & Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # For uploading code scanning results
 
     strategy:
       matrix:
@@ -18,6 +25,9 @@ jobs:
     steps:
     - name: 📦 Checkout repository
       uses: actions/checkout@v4
+      with:
+        # Limit checkout depth for security
+        fetch-depth: 1
 
     - name: 🟢 Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
