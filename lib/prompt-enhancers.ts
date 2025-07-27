@@ -20,40 +20,66 @@ interface ContentAnalysis {
  */
 function analyzeContent(content: string): ContentAnalysis {
   const lowerContent = content.toLowerCase();
-  
+
   // 检测语言
   const chineseChars = (content.match(/[\u4e00-\u9fff]/g) || []).length;
   const totalChars = content.length;
   const chineseRatio = chineseChars / totalChars;
-  
+
   let language: 'chinese' | 'english' | 'mixed' = 'english';
   if (chineseRatio > 0.7) language = 'chinese';
   else if (chineseRatio > 0.1) language = 'mixed';
 
   // 检测内容类型
   let type: ContentAnalysis['type'] = 'request';
-  if (content.includes('?') || content.includes('？') || lowerContent.includes('what') || lowerContent.includes('how') || content.includes('什么') || content.includes('如何')) {
+  if (
+    content.includes('?') ||
+    content.includes('？') ||
+    lowerContent.includes('what') ||
+    lowerContent.includes('how') ||
+    content.includes('什么') ||
+    content.includes('如何')
+  ) {
     type = 'question';
-  } else if (lowerContent.includes('solve') || lowerContent.includes('problem') || content.includes('问题') || content.includes('解决')) {
+  } else if (
+    lowerContent.includes('solve') ||
+    lowerContent.includes('problem') ||
+    content.includes('问题') ||
+    content.includes('解决')
+  ) {
     type = 'problem';
-  } else if (lowerContent.includes('discuss') || lowerContent.includes('think') || content.includes('讨论') || content.includes('思考')) {
+  } else if (
+    lowerContent.includes('discuss') ||
+    lowerContent.includes('think') ||
+    content.includes('讨论') ||
+    content.includes('思考')
+  ) {
     type = 'discussion';
   }
 
   // 检测复杂度
   let complexity: ContentAnalysis['complexity'] = 'simple';
   if (content.length > 200) complexity = 'medium';
-  if (content.length > 500 || content.split('\n').length > 5) complexity = 'complex';
+  if (content.length > 500 || content.split('\n').length > 5)
+    complexity = 'complex';
 
   // 检测领域
   const domains: string[] = [];
   const domainKeywords = {
-    'programming': ['code', 'function', 'algorithm', 'programming', '代码', '编程', '算法'],
-    'math': ['calculate', 'equation', 'formula', 'math', '计算', '公式', '数学'],
-    'business': ['business', 'strategy', 'market', '商业', '策略', '市场'],
-    'science': ['research', 'experiment', 'theory', '研究', '实验', '理论'],
-    'design': ['design', 'ui', 'ux', 'interface', '设计', '界面'],
-    'data': ['data', 'analysis', 'statistics', '数据', '分析', '统计']
+    programming: [
+      'code',
+      'function',
+      'algorithm',
+      'programming',
+      '代码',
+      '编程',
+      '算法',
+    ],
+    math: ['calculate', 'equation', 'formula', 'math', '计算', '公式', '数学'],
+    business: ['business', 'strategy', 'market', '商业', '策略', '市场'],
+    science: ['research', 'experiment', 'theory', '研究', '实验', '理论'],
+    design: ['design', 'ui', 'ux', 'interface', '设计', '界面'],
+    data: ['data', 'analysis', 'statistics', '数据', '分析', '统计'],
   };
 
   Object.entries(domainKeywords).forEach(([domain, keywords]) => {
@@ -63,10 +89,14 @@ function analyzeContent(content: string): ContentAnalysis {
   });
 
   // 检测是否包含代码
-  const hasCode = /```|`[^`]+`|function|class|def |import |#include/.test(content);
-  
+  const hasCode = /```|`[^`]+`|function|class|def |import |#include/.test(
+    content
+  );
+
   // 检测是否包含数据
-  const hasData = /\d+[,.\d]*|\[.*\]|\{.*\}|table|chart|数据|表格/.test(content);
+  const hasData = /\d+[,.\d]*|\[.*\]|\{.*\}|table|chart|数据|表格/.test(
+    content
+  );
 
   return {
     type,
@@ -74,7 +104,7 @@ function analyzeContent(content: string): ContentAnalysis {
     domain: domains,
     hasCode,
     hasData,
-    language
+    language,
   };
 }
 
@@ -83,7 +113,8 @@ function analyzeContent(content: string): ContentAnalysis {
  */
 export function enhanceReasonerPrompt(userInput: string): string {
   const analysis = analyzeContent(userInput);
-  const isChinese = analysis.language === 'chinese' || analysis.language === 'mixed';
+  const isChinese =
+    analysis.language === 'chinese' || analysis.language === 'mixed';
 
   if (isChinese) {
     return `# 🧠 DeepSeek Reasoner - 逻辑推理增强提示
@@ -191,7 +222,8 @@ Please begin your in-depth logical analysis:`;
  */
 export function enhanceCoderPrompt(userInput: string): string {
   const analysis = analyzeContent(userInput);
-  const isChinese = analysis.language === 'chinese' || analysis.language === 'mixed';
+  const isChinese =
+    analysis.language === 'chinese' || analysis.language === 'mixed';
 
   if (isChinese) {
     return `# 👨‍💻 DeepSeek Coder - 代码生成增强提示
@@ -301,21 +333,27 @@ Please begin generating the complete code project:`;
 }
 
 // Helper functions
-function getTypeDescription(type: ContentAnalysis['type'], isChinese: boolean): string {
+function getTypeDescription(
+  type: ContentAnalysis['type'],
+  isChinese: boolean
+): string {
   const descriptions = {
     question: isChinese ? '问题询问' : 'Question',
     problem: isChinese ? '问题解决' : 'Problem Solving',
     request: isChinese ? '功能请求' : 'Feature Request',
-    discussion: isChinese ? '讨论分析' : 'Discussion'
+    discussion: isChinese ? '讨论分析' : 'Discussion',
   };
   return descriptions[type];
 }
 
-function getComplexityDescription(complexity: ContentAnalysis['complexity'], isChinese: boolean): string {
+function getComplexityDescription(
+  complexity: ContentAnalysis['complexity'],
+  isChinese: boolean
+): string {
   const descriptions = {
     simple: isChinese ? '简单' : 'Simple',
     medium: isChinese ? '中等' : 'Medium',
-    complex: isChinese ? '复杂' : 'Complex'
+    complex: isChinese ? '复杂' : 'Complex',
   };
   return descriptions[complexity];
 }
@@ -327,7 +365,7 @@ function getDomainDescription(domain: string, isChinese: boolean): string {
     business: isChinese ? '商业分析' : 'Business',
     science: isChinese ? '科学研究' : 'Science',
     design: isChinese ? '设计创意' : 'Design',
-    data: isChinese ? '数据分析' : 'Data Analysis'
+    data: isChinese ? '数据分析' : 'Data Analysis',
   };
   return descriptions[domain as keyof typeof descriptions] || domain;
 }
@@ -344,7 +382,7 @@ function getProjectType(analysis: ContentAnalysis, isChinese: boolean): string {
 
 function getTechStack(analysis: ContentAnalysis, isChinese: boolean): string {
   const stacks: string[] = [];
-  
+
   if (analysis.domain.includes('programming')) {
     stacks.push(isChinese ? '编程语言' : 'Programming Languages');
   }
@@ -354,6 +392,10 @@ function getTechStack(analysis: ContentAnalysis, isChinese: boolean): string {
   if (analysis.domain.includes('design')) {
     stacks.push(isChinese ? '前端技术' : 'Frontend Technologies');
   }
-  
-  return stacks.length > 0 ? stacks.join(isChinese ? '、' : ', ') : (isChinese ? '待确定' : 'To be determined');
+
+  return stacks.length > 0
+    ? stacks.join(isChinese ? '、' : ', ')
+    : isChinese
+      ? '待确定'
+      : 'To be determined';
 }

@@ -9,7 +9,7 @@ import './globals.css';
 import '../styles/globals.scss'; // NextChat 样式
 
 // 字体配置
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
@@ -21,7 +21,8 @@ export const metadata: Metadata = {
     default: 'EP - Enhanced Prompt | 增强提示生成器',
     template: '%s | EP - Enhanced Prompt',
   },
-  description: '超轻量级、超快速的提示增强 Web 应用，帮助 Claude Code 一次性生成完整项目',
+  description:
+    '超轻量级、超快速的提示增强 Web 应用，帮助 Claude Code 一次性生成完整项目',
   keywords: [
     'prompt',
     'enhancement',
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://ep.example.com'),
+  metadataBase: new URL('https://ep-enhanced-prompt.vercel.app'),
   alternates: {
     canonical: '/',
     languages: {
@@ -51,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
-    url: 'https://ep.example.com',
+    url: 'https://ep-enhanced-prompt.vercel.app',
     title: 'EP - Enhanced Prompt | 增强提示生成器',
     description: '超轻量级、超快速的提示增强 Web 应用',
     siteName: 'EP - Enhanced Prompt',
@@ -129,24 +130,41 @@ export default function RootLayout({
         {/* 预加载关键资源 */}
         <link rel="preload" href="/shamrock-logo.png" as="image" />
         <link rel="dns-prefetch" href="https://api.deepseek.com" />
-        
+
         {/* 安全策略 */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         <meta httpEquiv="Referrer-Policy" content="origin-when-cross-origin" />
-        
+
         {/* PWA 支持 */}
-        <meta name="application-name" content="EP" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#22c55e" />
+        <meta name="application-name" content="EP Chat" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="EP" />
+        <meta name="apple-mobile-web-app-title" content="EP Chat" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#22c55e" />
         <meta name="msapplication-tap-highlight" content="no" />
-        
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link
+          rel="apple-touch-icon"
+          sizes="192x192"
+          href="/icons/icon-192.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="512x512"
+          href="/icons/icon-512.png"
+        />
+
         {/* 性能优化 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={`${inter.className} antialiased`}>
         {/* 跳过导航链接（无障碍访问） */}
@@ -161,7 +179,7 @@ export default function RootLayout({
         <div id="main-content" className="light">
           {children}
         </div>
-        
+
         {/* 全局脚本 */}
         <script
           dangerouslySetInnerHTML={{
@@ -173,13 +191,15 @@ export default function RootLayout({
                 document.documentElement.classList.toggle('dark', theme === 'dark');
               })();
               
-              // 性能监控
-              if (typeof window !== 'undefined' && 'performance' in window) {
+              // 性能监控 (仅开发环境)
+              if (typeof window !== 'undefined' && 'performance' in window && process.env.NODE_ENV === 'development') {
                 window.addEventListener('load', function() {
                   setTimeout(function() {
                     const perfData = performance.getEntriesByType('navigation')[0];
                     if (perfData && perfData.loadEventEnd > 0) {
-                      console.log('页面加载时间:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
+                      if (process.env.NODE_ENV === 'development') {
+                        console.log('页面加载时间:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
+                      }
                     }
                   }, 0);
                 });

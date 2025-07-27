@@ -1,10 +1,12 @@
-@import "./animation.scss";
-@import "./window.scss";
+@use './animation.scss';
+@use './window.scss';
 
-/* Streaming cursor animation */
+/* Streaming cursor animation - DISABLED to prevent eye strain */
 @keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
 }
 
 @mixin light {
@@ -51,23 +53,31 @@
 
   /* Enhanced dark mode sidebar styling */
   .sidebar {
-    background: linear-gradient(135deg, rgb(27, 38, 42) 0%, rgba(27, 38, 42, 0.95) 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(27, 38, 42) 0%,
+      rgba(27, 38, 42, 0.95) 100%
+    );
     border-right: 1px solid rgba(29, 147, 171, 0.25);
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
 
     &::before {
-      background: linear-gradient(to bottom,
+      background: linear-gradient(
+        to bottom,
         rgba(29, 147, 171, 0.2) 0%,
         rgba(29, 147, 171, 0.1) 50%,
-        rgba(29, 147, 171, 0.2) 100%);
+        rgba(29, 147, 171, 0.2) 100%
+      );
     }
   }
 
   .window-content::before {
-    background: linear-gradient(to bottom,
+    background: linear-gradient(
+      to bottom,
       rgba(29, 147, 171, 0.1) 0%,
       rgba(29, 147, 171, 0.05) 50%,
-      rgba(29, 147, 171, 0.1) 100%);
+      rgba(29, 147, 171, 0.1) 100%
+    );
   }
 }
 
@@ -117,8 +127,9 @@
 html {
   height: var(--full-height);
 
-  font-family: "Noto Sans", "SF Pro SC", "SF Pro Text", "SF Pro Icons",
-    "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  font-family:
+    'Noto Sans', 'SF Pro SC', 'SF Pro Text', 'SF Pro Icons', 'PingFang SC',
+    'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
 body {
@@ -181,7 +192,7 @@ input {
   font-family: inherit;
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
   cursor: pointer;
   background-color: var(--white);
   color: var(--black);
@@ -195,16 +206,16 @@ input[type="checkbox"] {
   justify-content: center;
 }
 
-input[type="checkbox"]:checked::after {
+input[type='checkbox']:checked::after {
   display: inline-block;
   width: 8px;
   height: 8px;
   background-color: var(--primary);
-  content: " ";
+  content: ' ';
   border-radius: 2px;
 }
 
-input[type="range"] {
+input[type='range'] {
   appearance: none;
   background-color: var(--white);
   color: var(--black);
@@ -222,15 +233,15 @@ input[type="range"] {
   border: none;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   @include thumb();
 }
 
-input[type="range"]::-moz-range-thumb {
+input[type='range']::-moz-range-thumb {
   @include thumb();
 }
 
-input[type="range"]::-ms-thumb {
+input[type='range']::-ms-thumb {
   @include thumb();
 }
 
@@ -239,21 +250,21 @@ input[type="range"]::-ms-thumb {
   width: 24px;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover {
+input[type='range']::-webkit-slider-thumb:hover {
   @include thumbHover();
 }
 
-input[type="range"]::-moz-range-thumb:hover {
+input[type='range']::-moz-range-thumb:hover {
   @include thumbHover();
 }
 
-input[type="range"]::-ms-thumb:hover {
+input[type='range']::-ms-thumb:hover {
   @include thumbHover();
 }
 
-input[type="number"],
-input[type="text"],
-input[type="password"] {
+input[type='number'],
+input[type='text'],
+input[type='password'] {
   appearance: none;
   border-radius: 10px;
   border: var(--border-in-light);
@@ -299,7 +310,7 @@ div.math {
 
 pre {
   position: relative;
-  
+
   &:hover .copy-code-button {
     pointer-events: all;
     transform: translateX(0px);
@@ -322,7 +333,7 @@ pre {
     transition: all ease 0.3s;
 
     &:after {
-      content: "copy";
+      content: 'copy';
     }
 
     &:hover {
@@ -342,7 +353,7 @@ pre {
     display: inline-flex;
     justify-content: center;
     pointer-events: none;
-    button{
+    button {
       pointer-events: auto;
       margin-top: 3em;
       margin-bottom: 4em;
@@ -353,14 +364,18 @@ pre {
       text-align: center;
       color: white;
       background: #464e4e;
-    } 
+    }
   }
-  
+
   .expanded {
     background-image: none;
   }
   .collapsed {
-    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.06));
+    background-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.8),
+      rgba(0, 0, 0, 0.06)
+    );
   }
 }
 

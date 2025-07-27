@@ -31,7 +31,7 @@ export function delay(ms: number): Promise<void> {
  * @param wait - 等待时间（毫秒）
  * @returns 防抖后的函数
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -48,7 +48,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param limit - 限制时间（毫秒）
  * @returns 节流后的函数
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -87,7 +87,9 @@ export async function copyToClipboard(text: string): Promise<boolean> {
       return result;
     }
   } catch (error) {
-    console.error('复制到剪贴板失败:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('复制到剪贴板失败:', error);
+    }
     return false;
   }
 }
@@ -99,11 +101,11 @@ export async function copyToClipboard(text: string): Promise<boolean> {
  */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
@@ -113,7 +115,8 @@ export function formatFileSize(bytes: number): string {
  * @returns 随机 ID 字符串
  */
 export function generateId(length: number = 8): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -181,7 +184,7 @@ export function isMobile(): boolean {
  */
 export function getPreferredLanguage(): Language {
   if (typeof window === 'undefined') return 'en';
-  
+
   const lang = navigator.language.toLowerCase();
   if (lang.startsWith('zh')) return 'zh';
   return 'en';

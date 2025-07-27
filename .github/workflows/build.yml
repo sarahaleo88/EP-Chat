@@ -1,0 +1,152 @@
+name: Build and Test PWA
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checking
+        run: npm run type-check
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run PWA tests specifically
+        run: npm test -- tests/pwa.test.tsx
+
+      - name: Build PWA
+        run: npm run build
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY || 'test_key_for_build' }}
+
+      - name: Verify PWA manifest
+        run: |
+          if [ ! -f "public/manifest.json" ]; then
+            echo "❌ manifest.json not found"
+            exit 1
+          fi
+          echo "✅ manifest.json exists"
+
+          # Validate manifest structure
+          node -e "
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('public/manifest.json', 'utf8'));
+            const required = ['name', 'short_name', 'start_url', 'display', 'theme_color', 'icons'];
+            const missing = required.filter(key => !manifest[key]);
+            if (missing.length > 0) {
+              console.log('❌ Missing required manifest fields:', missing.join(', '));
+              process.exit(1);
+            }
+            if (!Array.isArray(manifest.icons) || manifest.icons.length === 0) {
+              console.log('❌ Manifest must have at least one icon');
+              process.exit(1);
+            }
+            console.log('✅ Manifest structure is valid');
+          "
+
+      - name: Check service worker generation
+        run: |
+          if [ ! -f "public/sw.js" ]; then
+            echo "❌ Service worker not generated"
+            exit 1
+          fi
+          echo "✅ Service worker generated successfully"
+
+      - name: Verify PWA icons
+        run: |
+          if [ ! -f "public/icons/icon-192.png" ]; then
+            echo "❌ PWA icon 192x192 not found"
+            exit 1
+          fi
+          if [ ! -f "public/icons/icon-512.png" ]; then
+            echo "❌ PWA icon 512x512 not found"
+            exit 1
+          fi
+          echo "✅ PWA icons exist"
+
+      - name: Check build output
+        run: |
+          if [ ! -d ".next" ]; then
+            echo "❌ Next.js build output not found"
+            exit 1
+          fi
+          echo "✅ Build completed successfully"
+
+      - name: Verify PWA build artifacts
+        run: |
+          # Check for workbox files
+          if [ ! -f "public/workbox-*.js" ] && [ ! -f "public/sw.js" ]; then
+            echo "⚠️ Warning: Workbox files not found (may be expected in development)"
+          else
+            echo "✅ PWA service worker artifacts found"
+          fi
+
+      - name: Test PWA installability (simulation)
+        run: |
+          node -e "
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('public/manifest.json', 'utf8'));
+            
+            // Check PWA installability criteria
+            const checks = {
+              'Has name': !!manifest.name,
+              'Has short_name': !!manifest.short_name,
+              'Has start_url': !!manifest.start_url,
+              'Has display standalone': manifest.display === 'standalone',
+              'Has theme_color': !!manifest.theme_color,
+              'Has icons': manifest.icons && manifest.icons.length > 0,
+              'Has 192px icon': manifest.icons.some(icon => icon.sizes.includes('192x192')),
+              'Has 512px icon': manifest.icons.some(icon => icon.sizes.includes('512x512'))
+            };
+            
+            const passed = Object.values(checks).every(Boolean);
+            
+            console.log('PWA Installability Checks:');
+            Object.entries(checks).forEach(([check, result]) => {
+              console.log(\`  \${result ? '✅' : '❌'} \${check}\`);
+            });
+            
+            if (passed) {
+              console.log('\\n🎉 PWA passes all installability checks!');
+            } else {
+              console.log('\\n❌ PWA fails some installability checks');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-artifacts-node-${{ matrix.node-version }}
+          path: |
+            .next/
+            public/sw.js
+            public/workbox-*.js
+            public/manifest.json
+          retention-days: 7

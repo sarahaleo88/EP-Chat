@@ -44,14 +44,16 @@ export default function LoadingSpinner({
   };
 
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-3',
+        className
+      )}
+    >
       {/* 三叶草旋转动画 */}
       <div className="relative">
         <div
-          className={cn(
-            'shamrock-spin text-shamrock-500',
-            sizeClasses[size]
-          )}
+          className={cn('shamrock-spin text-shamrock-500', sizeClasses[size])}
           role="status"
           aria-label="加载中"
         >
@@ -120,19 +122,11 @@ export function InlineSpinner({
 
   return (
     <div
-      className={cn(
-        'shamrock-spin text-current',
-        sizeClasses[size],
-        className
-      )}
+      className={cn('shamrock-spin text-current', sizeClasses[size], className)}
       role="status"
       aria-label="加载中"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-full h-full"
-      >
+      <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
         <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
         <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
         <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
@@ -186,7 +180,7 @@ export function DotsLoader({
 
   return (
     <div className={cn('flex items-center space-x-1', className)}>
-      {[0, 1, 2].map((index) => (
+      {[0, 1, 2].map(index => (
         <div
           key={index}
           className={cn(

@@ -13,7 +13,10 @@ export type Scenario = 'code' | 'web';
 export type Mode = 'full' | 'minimal';
 
 // DeepSeek 模型类型
-export type DeepSeekModel = 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner';
+export type DeepSeekModel =
+  | 'deepseek-chat'
+  | 'deepseek-coder'
+  | 'deepseek-reasoner';
 
 // 模板配置接口
 export interface TemplateConfig {

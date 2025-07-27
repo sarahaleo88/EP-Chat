@@ -23,10 +23,12 @@
 EP (Enhanced Prompt) 是一个专为 Claude Code 设计的超轻量级提示增强工具，能够将自然语言需求转换为结构化提示，帮助 Claude Code 一次性生成完整的项目代码。
 
 **核心场景：**
+
 - 🛠️ **代码工具** - 生成工具库、实用程序和代码组件
 - 🌐 **Web 应用** - 生成完整的 Web 应用和前端组件
 
 **核心特性：**
+
 - ⚡ 超快响应（无历史记录，无文件上传，流式 SSR）
 - 🧩 可扩展模板系统（JSON 模板库 + 渲染器）
 - 🔒 仅依赖 **DeepSeek API**（chat|coder|reasoner 模型）
@@ -36,31 +38,43 @@ EP (Enhanced Prompt) 是一个专为 Claude Code 设计的超轻量级提示增�
 
 ### 🛠 技术栈
 
-| 层级 | 技术选择 |
-|------|----------|
-| 前端 | **Next.js 15** (App Router / SSR & SSG) |
-| UI 框架 | **React 18 + TypeScript 5 + Tailwind CSS 3** |
-| 状态管理 | React Context (轻量级) |
-| 样式 | Tailwind + Headless UI |
-| API 集成 | `lib/deepseek.ts` (单一适配层) |
-| 构建 | Next.js 原生 turbo 编译 |
-| 部署 | 多阶段 **Dockerfile** + **docker-compose.yml** |
-| 测试 | Vitest + React Testing Library |
+| 层级     | 技术选择                                       |
+| -------- | ---------------------------------------------- |
+| 前端     | **Next.js 15** (App Router / SSR & SSG)        |
+| UI 框架  | **React 18 + TypeScript 5 + Tailwind CSS 3**   |
+| 状态管理 | React Context (轻量级)                         |
+| 样式     | Tailwind + Headless UI                         |
+| API 集成 | `lib/deepseek.ts` (单一适配层)                 |
+| 构建     | Next.js 原生 turbo 编译                        |
+| 部署     | 多阶段 **Dockerfile** + **docker-compose.yml** |
+| 测试     | Vitest + React Testing Library                 |
 
 ### 🚀 快速开始
+
+#### 0. 系统要求
+
+- **Node.js**: 18.0 或更高版本
+- **npm**: 8.0 或更高版本
+- **Docker**: (可选) 用于容器化部署
+- **curl**: 用于健康检查
 
 #### 1. 环境准备
 
 ```bash
 # 克隆项目
-git clone <repository-url>
-cd ep
+git clone https://github.com/yourusername/ep-enhanced-prompt.git
+cd ep-enhanced-prompt
 
 # 安装依赖
 npm install
 
-# 配置环境变量
+# 配置环境变量（选择其一）
+# 方式1: 最小配置（推荐新手）
+cp .env.minimal.example .env
+
+# 方式2: 完整配置（包含所有选项）
 cp .env.example .env
+
 # 编辑 .env 文件，填入你的 DeepSeek API Key
 ```
 
@@ -82,6 +96,9 @@ npm run dev
 
 # 访问应用
 open http://localhost:3000
+
+# 验证安装
+curl http://localhost:3000
 ```
 
 #### 4. Docker 部署
@@ -133,6 +150,30 @@ ep/
 5. **生成提示**：点击生成按钮，获得结构化提示
 6. **复制使用**：将生成的提示复制到 Claude Code 中使用
 
+### 📱 PWA 安装指南
+
+EP Chat 支持渐进式 Web 应用 (PWA) 功能，可以像原生应用一样安装到您的设备上。
+
+#### 安装步骤
+
+1. **桌面端 (Chrome/Edge)**: 在地址栏中查找安装图标 (⊕) 并点击
+2. **移动端 (Chrome)**: 点击菜单 → "添加到主屏幕"
+3. **iOS Safari**: 点击分享 → "添加到主屏幕"
+
+#### 离线支持
+
+- 应用支持离线使用缓存内容
+- API 请求采用网络优先策略，网络失败时回退到缓存
+- 核心功能在无网络连接时仍可使用
+
+#### PWA 特性
+
+- ✅ 可安装到桌面和移动设备
+- ✅ 离线功能支持
+- ✅ 原生应用般的体验
+- ✅ 自动更新
+- ✅ 推送通知就绪（未来功能）
+
 ### 🧪 测试
 
 ```bash
@@ -144,6 +185,9 @@ npm run test:watch
 
 # 生成覆盖率报告
 npm run test -- --coverage
+
+# PWA 功能测试
+npm test -- tests/pwa.test.tsx
 ```
 
 ### 🔧 开发
@@ -185,12 +229,49 @@ npm run test -- --coverage
 ### 🌍 国际化
 
 目前支持：
+
 - 🇨🇳 中文 (zh)
 - 🇺🇸 English (en)
 
 ### 📝 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件
+
+### 🛠 故障排除
+
+#### 常见问题
+
+1. **端口占用错误**
+
+   ```bash
+   Error: listen EADDRINUSE: address already in use :::3000
+   ```
+
+   **解决方案**: 更改端口或关闭占用进程
+
+   ```bash
+   # 查找占用进程
+   lsof -i :3000
+   # 或使用其他端口
+   PORT=3001 npm run dev
+   ```
+
+2. **API Key 无效**
+
+   ```bash
+   Error: Invalid API Key
+   ```
+
+   **解决方案**: 检查 `.env` 文件中的 `DEEPSEEK_API_KEY` 是否正确
+
+3. **Docker 权限问题**
+   ```bash
+   permission denied while trying to connect to the Docker daemon
+   ```
+   **解决方案**: 确保用户在 docker 组中
+   ```bash
+   sudo usermod -aG docker $USER
+   ```
 
 ### 🤝 贡献
 
@@ -205,10 +286,12 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 EP (Enhanced Prompt) is an ultra-lightweight prompt enhancement tool designed for Claude Code, converting natural language requirements into structured prompts to help Claude Code generate complete project code in one go.
 
 **Core Scenarios:**
+
 - 🛠️ **Code Tools** - Generate utilities, libraries, and code components
 - 🌐 **Web Apps** - Generate complete web applications and frontend components
 
 **Key Features:**
+
 - ⚡ Ultra-fast response (no history, no file uploads, streaming SSR)
 - 🧩 Extensible template system (JSON template repository + renderer)
 - 🔒 Only depends on **DeepSeek API** (chat|coder|reasoner models)
@@ -218,31 +301,43 @@ EP (Enhanced Prompt) is an ultra-lightweight prompt enhancement tool designed fo
 
 ### 🛠 Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | **Next.js 15** (App Router / SSR & SSG) |
-| UI Framework | **React 18 + TypeScript 5 + Tailwind CSS 3** |
-| State Management | React Context (lightweight) |
-| Styling | Tailwind + Headless UI |
-| API Integration | `lib/deepseek.ts` (single adapter layer) |
-| Build | Next.js native turbo compilation |
-| Deployment | Multi-stage **Dockerfile** + **docker-compose.yml** |
-| Testing | Vitest + React Testing Library |
+| Layer            | Technology                                          |
+| ---------------- | --------------------------------------------------- |
+| Frontend         | **Next.js 15** (App Router / SSR & SSG)             |
+| UI Framework     | **React 18 + TypeScript 5 + Tailwind CSS 3**        |
+| State Management | React Context (lightweight)                         |
+| Styling          | Tailwind + Headless UI                              |
+| API Integration  | `lib/deepseek.ts` (single adapter layer)            |
+| Build            | Next.js native turbo compilation                    |
+| Deployment       | Multi-stage **Dockerfile** + **docker-compose.yml** |
+| Testing          | Vitest + React Testing Library                      |
 
 ### 🚀 Quick Start
+
+#### 0. Prerequisites
+
+- **Node.js**: 18.0 or higher
+- **npm**: 8.0 or higher
+- **Docker**: (Optional) for containerized deployment
+- **curl**: For health checks
 
 #### 1. Environment Setup
 
 ```bash
 # Clone the project
-git clone <repository-url>
-cd ep
+git clone https://github.com/yourusername/ep-enhanced-prompt.git
+cd ep-enhanced-prompt
 
 # Install dependencies
 npm install
 
-# Configure environment variables
+# Configure environment variables (choose one)
+# Option 1: Minimal setup (recommended for beginners)
+cp .env.minimal.example .env
+
+# Option 2: Full configuration (includes all options)
 cp .env.example .env
+
 # Edit .env file and add your DeepSeek API Key
 ```
 
@@ -264,6 +359,9 @@ npm run dev
 
 # Open application
 open http://localhost:3000
+
+# Verify installation
+curl http://localhost:3000
 ```
 
 #### 4. Docker Deployment
@@ -279,6 +377,30 @@ docker compose logs -f
 docker compose down
 ```
 
+### 📱 PWA Installation Guide
+
+EP Chat supports Progressive Web App (PWA) functionality, allowing you to install it as a native app on your device.
+
+#### Installation Steps
+
+1. **Desktop (Chrome/Edge)**: Look for the install icon (⊕) in the address bar
+2. **Mobile (Chrome)**: Tap the menu → "Add to Home screen"
+3. **iOS Safari**: Tap Share → "Add to Home Screen"
+
+#### Offline Support
+
+- The app works offline with cached content
+- API requests use network-first strategy with fallback to cache
+- Core functionality remains available without internet connection
+
+#### PWA Features
+
+- ✅ Installable on desktop and mobile
+- ✅ Offline functionality
+- ✅ Native app-like experience
+- ✅ Automatic updates
+- ✅ Push notifications ready (future feature)
+
 ### 📊 Performance
 
 - ✅ First-screen JS < 50KB (gzipped)
@@ -286,6 +408,7 @@ docker compose down
 - ✅ Template lazy loading and caching
 - ✅ Mobile optimization
 - ✅ SSR + Static generation
+- ✅ PWA-compliant with offline support
 
 ### 🔒 Security
 
@@ -298,6 +421,42 @@ docker compose down
 ### 📝 License
 
 MIT License - see [LICENSE](LICENSE) file for details
+
+### 🛠 Troubleshooting
+
+#### Common Issues
+
+1. **Port already in use error**
+
+   ```bash
+   Error: listen EADDRINUSE: address already in use :::3000
+   ```
+
+   **Solution**: Change port or kill the process
+
+   ```bash
+   # Find the process using the port
+   lsof -i :3000
+   # Or use a different port
+   PORT=3001 npm run dev
+   ```
+
+2. **Invalid API Key error**
+
+   ```bash
+   Error: Invalid API Key
+   ```
+
+   **Solution**: Check your `DEEPSEEK_API_KEY` in the `.env` file
+
+3. **Docker permission issues**
+   ```bash
+   permission denied while trying to connect to the Docker daemon
+   ```
+   **Solution**: Ensure your user is in the docker group
+   ```bash
+   sudo usermod -aG docker $USER
+   ```
 
 ### 🤝 Contributing
 

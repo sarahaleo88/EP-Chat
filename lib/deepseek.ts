@@ -66,8 +66,8 @@ export class DeepSeekClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Accept': stream ? 'text/event-stream' : 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: stream ? 'text/event-stream' : 'application/json',
       },
       body: JSON.stringify(requestBody),
     });
@@ -108,7 +108,7 @@ export class DeepSeekClient {
     try {
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) {
           onComplete();
           break;
@@ -119,29 +119,31 @@ export class DeepSeekClient {
 
         for (const line of lines) {
           const trimmedLine = line.trim();
-          
+
           if (trimmedLine === '') continue;
           if (trimmedLine === 'data: [DONE]') {
             onComplete();
             return;
           }
-          
+
           if (trimmedLine.startsWith('data: ')) {
             try {
               const jsonStr = trimmedLine.slice(6);
               const data: StreamResponse = JSON.parse(jsonStr);
-              
+
               const content = data.choices?.[0]?.delta?.content;
               if (content) {
                 onChunk(content);
               }
-              
+
               if (data.choices?.[0]?.finish_reason) {
                 onComplete();
                 return;
               }
             } catch (parseError) {
-              console.warn('解析流数据失败:', parseError);
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('解析流数据失败:', parseError);
+              }
             }
           }
         }
@@ -169,11 +171,10 @@ export class DeepSeekClient {
    */
   async validateApiKey(): Promise<boolean> {
     try {
-      const response = await this.sendPrompt(
-        'Hello',
-        'deepseek-chat',
-        { stream: false, maxTokens: 10 }
-      );
+      const response = await this.sendPrompt('Hello', 'deepseek-chat', {
+        stream: false,
+        maxTokens: 10,
+      });
       return response.ok;
     } catch {
       return false;
@@ -188,7 +189,7 @@ export class DeepSeekClient {
     try {
       const response = await fetch(`${this.baseUrl}/models`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       });
 
@@ -197,9 +198,11 @@ export class DeepSeekClient {
       }
 
       const data = await response.json();
-      return data.data?.map((model: any) => model.id) || [];
+      return data.data?.map((model: { id: string }) => model.id) || [];
     } catch (error) {
-      console.error('获取模型列表失败:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('获取模型列表失败:', error);
+      }
       return ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'];
     }
   }

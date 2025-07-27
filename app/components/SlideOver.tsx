@@ -36,15 +36,18 @@ const sizeClasses: Record<SlideSize, string> = {
 };
 
 // 方向样式映射
-const directionClasses: Record<SlideDirection, {
-  panel: string;
-  enter: string;
-  enterFrom: string;
-  enterTo: string;
-  leave: string;
-  leaveFrom: string;
-  leaveTo: string;
-}> = {
+const directionClasses: Record<
+  SlideDirection,
+  {
+    panel: string;
+    enter: string;
+    enterFrom: string;
+    enterTo: string;
+    leave: string;
+    leaveFrom: string;
+    leaveTo: string;
+  }
+> = {
   right: {
     panel: 'ml-auto',
     enter: 'transform transition ease-in-out duration-500',
@@ -82,7 +85,11 @@ export function SlideOver({
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={closeOnBackdrop ? onClose : () => {}}>
+      <Dialog
+        as="div"
+        className="relative z-50"
+        onClose={closeOnBackdrop ? onClose : () => {}}
+      >
         {/* 背景遮罩 */}
         <Transition.Child
           as={Fragment}
@@ -99,10 +106,12 @@ export function SlideOver({
         {/* SlideOver 容器 */}
         <div className="fixed inset-0 overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
-            <div className={cn(
-              'pointer-events-none fixed inset-y-0 flex',
-              direction === 'right' ? 'right-0' : 'left-0'
-            )}>
+            <div
+              className={cn(
+                'pointer-events-none fixed inset-y-0 flex',
+                direction === 'right' ? 'right-0' : 'left-0'
+              )}
+            >
               <Transition.Child
                 as={Fragment}
                 enter={directionStyles.enter}
@@ -119,12 +128,15 @@ export function SlideOver({
                     directionStyles.panel
                   )}
                 >
-                  <div className={cn(
-                    'flex h-full flex-col overflow-y-scroll bg-white dark:bg-gray-800 shadow-xl',
-                    'border-l border-gray-200 dark:border-gray-700',
-                    direction === 'left' && 'border-l-0 border-r border-gray-200 dark:border-gray-700',
-                    className
-                  )}>
+                  <div
+                    className={cn(
+                      'flex h-full flex-col overflow-y-scroll bg-white dark:bg-gray-800 shadow-xl',
+                      'border-l border-gray-200 dark:border-gray-700',
+                      direction === 'left' &&
+                        'border-l-0 border-r border-gray-200 dark:border-gray-700',
+                      className
+                    )}
+                  >
                     {/* 关闭按钮 */}
                     {showCloseButton && (
                       <div className="absolute top-4 right-4 z-10">
@@ -134,8 +146,18 @@ export function SlideOver({
                           onClick={onClose}
                         >
                           <span className="sr-only">关闭面板</span>
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -168,10 +190,12 @@ export function SlideOverHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
-      className
-    )}>
+    <div
+      className={cn(
+        'px-6 py-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
+        className
+      )}
+    >
       {children || (
         <div className="pr-8">
           {title && (
@@ -201,10 +225,7 @@ export function SlideOverBody({
   children: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'flex-1 px-6 py-6 overflow-y-auto',
-      className
-    )}>
+    <div className={cn('flex-1 px-6 py-6 overflow-y-auto', className)}>
       {children}
     </div>
   );
@@ -221,11 +242,13 @@ export function SlideOverFooter({
   children: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
-      'flex items-center justify-end space-x-3',
-      className
-    )}>
+    <div
+      className={cn(
+        'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
+        'flex items-center justify-end space-x-3',
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -248,9 +271,7 @@ export function SettingsSlideOver({
   return (
     <SlideOver isOpen={isOpen} onClose={onClose} size="lg">
       <SlideOverHeader title={title} />
-      <SlideOverBody>
-        {children}
-      </SlideOverBody>
+      <SlideOverBody>{children}</SlideOverBody>
       <SlideOverFooter>
         <button
           onClick={onClose}

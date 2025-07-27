@@ -17,50 +17,71 @@ export interface UserFriendlyError {
 /**
  * Convert API errors to user-friendly messages
  */
-export function formatUserFriendlyError(error: unknown): UserFriendlyError {
+export function formatUserFriendlyError(
+  error: unknown,
+  model?: string
+): UserFriendlyError {
   // Handle OptimizedApiError
   if (error instanceof Error && (error as OptimizedApiError).type) {
     const apiError = error as OptimizedApiError;
-    
+
     switch (apiError.type) {
       case ApiErrorType.NETWORK:
         return {
           title: '网络连接问题',
           message: '无法连接到 DeepSeek 服务器，请检查您的网络连接。',
-          suggestion: '请确保网络连接正常，然后重试。如果问题持续存在，可能是服务器暂时不可用。',
+          suggestion:
+            '请确保网络连接正常，然后重试。如果问题持续存在，可能是服务器暂时不可用。',
           retryable: true,
           icon: '🌐',
-          actionLabel: '重试'
+          actionLabel: '重试',
         };
 
       case ApiErrorType.TIMEOUT:
-        return {
-          title: '请求超时',
-          message: '服务器响应时间过长，请求已超时。',
-          suggestion: '这可能是由于网络较慢或服务器负载较高。请稍后重试，或尝试缩短您的输入内容。',
-          retryable: true,
-          icon: '⏱️',
-          actionLabel: '重试'
-        };
+        // Provide model-specific timeout guidance
+        if (model === 'deepseek-reasoner') {
+          return {
+            title: '推理超时',
+            message:
+              'DeepSeek Reasoner 正在进行复杂推理，但响应时间超过了预期。',
+            suggestion:
+              '推理模型需要更多时间来分析复杂问题。请稍等片刻后重试，或考虑简化您的问题。对于特别复杂的推理任务，可能需要分步骤进行。',
+            retryable: true,
+            icon: '🧠',
+            actionLabel: '重新推理',
+          };
+        } else {
+          return {
+            title: '请求超时',
+            message: '服务器响应时间过长，请求已超时。',
+            suggestion:
+              '这可能是由于网络较慢或服务器负载较高。请稍后重试，或尝试缩短您的输入内容。',
+            retryable: true,
+            icon: '⏱️',
+            actionLabel: '重试',
+          };
+        }
 
       case ApiErrorType.RATE_LIMIT:
         return {
           title: '请求频率限制',
           message: '您的请求过于频繁，已达到速率限制。',
-          suggestion: '请稍等片刻再发送新的请求。如果您需要更高的请求限制，请考虑升级您的 API 计划。',
+          suggestion:
+            '请稍等片刻再发送新的请求。如果您需要更高的请求限制，请考虑升级您的 API 计划。',
           retryable: true,
           icon: '🚦',
-          actionLabel: '稍后重试'
+          actionLabel: '稍后重试',
         };
 
       case ApiErrorType.INVALID_KEY:
         return {
           title: 'API 密钥无效',
           message: '您的 DeepSeek API 密钥无效或已过期。',
-          suggestion: '请检查您的 API 密钥是否正确，或前往 DeepSeek 官网重新生成密钥。',
+          suggestion:
+            '请检查您的 API 密钥是否正确，或前往 DeepSeek 官网重新生成密钥。',
           retryable: false,
           icon: '🔑',
-          actionLabel: '检查设置'
+          actionLabel: '检查设置',
         };
 
       case ApiErrorType.API_ERROR:
@@ -71,18 +92,19 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
             suggestion: '请检查您的输入内容，确保没有特殊字符或过长的文本。',
             retryable: false,
             icon: '❌',
-            actionLabel: '修改输入'
+            actionLabel: '修改输入',
           };
         }
-        
+
         if (apiError.statusCode && apiError.statusCode >= 500) {
           return {
             title: '服务器错误',
             message: 'DeepSeek 服务器遇到了内部错误。',
-            suggestion: '这是服务器端的问题，请稍后重试。如果问题持续存在，请联系技术支持。',
+            suggestion:
+              '这是服务器端的问题，请稍后重试。如果问题持续存在，请联系技术支持。',
             retryable: true,
             icon: '🔧',
-            actionLabel: '重试'
+            actionLabel: '重试',
           };
         }
 
@@ -92,7 +114,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
           suggestion: '请检查您的输入内容和网络连接，然后重试。',
           retryable: apiError.retryable,
           icon: '⚠️',
-          actionLabel: apiError.retryable ? '重试' : '检查输入'
+          actionLabel: apiError.retryable ? '重试' : '检查输入',
         };
 
       default:
@@ -102,7 +124,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
           suggestion: '请重试，如果问题持续存在，请联系技术支持。',
           retryable: true,
           icon: '❓',
-          actionLabel: '重试'
+          actionLabel: '重试',
         };
     }
   }
@@ -117,7 +139,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
         suggestion: '请检查您的网络连接，然后重试。',
         retryable: true,
         icon: '🌐',
-        actionLabel: '重试'
+        actionLabel: '重试',
       };
     }
 
@@ -129,7 +151,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
         suggestion: '请稍后重试，或尝试缩短您的输入内容。',
         retryable: true,
         icon: '⏱️',
-        actionLabel: '重试'
+        actionLabel: '重试',
       };
     }
 
@@ -141,7 +163,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
         suggestion: '这可能是服务器的临时问题，请重试。',
         retryable: true,
         icon: '📄',
-        actionLabel: '重试'
+        actionLabel: '重试',
       };
     }
 
@@ -151,7 +173,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
       suggestion: '请重试，如果问题持续存在，请联系技术支持。',
       retryable: true,
       icon: '⚠️',
-      actionLabel: '重试'
+      actionLabel: '重试',
     };
   }
 
@@ -162,7 +184,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
     suggestion: '请刷新页面并重试，如果问题持续存在，请联系技术支持。',
     retryable: true,
     icon: '❓',
-    actionLabel: '重试'
+    actionLabel: '重试',
   };
 }
 
@@ -172,7 +194,7 @@ export function formatUserFriendlyError(error: unknown): UserFriendlyError {
 export function getRetryDelay(error: unknown): number {
   if (error instanceof Error && (error as OptimizedApiError).type) {
     const apiError = error as OptimizedApiError;
-    
+
     switch (apiError.type) {
       case ApiErrorType.RATE_LIMIT:
         return 5000; // 5 seconds for rate limit
@@ -186,75 +208,90 @@ export function getRetryDelay(error: unknown): number {
         return 1000; // 1 second default
     }
   }
-  
+
   return 1000; // Default 1 second
 }
 
 /**
  * Check if error should trigger automatic retry
  */
-export function shouldAutoRetry(error: unknown, attemptCount: number, maxAttempts: number = 3): boolean {
+export function shouldAutoRetry(
+  error: unknown,
+  attemptCount: number,
+  maxAttempts: number = 3
+): boolean {
   if (attemptCount >= maxAttempts) {
     return false;
   }
 
   if (error instanceof Error && (error as OptimizedApiError).type) {
     const apiError = error as OptimizedApiError;
-    
+
     // Don't auto-retry for these error types
-    if (apiError.type === ApiErrorType.INVALID_KEY || 
-        (apiError.type === ApiErrorType.API_ERROR && apiError.statusCode === 400)) {
+    if (
+      apiError.type === ApiErrorType.INVALID_KEY ||
+      (apiError.type === ApiErrorType.API_ERROR && apiError.statusCode === 400)
+    ) {
       return false;
     }
-    
+
     return apiError.retryable;
   }
-  
+
   // Auto-retry for network and timeout errors
   if (error instanceof Error) {
-    return error.message.includes('fetch') || 
-           error.message.includes('network') || 
-           error.message.includes('timeout') ||
-           error.message.includes('abort');
+    return (
+      error.message.includes('fetch') ||
+      error.message.includes('network') ||
+      error.message.includes('timeout') ||
+      error.message.includes('abort')
+    );
   }
-  
+
   return false;
 }
 
 /**
  * Generate helpful suggestions based on error context
  */
-export function getContextualSuggestions(error: unknown, context: {
-  inputLength?: number;
-  modelType?: string;
-  isFirstRequest?: boolean;
-}): string[] {
+export function getContextualSuggestions(
+  error: unknown,
+  context: {
+    inputLength?: number;
+    modelType?: string;
+    isFirstRequest?: boolean;
+  }
+): string[] {
   const suggestions: string[] = [];
-  
+
   if (error instanceof Error && (error as OptimizedApiError).type) {
     const apiError = error as OptimizedApiError;
-    
-    if (apiError.type === ApiErrorType.TIMEOUT && context.inputLength && context.inputLength > 1000) {
+
+    if (
+      apiError.type === ApiErrorType.TIMEOUT &&
+      context.inputLength &&
+      context.inputLength > 1000
+    ) {
       suggestions.push('尝试缩短您的输入内容');
     }
-    
+
     if (apiError.type === ApiErrorType.RATE_LIMIT) {
       suggestions.push('等待几分钟后再试');
       suggestions.push('考虑升级您的 API 计划');
     }
-    
+
     if (apiError.type === ApiErrorType.INVALID_KEY && context.isFirstRequest) {
       suggestions.push('检查 API 密钥是否正确复制');
       suggestions.push('确认 API 密钥没有过期');
       suggestions.push('访问 DeepSeek 官网重新生成密钥');
     }
-    
+
     if (apiError.type === ApiErrorType.NETWORK) {
       suggestions.push('检查网络连接');
       suggestions.push('尝试刷新页面');
       suggestions.push('如果使用 VPN，尝试切换节点');
     }
   }
-  
+
   return suggestions;
 }

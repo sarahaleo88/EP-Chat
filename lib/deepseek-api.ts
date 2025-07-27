@@ -68,7 +68,7 @@ export class DeepSeekApiClient {
       temperature = 0.7,
       max_tokens = 2048,
       top_p = 0.95,
-      stream = false
+      stream = false,
     } = options;
 
     const requestBody = {
@@ -77,7 +77,7 @@ export class DeepSeekApiClient {
       temperature,
       max_tokens,
       top_p,
-      stream
+      stream,
     };
 
     try {
@@ -85,14 +85,17 @@ export class DeepSeekApiClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorData: DeepSeekApiError = await response.json();
-        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          errorData.error?.message ||
+            `HTTP ${response.status}: ${response.statusText}`
+        );
       }
 
       const data: DeepSeekApiResponse = await response.json();
@@ -111,12 +114,14 @@ export class DeepSeekApiClient {
    */
   async validateApiKey(): Promise<boolean> {
     try {
-      await this.chat([
-        { role: 'user', content: 'Hello' }
-      ], 'deepseek-chat', { max_tokens: 10 });
+      await this.chat([{ role: 'user', content: 'Hello' }], 'deepseek-chat', {
+        max_tokens: 10,
+      });
       return true;
     } catch (error) {
-      console.error('API key validation failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('API key validation failed:', error);
+      }
       return false;
     }
   }
@@ -142,30 +147,30 @@ export function createDeepSeekClient(apiKey: string): DeepSeekApiClient {
 export function formatApiError(error: unknown): string {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
-    
+
     if (message.includes('unauthorized') || message.includes('401')) {
       return '❌ API 密钥无效，请检查您的 DeepSeek API 密钥是否正确';
     }
-    
+
     if (message.includes('rate limit') || message.includes('429')) {
       return '⏰ API 调用频率超限，请稍后再试';
     }
-    
+
     if (message.includes('quota') || message.includes('insufficient')) {
       return '💳 API 配额不足，请检查您的账户余额';
     }
-    
+
     if (message.includes('network') || message.includes('fetch')) {
       return '🌐 网络连接错误，请检查网络连接后重试';
     }
-    
+
     if (message.includes('timeout')) {
       return '⏱️ 请求超时，请重试';
     }
-    
+
     return `❌ API 调用失败: ${error.message}`;
   }
-  
+
   return '❌ 未知错误，请重试';
 }
 
@@ -174,13 +179,15 @@ export function formatApiError(error: unknown): string {
  * @param messages - 应用内消息格式
  * @returns DeepSeek API 消息格式
  */
-export function convertToDeepSeekMessages(messages: Array<{
-  type: 'user' | 'assistant';
-  content: string;
-}>): DeepSeekMessage[] {
+export function convertToDeepSeekMessages(
+  messages: Array<{
+    type: 'user' | 'assistant';
+    content: string;
+  }>
+): DeepSeekMessage[] {
   return messages.map(msg => ({
     role: msg.type === 'user' ? 'user' : 'assistant',
-    content: msg.content
+    content: msg.content,
   }));
 }
 
@@ -192,8 +199,11 @@ export function convertToDeepSeekMessages(messages: Array<{
 export function estimateTokens(text: string): number {
   // 粗略估算：中文字符约 1.5 tokens，英文单词约 1.3 tokens
   const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-  const englishWords = text.replace(/[\u4e00-\u9fff]/g, '').split(/\s+/).filter(word => word.length > 0).length;
-  
+  const englishWords = text
+    .replace(/[\u4e00-\u9fff]/g, '')
+    .split(/\s+/)
+    .filter(word => word.length > 0).length;
+
   return Math.ceil(chineseChars * 1.5 + englishWords * 1.3);
 }
 
@@ -203,8 +213,14 @@ export function estimateTokens(text: string): number {
  * @param maxTokens - 最大 token 数
  * @returns 是否超过限制
  */
-export function isTokenLimitExceeded(messages: DeepSeekMessage[], maxTokens: number = 4000): boolean {
-  const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
+export function isTokenLimitExceeded(
+  messages: DeepSeekMessage[],
+  maxTokens: number = 4000
+): boolean {
+  const totalTokens = messages.reduce(
+    (sum, msg) => sum + estimateTokens(msg.content),
+    0
+  );
   return totalTokens > maxTokens;
 }
 
@@ -214,7 +230,10 @@ export function isTokenLimitExceeded(messages: DeepSeekMessage[], maxTokens: num
  * @param maxTokens - 最大 token 数
  * @returns 截断后的消息列表
  */
-export function truncateMessages(messages: DeepSeekMessage[], maxTokens: number = 4000): DeepSeekMessage[] {
+export function truncateMessages(
+  messages: DeepSeekMessage[],
+  maxTokens: number = 4000
+): DeepSeekMessage[] {
   if (!isTokenLimitExceeded(messages, maxTokens)) {
     return messages;
   }

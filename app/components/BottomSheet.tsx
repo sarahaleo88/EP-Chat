@@ -49,7 +49,7 @@ export function BottomSheet({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -59,7 +59,11 @@ export function BottomSheet({
   if (!isMobile) {
     return (
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={closeOnBackdrop ? onClose : () => {}}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={closeOnBackdrop ? onClose : () => {}}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -103,7 +107,11 @@ export function BottomSheet({
   // 移动端底部弹出
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={closeOnBackdrop ? onClose : () => {}}>
+      <Dialog
+        as="div"
+        className="relative z-50"
+        onClose={closeOnBackdrop ? onClose : () => {}}
+      >
         {/* 背景遮罩 */}
         <Transition.Child
           as={Fragment}
@@ -136,12 +144,14 @@ export function BottomSheet({
                     heightClasses[height]
                   )}
                 >
-                  <div className={cn(
-                    'flex flex-col bg-white dark:bg-gray-800 shadow-2xl rounded-t-2xl',
-                    'border-t border-l border-r border-gray-200 dark:border-gray-700',
-                    heightClasses[height],
-                    className
-                  )}>
+                  <div
+                    className={cn(
+                      'flex flex-col bg-white dark:bg-gray-800 shadow-2xl rounded-t-2xl',
+                      'border-t border-l border-r border-gray-200 dark:border-gray-700',
+                      heightClasses[height],
+                      className
+                    )}
+                  >
                     {/* 拖拽手柄 */}
                     {showHandle && (
                       <div className="flex justify-center py-3">
@@ -180,10 +190,12 @@ export function BottomSheetHeader({
   onClose?: () => void;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
-      className
-    )}>
+    <div
+      className={cn(
+        'px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
+        className
+      )}
+    >
       <div className="flex items-center justify-between">
         {children || (
           <div>
@@ -199,14 +211,24 @@ export function BottomSheetHeader({
             )}
           </div>
         )}
-        
+
         {showCloseButton && onClose && (
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         )}
@@ -226,10 +248,7 @@ export function BottomSheetBody({
   children: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'flex-1 px-6 py-4 overflow-y-auto',
-      className
-    )}>
+    <div className={cn('flex-1 px-6 py-4 overflow-y-auto', className)}>
       {children}
     </div>
   );
@@ -246,11 +265,13 @@ export function BottomSheetFooter({
   children: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
-      'flex items-center justify-end space-x-3',
-      className
-    )}>
+    <div
+      className={cn(
+        'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50',
+        'flex items-center justify-end space-x-3',
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -277,16 +298,17 @@ export function ActionBottomSheet({
 }) {
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} height="auto">
-      {title && (
-        <BottomSheetHeader title={title} onClose={onClose} />
-      )}
+      {title && <BottomSheetHeader title={title} onClose={onClose} />}
       <BottomSheetBody>
         <div className="space-y-2">
           {actions.map((action, index) => {
             const variantStyles = {
-              default: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
-              danger: 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20',
-              primary: 'text-clover-600 dark:text-clover-400 hover:bg-clover-50 dark:hover:bg-clover-900/20',
+              default:
+                'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
+              danger:
+                'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20',
+              primary:
+                'text-clover-600 dark:text-clover-400 hover:bg-clover-50 dark:hover:bg-clover-900/20',
             };
 
             return (
@@ -302,9 +324,7 @@ export function ActionBottomSheet({
                 )}
               >
                 {action.icon && (
-                  <span className="flex-shrink-0">
-                    {action.icon}
-                  </span>
+                  <span className="flex-shrink-0">{action.icon}</span>
                 )}
                 <span className="font-medium">{action.label}</span>
               </button>

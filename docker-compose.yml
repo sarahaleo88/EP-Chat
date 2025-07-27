@@ -9,7 +9,7 @@ services:
       target: runner
     container_name: ep-enhanced-prompt
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
@@ -18,7 +18,7 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/generate"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/generate']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,24 +29,24 @@ services:
       # 挂载日志目录（可选）
       - ./logs:/app/logs
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ep.rule=Host(`ep.localhost`)"
-      - "traefik.http.services.ep.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.ep.rule=Host(`ep.localhost`)'
+      - 'traefik.http.services.ep.loadbalancer.server.port=3000'
 
   # Redis 缓存服务（可选，用于缓存模板和响应）
   redis:
     image: redis:7-alpine
     container_name: ep-redis
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-ep-redis-pass}
+      - '6379:6379'
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-your_redis_password_here}
     volumes:
       - redis-data:/data
     restart: unless-stopped
     networks:
       - ep-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 30s
       timeout: 3s
       retries: 3
@@ -56,8 +56,8 @@ services:
     image: nginx:alpine
     container_name: ep-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
@@ -101,8 +101,8 @@ x-development: &development
         - /app/.next
       command: npm run dev
       ports:
-        - "3000:3000"
-        - "9229:9229" # Node.js 调试端口
+        - '3000:3000'
+        - '9229:9229' # Node.js 调试端口
 
 # 生产环境配置
 x-production: &production
@@ -123,7 +123,7 @@ x-production: &production
           max_attempts: 3
           window: 120s
       logging:
-        driver: "json-file"
+        driver: 'json-file'
         options:
-          max-size: "10m"
-          max-file: "3"
+          max-size: '10m'
+          max-file: '3'

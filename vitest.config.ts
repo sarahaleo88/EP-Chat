@@ -27,12 +27,7 @@ export default defineConfig({
     ],
 
     // 排除的文件
-    exclude: [
-      'node_modules',
-      'dist',
-      '.next',
-      'coverage',
-    ],
+    exclude: ['node_modules', 'dist', '.next', 'coverage'],
 
     // 覆盖率配置
     coverage: {

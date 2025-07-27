@@ -11,22 +11,22 @@ export interface OptimizationConfig {
   enableConnectionPooling: boolean;
   maxConnectionPool: number;
   connectionTimeout: number;
-  
+
   // Request optimizations
   enableRequestBatching: boolean;
   batchSize: number;
   batchTimeout: number;
-  
+
   // Cache optimizations
   enableSemanticCaching: boolean;
   enablePredictiveCache: boolean;
   cacheCompressionLevel: number;
-  
+
   // Network optimizations
   enableCompression: boolean;
   compressionThreshold: number;
   enablePrefetching: boolean;
-  
+
   // Frontend optimizations
   enableVirtualization: boolean;
   messageBufferSize: number;
@@ -37,22 +37,22 @@ const DEFAULT_OPTIMIZATION_CONFIG: OptimizationConfig = {
   enableConnectionPooling: true,
   maxConnectionPool: 5,
   connectionTimeout: 10000,
-  
+
   enableRequestBatching: false, // Disabled by default for chat
   batchSize: 3,
   batchTimeout: 100,
-  
+
   enableSemanticCaching: true,
   enablePredictiveCache: false,
   cacheCompressionLevel: 1,
-  
+
   enableCompression: true,
   compressionThreshold: 1024,
   enablePrefetching: false,
-  
+
   enableVirtualization: false,
   messageBufferSize: 100,
-  renderBatchSize: 10
+  renderBatchSize: 10,
 };
 
 export class PerformanceOptimizer {
@@ -80,8 +80,10 @@ export class PerformanceOptimizer {
   private setupConnectionPooling(): void {
     // Note: This would typically involve configuring HTTP agents
     // For now, we'll implement a simple connection tracking system
-    console.log('🔗 Setting up connection pooling...');
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔗 Setting up connection pooling...');
+    }
+
     // In a real implementation, you would configure:
     // - HTTP/2 support
     // - Keep-alive connections
@@ -102,7 +104,9 @@ export class PerformanceOptimizer {
    * Setup request batching for multiple concurrent requests
    */
   private setupRequestBatching(): void {
-    console.log('📦 Setting up request batching...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📦 Setting up request batching...');
+    }
     // Implementation would batch multiple requests together
     // This is typically not useful for chat applications
     // but could be beneficial for bulk operations
@@ -115,7 +119,7 @@ export class PerformanceOptimizer {
     if (this.config.enableSemanticCaching) {
       this.setupSemanticCaching(client);
     }
-    
+
     if (this.config.enablePredictiveCache) {
       this.setupPredictiveCache(client);
     }
@@ -125,7 +129,9 @@ export class PerformanceOptimizer {
    * Setup semantic caching with content similarity
    */
   private setupSemanticCaching(client: OptimizedDeepSeekClient): void {
-    console.log('🧠 Setting up semantic caching...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🧠 Setting up semantic caching...');
+    }
     // This would implement vector-based similarity caching
     // For now, we'll enhance the existing cache key generation
   }
@@ -134,7 +140,9 @@ export class PerformanceOptimizer {
    * Setup predictive caching based on user patterns
    */
   private setupPredictiveCache(client: OptimizedDeepSeekClient): void {
-    console.log('🔮 Setting up predictive caching...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔮 Setting up predictive caching...');
+    }
     // This would analyze user patterns and pre-cache likely requests
   }
 
@@ -145,7 +153,7 @@ export class PerformanceOptimizer {
     if (this.config.enableCompression) {
       this.setupCompression();
     }
-    
+
     if (this.config.enablePrefetching) {
       this.setupPrefetching();
     }
@@ -155,7 +163,9 @@ export class PerformanceOptimizer {
    * Setup response compression
    */
   private setupCompression(): void {
-    console.log('🗜️ Setting up response compression...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🗜️ Setting up response compression...');
+    }
     // This would configure gzip/brotli compression for responses
     // Typically handled at the server/proxy level
   }
@@ -164,7 +174,9 @@ export class PerformanceOptimizer {
    * Setup request prefetching
    */
   private setupPrefetching(): void {
-    console.log('⚡ Setting up request prefetching...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚡ Setting up request prefetching...');
+    }
     // This would implement predictive request prefetching
   }
 
@@ -181,7 +193,9 @@ export class PerformanceOptimizer {
    * Setup message virtualization for large chat histories
    */
   private setupVirtualization(): void {
-    console.log('📱 Setting up message virtualization...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📱 Setting up message virtualization...');
+    }
     // This would implement virtual scrolling for large message lists
   }
 
@@ -198,7 +212,7 @@ export class PerformanceOptimizer {
     } = {}
   ): Promise<T> {
     const { timeout = 15000, retries = 3, priority = 1 } = options;
-    
+
     const requestId = performanceLogger.startRequest(`optimized-${operation}`);
     let lastError: Error | null = null;
 
@@ -206,16 +220,16 @@ export class PerformanceOptimizer {
       try {
         // Apply timeout wrapper
         const result = await this.withTimeout(apiCall(), timeout);
-        
+
         performanceLogger.endRequest(requestId, true, {
           retryCount: attempt,
-          priority
+          priority,
         });
-        
+
         return result;
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt < retries) {
           // Exponential backoff
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
@@ -226,7 +240,7 @@ export class PerformanceOptimizer {
 
     performanceLogger.endRequest(requestId, false, {
       retryCount: retries,
-      errorType: lastError?.constructor.name || 'Unknown'
+      errorType: lastError?.constructor.name || 'Unknown',
     });
 
     throw lastError;
@@ -240,7 +254,7 @@ export class PerformanceOptimizer {
       promise,
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Operation timeout')), timeoutMs)
-      )
+      ),
     ]);
   }
 
@@ -262,12 +276,12 @@ export class PerformanceOptimizer {
     // Keep recent messages and summarize older ones
     const recentMessages = messages.slice(-this.config.messageBufferSize);
     const olderMessages = messages.slice(0, -this.config.messageBufferSize);
-    
+
     // In a real implementation, you might:
     // - Summarize older messages
     // - Compress message content
     // - Remove redundant information
-    
+
     return recentMessages;
   }
 
@@ -275,18 +289,22 @@ export class PerformanceOptimizer {
    * Apply all optimizations
    */
   applyAllOptimizations(client?: OptimizedDeepSeekClient): void {
-    console.log('🚀 Applying comprehensive performance optimizations...');
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🚀 Applying comprehensive performance optimizations...');
+    }
+
     this.optimizeConnections();
     this.optimizeRequests();
     this.optimizeNetwork();
     this.optimizeFrontend();
-    
+
     if (client) {
       this.optimizeCaching(client);
     }
-    
-    console.log('✅ All optimizations applied successfully!');
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ All optimizations applied successfully!');
+    }
   }
 
   /**
@@ -298,19 +316,26 @@ export class PerformanceOptimizer {
     performanceGains: any;
   } {
     const activeOptimizations: string[] = [];
-    
-    if (this.config.enableConnectionPooling) activeOptimizations.push('Connection Pooling');
-    if (this.config.enableRequestBatching) activeOptimizations.push('Request Batching');
-    if (this.config.enableSemanticCaching) activeOptimizations.push('Semantic Caching');
-    if (this.config.enablePredictiveCache) activeOptimizations.push('Predictive Cache');
-    if (this.config.enableCompression) activeOptimizations.push('Response Compression');
-    if (this.config.enablePrefetching) activeOptimizations.push('Request Prefetching');
-    if (this.config.enableVirtualization) activeOptimizations.push('Message Virtualization');
+
+    if (this.config.enableConnectionPooling)
+      activeOptimizations.push('Connection Pooling');
+    if (this.config.enableRequestBatching)
+      activeOptimizations.push('Request Batching');
+    if (this.config.enableSemanticCaching)
+      activeOptimizations.push('Semantic Caching');
+    if (this.config.enablePredictiveCache)
+      activeOptimizations.push('Predictive Cache');
+    if (this.config.enableCompression)
+      activeOptimizations.push('Response Compression');
+    if (this.config.enablePrefetching)
+      activeOptimizations.push('Request Prefetching');
+    if (this.config.enableVirtualization)
+      activeOptimizations.push('Message Virtualization');
 
     return {
       config: this.config,
       activeOptimizations,
-      performanceGains: performanceLogger.getStats()
+      performanceGains: performanceLogger.getStats(),
     };
   }
 
@@ -319,23 +344,31 @@ export class PerformanceOptimizer {
    */
   generateRecommendations(performanceStats: any): string[] {
     const recommendations: string[] = [];
-    
+
     if (performanceStats.averageResponseTime > 5000) {
-      recommendations.push('Consider enabling connection pooling for faster API calls');
+      recommendations.push(
+        'Consider enabling connection pooling for faster API calls'
+      );
     }
-    
+
     if (performanceStats.cacheHitRate < 50) {
-      recommendations.push('Enable semantic caching to improve cache effectiveness');
+      recommendations.push(
+        'Enable semantic caching to improve cache effectiveness'
+      );
     }
-    
+
     if (performanceStats.errorRate > 5) {
-      recommendations.push('Implement predictive caching to reduce API failures');
+      recommendations.push(
+        'Implement predictive caching to reduce API failures'
+      );
     }
-    
+
     if (performanceStats.p95ResponseTime > 10000) {
-      recommendations.push('Enable response compression to reduce transfer time');
+      recommendations.push(
+        'Enable response compression to reduce transfer time'
+      );
     }
-    
+
     return recommendations;
   }
 
@@ -344,7 +377,9 @@ export class PerformanceOptimizer {
    */
   updateConfig(newConfig: Partial<OptimizationConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    console.log('⚙️ Optimization configuration updated');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚙️ Optimization configuration updated');
+    }
   }
 }
 

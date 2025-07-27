@@ -215,3 +215,15 @@ pnpm-lock.yaml
 
 # Husky
 .husky/_
+
+# Development reports and temporary files (should not be in production)
+*_SUMMARY.md
+*_REPORT.md
+*_GUIDE.md
+*_VALIDATION.md
+*_OPTIMIZATION.md
+*_IMPROVEMENTS.md
+*_EVALUATION*.md
+generate-favicon.html
+test-api.js
+test-stream.js

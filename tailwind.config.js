@@ -68,8 +68,8 @@ module.exports = {
         'slide-up': 'slide-up 0.3s ease-out',
       },
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
+        18: '4.5rem',
+        88: '22rem',
       },
       maxWidth: {
         '8xl': '88rem',
@@ -112,9 +112,6 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [require('@tailwindcss/typography'), require('@tailwindcss/forms')],
   darkMode: 'class',
 };

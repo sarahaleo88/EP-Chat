@@ -3,7 +3,11 @@
  * Enhanced with timeout, retry logic, caching, and better error handling
  */
 
-import { DeepSeekMessage, DeepSeekApiResponse, DeepSeekApiError } from './deepseek-api';
+import {
+  DeepSeekMessage,
+  DeepSeekApiResponse,
+  DeepSeekApiError,
+} from './deepseek-api';
 import { performanceLogger } from './performance-logger';
 
 // Cache interface
@@ -20,7 +24,7 @@ export enum ApiErrorType {
   RATE_LIMIT = 'rate_limit',
   API_ERROR = 'api_error',
   INVALID_KEY = 'invalid_key',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 export interface OptimizedApiError extends Error {
@@ -40,15 +44,31 @@ interface ApiConfig {
   requestPriority: boolean;
 }
 
+/**
+ * Get model-specific timeout configuration
+ * DeepSeek Reasoner requires longer timeout for complex reasoning tasks
+ */
+function getModelTimeout(model: string): number {
+  switch (model) {
+    case 'deepseek-reasoner':
+      return 120000; // 2 minutes for complex reasoning
+    case 'deepseek-coder':
+      return 60000; // 1 minute for code generation
+    case 'deepseek-chat':
+    default:
+      return 30000; // 30 seconds for general chat
+  }
+}
+
 // Default configuration
 const DEFAULT_CONFIG: ApiConfig = {
-  timeout: 15000, // 15 seconds - optimized for faster response
+  timeout: 30000, // Default 30 seconds - will be overridden by model-specific timeout
   maxRetries: 3,
   retryDelay: 800, // Reduced from 1000ms to 800ms for faster retry
   cacheSize: 75, // Increased from 50 to 75 for better cache hit rate
   cacheTtl: 1800000, // 30 minutes - optimized for better cache hit rate
   maxConcurrentRequests: 4, // Increased from 3 to 4 for better throughput
-  requestPriority: true // Enable request prioritization
+  requestPriority: true, // Enable request prioritization
 };
 
 /**
@@ -112,34 +132,44 @@ export class OptimizedDeepSeekClient {
   private abortController?: AbortController;
   private requestQueue: QueuedRequest[] = [];
   private activeRequests: number = 0;
+  private lastCleanupTime: number = 0;
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor(apiKey: string, config: Partial<ApiConfig> = {}) {
     this.apiKey = apiKey;
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.cache = new LRUCache(this.config.cacheSize);
+    this.lastCleanupTime = Date.now();
+
+    // Start periodic cleanup (every 10 minutes)
+    this.startPeriodicCleanup();
   }
 
   /**
    * Generate cache key for request with semantic considerations
    */
-  private generateCacheKey(messages: DeepSeekMessage[], model: string, temperature: number): string {
+  private generateCacheKey(
+    messages: DeepSeekMessage[],
+    model: string,
+    temperature: number
+  ): string {
     // Normalize messages for semantic caching
     const normalizedMessages = messages.map(msg => ({
       role: msg.role,
-      content: this.normalizeContent(msg.content)
+      content: this.normalizeContent(msg.content),
     }));
 
     const content = JSON.stringify({
       messages: normalizedMessages,
       model,
-      temperature: Math.round(temperature * 10) / 10 // Round temperature to 1 decimal
+      temperature: Math.round(temperature * 10) / 10, // Round temperature to 1 decimal
     });
 
     // Simple hash function
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString();
@@ -163,7 +193,10 @@ export class OptimizedDeepSeekClient {
     execute: () => Promise<T>,
     priority: number = 1
   ): Promise<T> {
-    if (!this.config.requestPriority || this.activeRequests < this.config.maxConcurrentRequests) {
+    if (
+      !this.config.requestPriority ||
+      this.activeRequests < this.config.maxConcurrentRequests
+    ) {
       this.activeRequests++;
       try {
         return await execute();
@@ -180,11 +213,13 @@ export class OptimizedDeepSeekClient {
         priority,
         execute,
         resolve,
-        reject
+        reject,
       };
 
       // Insert request in priority order (higher priority first)
-      const insertIndex = this.requestQueue.findIndex(req => req.priority < priority);
+      const insertIndex = this.requestQueue.findIndex(
+        req => req.priority < priority
+      );
       if (insertIndex === -1) {
         this.requestQueue.push(queuedRequest);
       } else {
@@ -197,7 +232,10 @@ export class OptimizedDeepSeekClient {
    * Process queued requests
    */
   private async processQueue(): Promise<void> {
-    while (this.requestQueue.length > 0 && this.activeRequests < this.config.maxConcurrentRequests) {
+    while (
+      this.requestQueue.length > 0 &&
+      this.activeRequests < this.config.maxConcurrentRequests
+    ) {
       const request = this.requestQueue.shift();
       if (!request) break;
 
@@ -222,10 +260,114 @@ export class OptimizedDeepSeekClient {
   }
 
   /**
-   * Create optimized error
+   * Clean expired entries from cache
    */
-  private createError(message: string, type: ApiErrorType, retryable: boolean, statusCode?: number): OptimizedApiError {
-    const error = new Error(message) as OptimizedApiError;
+  private cleanExpiredEntries(): { cleaned: number; remaining: number } {
+    const startTime = Date.now();
+    let cleanedCount = 0;
+    const cacheMap = this.cache['cache'] as Map<string, CacheEntry>;
+
+    // Collect expired keys
+    const expiredKeys: string[] = [];
+    for (const [key, entry] of cacheMap) {
+      if (!this.isCacheValid(entry)) {
+        expiredKeys.push(key);
+      }
+    }
+
+    // Remove expired entries
+    for (const key of expiredKeys) {
+      cacheMap.delete(key);
+      cleanedCount++;
+    }
+
+    const cleanupDuration = Date.now() - startTime;
+    const remainingCount = cacheMap.size;
+
+    // Log cleanup performance
+    if (process.env.NODE_ENV === 'development') {
+      performanceLogger.logCustomMetric('cache-cleanup', {
+        cleanedEntries: cleanedCount,
+        remainingEntries: remainingCount,
+        cleanupDuration,
+        cacheUtilization: (remainingCount / this.config.cacheSize) * 100,
+      });
+    }
+
+    this.lastCleanupTime = Date.now();
+
+    return { cleaned: cleanedCount, remaining: remainingCount };
+  }
+
+  /**
+   * Start periodic cleanup timer
+   */
+  private startPeriodicCleanup(): void {
+    // Clean up every 10 minutes (600,000ms)
+    this.cleanupInterval = setInterval(() => {
+      this.cleanExpiredEntries();
+    }, 600000);
+  }
+
+  /**
+   * Stop periodic cleanup timer
+   */
+  private stopPeriodicCleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      delete this.cleanupInterval;
+    }
+  }
+
+  /**
+   * Check if cleanup should be triggered based on cache capacity
+   */
+  private shouldTriggerCleanup(): boolean {
+    const cacheMap = this.cache['cache'] as Map<string, CacheEntry>;
+    const currentSize = cacheMap.size;
+    const capacityThreshold = Math.floor(this.config.cacheSize * 0.8); // 80% capacity
+    const timeSinceLastCleanup = Date.now() - this.lastCleanupTime;
+    const minCleanupInterval = 60000; // Minimum 1 minute between cleanups
+
+    return (
+      currentSize >= capacityThreshold &&
+      timeSinceLastCleanup >= minCleanupInterval
+    );
+  }
+
+  /**
+   * Create optimized error with model-specific context
+   */
+  private createError(
+    message: string,
+    type: ApiErrorType,
+    retryable: boolean,
+    statusCode?: number,
+    model?: string
+  ): OptimizedApiError {
+    let enhancedMessage = message;
+
+    // Add model-specific context for timeout errors
+    if (type === ApiErrorType.TIMEOUT && model) {
+      const timeout = getModelTimeout(model);
+      const timeoutSeconds = timeout / 1000;
+
+      switch (model) {
+        case 'deepseek-reasoner':
+          enhancedMessage = `${message} (${timeoutSeconds}s limit for complex reasoning tasks). Try breaking down your question into smaller parts or simplifying the request.`;
+          break;
+        case 'deepseek-coder':
+          enhancedMessage = `${message} (${timeoutSeconds}s limit for code generation). Try requesting smaller code snippets or simpler functions.`;
+          break;
+        case 'deepseek-chat':
+          enhancedMessage = `${message} (${timeoutSeconds}s limit for general chat). Try asking a more concise question.`;
+          break;
+        default:
+          enhancedMessage = `${message} (${timeoutSeconds}s timeout)`;
+      }
+    }
+
+    const error = new Error(enhancedMessage) as OptimizedApiError;
     error.type = type;
     error.retryable = retryable;
     if (statusCode !== undefined) {
@@ -237,7 +379,10 @@ export class OptimizedDeepSeekClient {
   /**
    * Determine error type from response
    */
-  private determineErrorType(status: number, message: string): { type: ApiErrorType; retryable: boolean } {
+  private determineErrorType(
+    status: number,
+    message: string
+  ): { type: ApiErrorType; retryable: boolean } {
     if (status === 401 || status === 403) {
       return { type: ApiErrorType.INVALID_KEY, retryable: false };
     }
@@ -272,8 +417,17 @@ export class OptimizedDeepSeekClient {
     onError?: (error: OptimizedApiError) => void
   ): Promise<void> {
     if (!response.body) {
-      const error = this.createError('Response body is empty', ApiErrorType.API_ERROR, false);
-      performanceLogger.endRequest(requestId, false, { errorType: error.type, model });
+      const error = this.createError(
+        'Response body is empty',
+        ApiErrorType.API_ERROR,
+        false,
+        undefined,
+        model
+      );
+      performanceLogger.endRequest(requestId, false, {
+        errorType: error.type,
+        model,
+      });
       onError?.(error);
       return;
     }
@@ -290,7 +444,7 @@ export class OptimizedDeepSeekClient {
           performanceLogger.endRequest(requestId, true, {
             cacheHit: false,
             model,
-            tokenCount: totalTokens
+            tokenCount: totalTokens,
           });
           onComplete?.();
           break;
@@ -307,7 +461,7 @@ export class OptimizedDeepSeekClient {
             performanceLogger.endRequest(requestId, true, {
               cacheHit: false,
               model,
-              tokenCount: totalTokens
+              tokenCount: totalTokens,
             });
             onComplete?.();
             return;
@@ -328,13 +482,16 @@ export class OptimizedDeepSeekClient {
                 performanceLogger.endRequest(requestId, true, {
                   cacheHit: false,
                   model,
-                  tokenCount: totalTokens
+                  tokenCount: totalTokens,
                 });
                 onComplete?.();
                 return;
               }
             } catch (parseError) {
-              console.warn('Failed to parse streaming data:', parseError);
+              // Only log parsing errors in development
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Failed to parse streaming data:', parseError);
+              }
             }
           }
         }
@@ -343,18 +500,35 @@ export class OptimizedDeepSeekClient {
       let streamError: OptimizedApiError;
 
       if (error instanceof Error && error.name === 'AbortError') {
-        streamError = this.createError('Streaming request timeout', ApiErrorType.TIMEOUT, true);
+        streamError = this.createError(
+          'Streaming request timeout',
+          ApiErrorType.TIMEOUT,
+          true,
+          undefined,
+          model
+        );
       } else if (error instanceof Error && error.message.includes('network')) {
-        streamError = this.createError('Network connection lost during streaming', ApiErrorType.NETWORK, true);
+        streamError = this.createError(
+          'Network connection lost during streaming',
+          ApiErrorType.NETWORK,
+          true,
+          undefined,
+          model
+        );
       } else {
         streamError = this.createError(
           error instanceof Error ? error.message : 'Streaming failed',
           ApiErrorType.UNKNOWN,
-          false
+          false,
+          undefined,
+          model
         );
       }
 
-      performanceLogger.endRequest(requestId, false, { errorType: streamError.type, model });
+      performanceLogger.endRequest(requestId, false, {
+        errorType: streamError.type,
+        model,
+      });
       onError?.(streamError);
     } finally {
       reader.releaseLock();
@@ -373,10 +547,21 @@ export class OptimizedDeepSeekClient {
       top_p?: number;
     }
   ): Promise<DeepSeekApiResponse> {
+    // Get model-specific timeout
+    const modelTimeout = getModelTimeout(model);
+    // Log timeout configuration in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `[Timeout] Model: ${model}, Timeout: ${modelTimeout}ms (${modelTimeout / 1000}s)`
+      );
+    }
     const { temperature = 0.7, max_tokens = 2048, top_p = 0.95 } = options;
 
     // Start performance tracking
-    const requestId = performanceLogger.startRequest('deepseek-api-call', model);
+    const requestId = performanceLogger.startRequest(
+      'deepseek-api-call',
+      model
+    );
 
     // Check cache first
     const cacheKey = this.generateCacheKey(messages, model, temperature);
@@ -386,13 +571,24 @@ export class OptimizedDeepSeekClient {
       return cachedEntry.response;
     }
 
+    // Trigger cleanup if needed (80% capacity reached)
+    if (this.shouldTriggerCleanup()) {
+      const cleanupResult = this.cleanExpiredEntries();
+      if (process.env.NODE_ENV === 'development') {
+        performanceLogger.logCustomMetric('cache-auto-cleanup', {
+          trigger: 'capacity-threshold',
+          ...cleanupResult,
+        });
+      }
+    }
+
     const requestBody = {
       model,
       messages,
       temperature,
       max_tokens,
       top_p,
-      stream: false
+      stream: false,
     };
 
     let lastError: OptimizedApiError | null = null;
@@ -403,31 +599,38 @@ export class OptimizedDeepSeekClient {
         this.abortController = new AbortController();
         const timeoutId = setTimeout(() => {
           this.abortController?.abort();
-        }, this.config.timeout);
+        }, modelTimeout);
 
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`
+            Authorization: `Bearer ${this.apiKey}`,
           },
           body: JSON.stringify(requestBody),
-          signal: this.abortController.signal
+          signal: this.abortController.signal,
         });
 
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const errorData: DeepSeekApiError = await response.json().catch(() => ({
-            error: { message: 'Unknown error', type: 'unknown' }
-          }));
-          
-          const { type, retryable } = this.determineErrorType(response.status, errorData.error.message);
+          const errorData: DeepSeekApiError = await response
+            .json()
+            .catch(() => ({
+              error: { message: 'Unknown error', type: 'unknown' },
+            }));
+
+          const { type, retryable } = this.determineErrorType(
+            response.status,
+            errorData.error.message
+          );
           lastError = this.createError(
-            errorData.error.message || `HTTP ${response.status}: ${response.statusText}`,
+            errorData.error.message ||
+              `HTTP ${response.status}: ${response.statusText}`,
             type,
             retryable,
-            response.status
+            response.status,
+            model
           );
 
           if (!retryable || attempt === this.config.maxRetries) {
@@ -440,7 +643,7 @@ export class OptimizedDeepSeekClient {
           this.cache.set(cacheKey, {
             response: data,
             timestamp: Date.now(),
-            ttl: this.config.cacheTtl
+            ttl: this.config.cacheTtl,
           });
 
           // Log successful request
@@ -448,20 +651,41 @@ export class OptimizedDeepSeekClient {
             cacheHit: false,
             retryCount: attempt,
             model,
-            tokenCount: data.usage?.total_tokens
+            tokenCount: data.usage?.total_tokens,
           });
 
           return data;
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          lastError = this.createError('Request timeout', ApiErrorType.TIMEOUT, true);
+          lastError = this.createError(
+            'Request timeout',
+            ApiErrorType.TIMEOUT,
+            true,
+            undefined,
+            model
+          );
         } else if (error instanceof Error && error.message.includes('fetch')) {
-          lastError = this.createError('Network error', ApiErrorType.NETWORK, true);
-        } else if (error instanceof Error && (error as OptimizedApiError).type) {
+          lastError = this.createError(
+            'Network error',
+            ApiErrorType.NETWORK,
+            true,
+            undefined,
+            model
+          );
+        } else if (
+          error instanceof Error &&
+          (error as OptimizedApiError).type
+        ) {
           lastError = error as OptimizedApiError;
         } else {
-          lastError = this.createError('Unknown error', ApiErrorType.UNKNOWN, true);
+          lastError = this.createError(
+            'Unknown error',
+            ApiErrorType.UNKNOWN,
+            true,
+            undefined,
+            model
+          );
         }
 
         if (!lastError.retryable || attempt === this.config.maxRetries) {
@@ -476,13 +700,21 @@ export class OptimizedDeepSeekClient {
       }
     }
 
-    const finalError = lastError || this.createError('Max retries exceeded', ApiErrorType.UNKNOWN, false);
+    const finalError =
+      lastError ||
+      this.createError(
+        'Max retries exceeded',
+        ApiErrorType.UNKNOWN,
+        false,
+        undefined,
+        model
+      );
 
     // Log failed request
     performanceLogger.endRequest(requestId, false, {
       errorType: finalError.type,
       retryCount: this.config.maxRetries,
-      model
+      model,
     });
 
     throw finalError;
@@ -524,10 +756,29 @@ export class OptimizedDeepSeekClient {
       onError?: (error: OptimizedApiError) => void;
     } = {}
   ): Promise<void> {
-    const { temperature = 0.7, max_tokens = 2048, top_p = 0.95, onChunk, onComplete, onError } = options;
+    const {
+      temperature = 0.7,
+      max_tokens = 2048,
+      top_p = 0.95,
+      onChunk,
+      onComplete,
+      onError,
+    } = options;
+
+    // Get model-specific timeout
+    const modelTimeout = getModelTimeout(model);
+    // Log timeout configuration in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `[Timeout] Model: ${model}, Timeout: ${modelTimeout}ms (${modelTimeout / 1000}s)`
+      );
+    }
 
     // Start performance tracking
-    const requestId = performanceLogger.startRequest('deepseek-api-stream', model);
+    const requestId = performanceLogger.startRequest(
+      'deepseek-api-stream',
+      model
+    );
 
     const requestBody = {
       model,
@@ -535,7 +786,7 @@ export class OptimizedDeepSeekClient {
       temperature,
       max_tokens,
       top_p,
-      stream: true
+      stream: true,
     };
 
     let lastError: OptimizedApiError | null = null;
@@ -546,63 +797,98 @@ export class OptimizedDeepSeekClient {
         this.abortController = new AbortController();
         const timeoutId = setTimeout(() => {
           this.abortController?.abort();
-        }, this.config.timeout);
+        }, modelTimeout);
 
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`
+            Authorization: `Bearer ${this.apiKey}`,
           },
           body: JSON.stringify(requestBody),
-          signal: this.abortController.signal
+          signal: this.abortController.signal,
         });
 
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const errorData: DeepSeekApiError = await response.json().catch(() => ({
-            error: { message: 'Unknown error', type: 'unknown' }
-          }));
+          const errorData: DeepSeekApiError = await response
+            .json()
+            .catch(() => ({
+              error: { message: 'Unknown error', type: 'unknown' },
+            }));
 
-          const { type, retryable } = this.determineErrorType(response.status, errorData.error.message);
+          const { type, retryable } = this.determineErrorType(
+            response.status,
+            errorData.error.message
+          );
           lastError = this.createError(
-            errorData.error.message || `HTTP ${response.status}: ${response.statusText}`,
+            errorData.error.message ||
+              `HTTP ${response.status}: ${response.statusText}`,
             type,
             retryable,
-            response.status
+            response.status,
+            model
           );
 
           if (!retryable || attempt === this.config.maxRetries) {
             performanceLogger.endRequest(requestId, false, {
               errorType: lastError.type,
               retryCount: attempt,
-              model
+              model,
             });
             onError?.(lastError);
             return;
           }
         } else {
           // Handle streaming response
-          await this.handleStreamingResponse(response, requestId, model, onChunk, onComplete, onError);
+          await this.handleStreamingResponse(
+            response,
+            requestId,
+            model,
+            onChunk,
+            onComplete,
+            onError
+          );
           return;
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          lastError = this.createError('Request timeout', ApiErrorType.TIMEOUT, true);
+          lastError = this.createError(
+            'Request timeout',
+            ApiErrorType.TIMEOUT,
+            true,
+            undefined,
+            model
+          );
         } else if (error instanceof Error && error.message.includes('fetch')) {
-          lastError = this.createError('Network error', ApiErrorType.NETWORK, true);
-        } else if (error instanceof Error && (error as OptimizedApiError).type) {
+          lastError = this.createError(
+            'Network error',
+            ApiErrorType.NETWORK,
+            true,
+            undefined,
+            model
+          );
+        } else if (
+          error instanceof Error &&
+          (error as OptimizedApiError).type
+        ) {
           lastError = error as OptimizedApiError;
         } else {
-          lastError = this.createError('Unknown error', ApiErrorType.UNKNOWN, true);
+          lastError = this.createError(
+            'Unknown error',
+            ApiErrorType.UNKNOWN,
+            true,
+            undefined,
+            model
+          );
         }
 
         if (!lastError.retryable || attempt === this.config.maxRetries) {
           performanceLogger.endRequest(requestId, false, {
             errorType: lastError.type,
             retryCount: attempt,
-            model
+            model,
           });
           onError?.(lastError);
           return;
@@ -629,16 +915,62 @@ export class OptimizedDeepSeekClient {
    */
   clearCache(): void {
     this.cache.clear();
+    this.lastCleanupTime = Date.now();
+
+    if (process.env.NODE_ENV === 'development') {
+      performanceLogger.logCustomMetric('cache-manual-clear', {
+        action: 'full-clear',
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * Force cleanup of expired entries
+   */
+  forceCleanup(): { cleaned: number; remaining: number } {
+    return this.cleanExpiredEntries();
   }
 
   /**
    * Get cache stats
    */
-  getCacheStats(): { size: number; maxSize: number } {
+  getCacheStats(): {
+    size: number;
+    maxSize: number;
+    utilization: number;
+    expiredEntries: number;
+    lastCleanup: number;
+  } {
+    const cacheMap = this.cache['cache'] as Map<string, CacheEntry>;
+    let expiredCount = 0;
+
+    // Count expired entries
+    for (const [, entry] of cacheMap) {
+      if (!this.isCacheValid(entry)) {
+        expiredCount++;
+      }
+    }
+
+    const size = cacheMap.size;
+    const maxSize = this.config.cacheSize;
+
     return {
-      size: this.cache['cache'].size,
-      maxSize: this.config.cacheSize
+      size,
+      maxSize,
+      utilization: (size / maxSize) * 100,
+      expiredEntries: expiredCount,
+      lastCleanup: this.lastCleanupTime,
     };
+  }
+
+  /**
+   * Cleanup resources when client is destroyed
+   */
+  destroy(): void {
+    this.stopPeriodicCleanup();
+    this.cancel();
+    this.clearCache();
   }
 
   /**

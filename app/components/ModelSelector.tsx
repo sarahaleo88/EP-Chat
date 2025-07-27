@@ -17,7 +17,9 @@ interface ModelOption {
 
 interface ModelSelectorProps {
   selectedModel: 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner';
-  onModelChange: (model: 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner') => void;
+  onModelChange: (
+    model: 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner'
+  ) => void;
   className?: string;
 }
 
@@ -26,32 +28,41 @@ const modelOptions: ModelOption[] = [
     value: 'deepseek-chat',
     label: 'DeepSeek Chat',
     icon: '💬',
-    description: 'General conversation'
+    description: 'General conversation (30s timeout)',
   },
   {
     value: 'deepseek-coder',
     label: 'DeepSeek Coder',
     icon: '👨‍💻',
-    description: 'Code generation'
+    description: 'Code generation (60s timeout)',
   },
   {
     value: 'deepseek-reasoner',
     label: 'DeepSeek Reasoner',
     icon: '🧠',
-    description: 'Logical reasoning'
-  }
+    description: 'Logical reasoning (2min timeout)',
+  },
 ];
 
-export function ModelSelector({ selectedModel, onModelChange, className }: ModelSelectorProps) {
+export function ModelSelector({
+  selectedModel,
+  onModelChange,
+  className,
+}: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = modelOptions.find(option => option.value === selectedModel);
+  const selectedOption = modelOptions.find(
+    option => option.value === selectedModel
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -62,7 +73,9 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
     };
   }, []);
 
-  const handleModelSelect = (model: 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner') => {
+  const handleModelSelect = (
+    model: 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner'
+  ) => {
     onModelChange(model);
     setIsOpen(false);
   };
@@ -85,7 +98,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
           backgroundColor: 'var(--white)',
           color: 'var(--black)',
           minWidth: '32px',
-          minHeight: '32px'
+          minHeight: '32px',
         }}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -105,7 +118,12 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </button>
@@ -120,33 +138,40 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
             backgroundColor: 'var(--white)',
             borderRadius: '8px',
             boxShadow: 'var(--card-shadow)',
-            border: 'var(--border-in-light)'
+            border: 'var(--border-in-light)',
           }}
         >
           {/* Ultra-Compact Model Options */}
           <div style={{ padding: '4px 0' }}>
-            {modelOptions.map((option) => (
+            {modelOptions.map(option => (
               <button
                 key={option.value}
                 onClick={() => handleModelSelect(option.value)}
                 className="w-full text-left transition-all duration-150 focus:outline-none"
                 style={{
-                  backgroundColor: selectedModel === option.value ? 'var(--hover-color)' : 'transparent',
-                  borderLeft: selectedModel === option.value ? '3px solid var(--primary)' : '3px solid transparent',
+                  backgroundColor:
+                    selectedModel === option.value
+                      ? 'var(--hover-color)'
+                      : 'transparent',
+                  borderLeft:
+                    selectedModel === option.value
+                      ? '3px solid var(--primary)'
+                      : '3px solid transparent',
                   color: 'var(--black)',
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '6px 8px'
+                  padding: '6px 8px',
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={e => {
                   if (selectedModel !== option.value) {
-                    e.currentTarget.style.backgroundColor = 'var(--hover-color)';
+                    e.currentTarget.style.backgroundColor =
+                      'var(--hover-color)';
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={e => {
                   if (selectedModel !== option.value) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                   }
@@ -162,19 +187,21 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       height: '6px',
                       backgroundColor: 'var(--primary)',
                       borderRadius: '50%',
-                      flexShrink: 0
+                      flexShrink: 0,
                     }}
                   />
                 )}
 
                 {/* English Name + Icon Format */}
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  color: 'var(--black)',
-                  whiteSpace: 'nowrap',
-                  flex: 1
-                }}>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: 'var(--black)',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                  }}
+                >
                   {option.label} {option.icon}
                 </span>
               </button>

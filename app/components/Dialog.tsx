@@ -78,10 +78,7 @@ export function Dialog({
 
         {/* Dialog 容器 */}
         <div className="fixed inset-0 overflow-y-auto">
-          <div className={cn(
-            'flex min-h-full p-4',
-            positionClasses[position]
-          )}>
+          <div className={cn('flex min-h-full p-4', positionClasses[position])}>
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -105,8 +102,18 @@ export function Dialog({
                     onClick={onClose}
                     className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -136,10 +143,12 @@ export function DialogHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-4 border-b border-gray-200 dark:border-gray-700',
-      className
-    )}>
+    <div
+      className={cn(
+        'px-6 py-4 border-b border-gray-200 dark:border-gray-700',
+        className
+      )}
+    >
       {children || (
         <div>
           {title && (
@@ -172,10 +181,7 @@ export function DialogBody({
   children: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-4 max-h-96 overflow-y-auto',
-      className
-    )}>
+    <div className={cn('px-6 py-4 max-h-96 overflow-y-auto', className)}>
       {children}
     </div>
   );
@@ -192,11 +198,13 @@ export function DialogFooter({
   children: ReactNode;
 }) {
   return (
-    <div className={cn(
-      'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 rounded-b-2xl',
-      'flex items-center justify-end space-x-3',
-      className
-    )}>
+    <div
+      className={cn(
+        'px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 rounded-b-2xl',
+        'flex items-center justify-end space-x-3',
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -234,9 +242,7 @@ export function ConfirmDialog({
     <Dialog isOpen={isOpen} onClose={onClose} size="sm">
       <DialogHeader title={title} />
       <DialogBody>
-        <p className="text-gray-600 dark:text-gray-400">
-          {message}
-        </p>
+        <p className="text-gray-600 dark:text-gray-400">{message}</p>
       </DialogBody>
       <DialogFooter>
         <button

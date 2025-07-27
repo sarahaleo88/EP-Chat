@@ -46,26 +46,26 @@ export class PerformanceLogger {
    */
   startRequest(operation: string, model?: string): string {
     if (!this.enabled) return '';
-    
+
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const startTime = performance.now();
-    
+
     // Store initial metric
     const metric: Partial<PerformanceMetrics> = {
       requestId,
       operation,
       startTime,
-      retryCount: 0
+      retryCount: 0,
     };
 
     if (model) {
       metric.model = model;
     }
-    
+
     // Store in a temporary map for completion
     this.tempMetrics = this.tempMetrics || new Map();
     this.tempMetrics.set(requestId, metric);
-    
+
     return requestId;
   }
 
@@ -75,8 +75,8 @@ export class PerformanceLogger {
    * Complete tracking a request
    */
   endRequest(
-    requestId: string, 
-    success: boolean, 
+    requestId: string,
+    success: boolean,
     options: {
       errorType?: string;
       cacheHit?: boolean;
@@ -87,36 +87,39 @@ export class PerformanceLogger {
     } = {}
   ): void {
     if (!this.enabled || !requestId) return;
-    
+
     const endTime = performance.now();
     const tempMetric = this.tempMetrics.get(requestId);
-    
+
     if (!tempMetric) return;
-    
+
     const metric: PerformanceMetrics = {
       ...tempMetric,
       endTime,
       duration: endTime - tempMetric.startTime!,
       success,
-      ...options
+      ...options,
     } as PerformanceMetrics;
-    
+
     this.metrics.push(metric);
     this.tempMetrics.delete(requestId);
-    
+
     // Keep only the last N metrics
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
     }
-    
+
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${metric.operation}: ${metric.duration.toFixed(2)}ms`, {
-        success: metric.success,
-        cacheHit: metric.cacheHit,
-        retryCount: metric.retryCount,
-        model: metric.model
-      });
+      console.log(
+        `[Performance] ${metric.operation}: ${metric.duration.toFixed(2)}ms`,
+        {
+          success: metric.success,
+          cacheHit: metric.cacheHit,
+          retryCount: metric.retryCount,
+          model: metric.model,
+        }
+      );
     }
   }
 
@@ -133,7 +136,7 @@ export class PerformanceLogger {
         cacheHitRate: 0,
         errorRate: 0,
         p95ResponseTime: 0,
-        p99ResponseTime: 0
+        p99ResponseTime: 0,
       };
     }
 
@@ -141,13 +144,14 @@ export class PerformanceLogger {
     const successfulRequests = this.metrics.filter(m => m.success).length;
     const failedRequests = totalRequests - successfulRequests;
     const cacheHits = this.metrics.filter(m => m.cacheHit).length;
-    
+
     const durations = this.metrics.map(m => m.duration).sort((a, b) => a - b);
-    const averageResponseTime = durations.reduce((sum, d) => sum + d, 0) / durations.length;
-    
+    const averageResponseTime =
+      durations.reduce((sum, d) => sum + d, 0) / durations.length;
+
     const p95Index = Math.floor(durations.length * 0.95);
     const p99Index = Math.floor(durations.length * 0.99);
-    
+
     return {
       totalRequests,
       successfulRequests,
@@ -156,7 +160,7 @@ export class PerformanceLogger {
       cacheHitRate: totalRequests > 0 ? (cacheHits / totalRequests) * 100 : 0,
       errorRate: totalRequests > 0 ? (failedRequests / totalRequests) * 100 : 0,
       p95ResponseTime: durations[p95Index] || 0,
-      p99ResponseTime: durations[p99Index] || 0
+      p99ResponseTime: durations[p99Index] || 0,
     };
   }
 
@@ -176,6 +180,35 @@ export class PerformanceLogger {
   }
 
   /**
+   * Log custom metric for cache operations and other events
+   */
+  logCustomMetric(operation: string, data: Record<string, any>): void {
+    if (!this.enabled) return;
+
+    const timestamp = Date.now();
+    console.log(`[Performance] ${operation}:`, {
+      timestamp,
+      ...data,
+    });
+
+    // Store custom metrics in a simple format for potential future analysis
+    if (this.metrics.length >= this.maxMetrics) {
+      this.metrics.shift();
+    }
+
+    // Create a pseudo-metric entry for custom events
+    this.metrics.push({
+      requestId: `custom_${timestamp}`,
+      operation,
+      startTime: timestamp,
+      endTime: timestamp,
+      duration: 0,
+      success: true,
+      ...data,
+    } as PerformanceMetrics);
+  }
+
+  /**
    * Enable/disable logging
    */
   setEnabled(enabled: boolean): void {
@@ -185,9 +218,14 @@ export class PerformanceLogger {
   /**
    * Log a custom performance event
    */
-  logEvent(operation: string, duration: number, success: boolean, metadata?: any): void {
+  logEvent(
+    operation: string,
+    duration: number,
+    success: boolean,
+    metadata?: any
+  ): void {
     if (!this.enabled) return;
-    
+
     const metric: PerformanceMetrics = {
       requestId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       operation,
@@ -195,11 +233,11 @@ export class PerformanceLogger {
       endTime: performance.now(),
       duration,
       success,
-      ...metadata
+      ...metadata,
     };
-    
+
     this.metrics.push(metric);
-    
+
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
     }
@@ -220,7 +258,7 @@ export async function measureAsync<T>(
   metadata?: any
 ): Promise<T> {
   const requestId = performanceLogger.startRequest(operation);
-  
+
   try {
     const result = await fn();
     performanceLogger.endRequest(requestId, true, metadata);
@@ -228,7 +266,7 @@ export async function measureAsync<T>(
   } catch (error) {
     performanceLogger.endRequest(requestId, false, {
       errorType: error instanceof Error ? error.constructor.name : 'Unknown',
-      ...metadata
+      ...metadata,
     });
     throw error;
   }
@@ -243,7 +281,7 @@ export function measureSync<T>(
   metadata?: any
 ): T {
   const requestId = performanceLogger.startRequest(operation);
-  
+
   try {
     const result = fn();
     performanceLogger.endRequest(requestId, true, metadata);
@@ -251,7 +289,7 @@ export function measureSync<T>(
   } catch (error) {
     performanceLogger.endRequest(requestId, false, {
       errorType: error instanceof Error ? error.constructor.name : 'Unknown',
-      ...metadata
+      ...metadata,
     });
     throw error;
   }

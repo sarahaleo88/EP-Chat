@@ -49,15 +49,18 @@ export default function PromptInput({
    * 处理键盘事件
    * @param event - 键盘事件
    */
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Cmd+Enter 或 Ctrl+Enter 提交
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-      event.preventDefault();
-      if (!disabled && !loading && value.trim()) {
-        onSubmit();
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Cmd+Enter 或 Ctrl+Enter 提交
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+        if (!disabled && !loading && value.trim()) {
+          onSubmit();
+        }
       }
-    }
-  }, [disabled, loading, value, onSubmit]);
+    },
+    [disabled, loading, value, onSubmit]
+  );
 
   /**
    * 自动调整文本域高度
@@ -74,14 +77,17 @@ export default function PromptInput({
    * 处理输入变化
    * @param event - 输入事件
    */
-  const handleChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
-    if (newValue.length <= maxLength) {
-      onChange(newValue);
-      // 延迟调整高度以确保内容已更新
-      setTimeout(adjustTextareaHeight, 0);
-    }
-  }, [onChange, maxLength, adjustTextareaHeight]);
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newValue = event.target.value;
+      if (newValue.length <= maxLength) {
+        onChange(newValue);
+        // 延迟调整高度以确保内容已更新
+        setTimeout(adjustTextareaHeight, 0);
+      }
+    },
+    [onChange, maxLength, adjustTextareaHeight]
+  );
 
   /**
    * 处理焦点事件
@@ -146,8 +152,8 @@ export default function PromptInput({
             isAtLimit
               ? 'text-red-500'
               : isNearLimit
-              ? 'text-yellow-500'
-              : 'text-gray-400 dark:text-gray-500'
+                ? 'text-yellow-500'
+                : 'text-gray-400 dark:text-gray-500'
           )}
         >
           {characterCount}/{maxLength}
@@ -196,21 +202,24 @@ export function SimplePromptInput({
   disabled = false,
   loading = false,
 }: Omit<PromptInputProps, 'maxLength' | 'className'>) {
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (!disabled && !loading && value.trim()) {
-        onSubmit();
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        if (!disabled && !loading && value.trim()) {
+          onSubmit();
+        }
       }
-    }
-  }, [disabled, loading, value, onSubmit]);
+    },
+    [disabled, loading, value, onSubmit]
+  );
 
   return (
     <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
       <input
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled || loading}
@@ -225,8 +234,18 @@ export function SimplePromptInput({
         {loading ? (
           <InlineSpinner size="sm" />
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            />
           </svg>
         )}
       </button>

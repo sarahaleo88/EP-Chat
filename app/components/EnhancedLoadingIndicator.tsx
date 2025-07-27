@@ -17,7 +17,7 @@ interface LoadingStage {
 const loadingStages: LoadingStage[] = [
   { label: '连接中...', duration: 1000, icon: '🔗' },
   { label: '生成中...', duration: 8000, icon: '🧠' },
-  { label: '完善中...', duration: 2000, icon: '✨' }
+  { label: '完善中...', duration: 2000, icon: '✨' },
 ];
 
 interface EnhancedLoadingIndicatorProps {
@@ -31,7 +31,7 @@ export function EnhancedLoadingIndicator({
   isLoading,
   className,
   showProgress = true,
-  estimatedDuration = 11000 // Default total duration
+  estimatedDuration = 11000, // Default total duration
 }: EnhancedLoadingIndicatorProps) {
   const [currentStage, setCurrentStage] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -55,7 +55,10 @@ export function EnhancedLoadingIndicator({
       setElapsedTime(totalElapsed);
 
       // Calculate overall progress
-      const overallProgress = Math.min((totalElapsed / estimatedDuration) * 100, 95);
+      const overallProgress = Math.min(
+        (totalElapsed / estimatedDuration) * 100,
+        95
+      );
       setProgress(overallProgress);
 
       // Update stage based on elapsed time
@@ -73,7 +76,10 @@ export function EnhancedLoadingIndicator({
       }
 
       // If we've exceeded all stages, stay on the last one
-      if (totalElapsed >= cumulativeDuration && currentStageIndex !== loadingStages.length - 1) {
+      if (
+        totalElapsed >= cumulativeDuration &&
+        currentStageIndex !== loadingStages.length - 1
+      ) {
         currentStageIndex = loadingStages.length - 1;
         setCurrentStage(currentStageIndex);
       }
@@ -93,25 +99,30 @@ export function EnhancedLoadingIndicator({
   const currentStageData = loadingStages[currentStage];
 
   return (
-    <div className={cn(
-      'flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700',
+        className
+      )}
+    >
       {/* Main Loading Animation */}
       <div className="relative mb-4">
         {/* Outer Ring */}
         <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-pulse">
           {/* Progress Ring */}
-          <div 
+          <div
             className="absolute inset-0 border-4 border-transparent border-t-shamrock-500 rounded-full animate-spin"
             style={{
-              animationDuration: '1s'
+              animationDuration: '1s',
             }}
           />
-          
+
           {/* Inner Content */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>
+            <span
+              className="text-2xl animate-bounce"
+              style={{ animationDelay: '0.5s' }}
+            >
               {currentStageData?.icon || '🍀'}
             </span>
           </div>
@@ -139,7 +150,7 @@ export function EnhancedLoadingIndicator({
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-            <div 
+            <div
               className="bg-gradient-to-r from-shamrock-400 to-shamrock-600 h-2 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
@@ -164,13 +175,13 @@ export function EnhancedLoadingIndicator({
 
       {/* Typing Dots Animation */}
       <div className="flex space-x-1 mt-4">
-        {[0, 1, 2].map((index) => (
+        {[0, 1, 2].map(index => (
           <div
             key={index}
             className="w-2 h-2 bg-shamrock-500 rounded-full animate-bounce"
             style={{
               animationDelay: `${index * 0.2}s`,
-              animationDuration: '1.4s'
+              animationDuration: '1.4s',
             }}
           />
         ))}
@@ -192,7 +203,7 @@ export function EnhancedLoadingIndicator({
 export function CompactLoadingIndicator({
   isLoading,
   className,
-  text = '生成中...'
+  text = '生成中...',
 }: {
   isLoading: boolean;
   className?: string;
@@ -203,33 +214,40 @@ export function CompactLoadingIndicator({
   }
 
   return (
-    <div className={cn(
-      'flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400',
+        className
+      )}
+    >
       {/* Branded Spinning Logo */}
       <div className="relative w-4 h-4 flex items-center justify-center">
-        <span className="text-xs animate-pulse" style={{
-          animationDuration: '2s',
-          filter: 'brightness(1.1)'
-        }}>
+        <span
+          className="text-xs animate-pulse"
+          style={{
+            animationDuration: '2s',
+            filter: 'brightness(1.1)',
+          }}
+        >
           🍀
         </span>
-        <div className="absolute inset-0 border border-shamrock-400 rounded-full animate-spin opacity-40"
-             style={{ animationDuration: '2s' }} />
+        <div
+          className="absolute inset-0 border border-shamrock-400 rounded-full animate-spin opacity-40"
+          style={{ animationDuration: '2s' }}
+        />
       </div>
 
       {/* Text with Typing Dots */}
       <span className="flex items-center">
         {text}
         <span className="ml-1 flex space-x-0.5">
-          {[0, 1, 2].map((index) => (
+          {[0, 1, 2].map(index => (
             <span
               key={index}
               className="w-1 h-1 bg-shamrock-500 rounded-full animate-bounce"
               style={{
                 animationDelay: `${index * 0.2}s`,
-                animationDuration: '1.4s'
+                animationDuration: '1.4s',
               }}
             />
           ))}
@@ -243,46 +261,67 @@ export function CompactLoadingIndicator({
  * Message Loading Bubble for chat interface - Compact & Branded
  */
 export function MessageLoadingBubble({
-  className
+  className,
+  model = 'deepseek-chat',
 }: {
   className?: string;
+  model?: string;
 }) {
+  // Model-specific loading messages
+  const getLoadingMessage = (model: string) => {
+    switch (model) {
+      case 'deepseek-reasoner':
+        return '🧠 正在深度推理...';
+      case 'deepseek-coder':
+        return '👨‍💻 正在生成代码...';
+      case 'deepseek-chat':
+      default:
+        return '💬 正在思考...';
+    }
+  };
   return (
-    <div className={cn(
-      'flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 max-w-fit',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 max-w-fit',
+        className
+      )}
+    >
       {/* Compact Branded Avatar with Project Logo */}
       <div className="relative w-6 h-6 bg-gradient-to-br from-shamrock-400 to-shamrock-600 rounded-full flex items-center justify-center flex-shrink-0">
         {/* Project Logo - 🍀 */}
-        <span className="text-sm animate-pulse" style={{
-          animationDuration: '2s',
-          filter: 'brightness(1.2)'
-        }}>
+        <span
+          className="text-sm animate-pulse"
+          style={{
+            animationDuration: '2s',
+            filter: 'brightness(1.2)',
+          }}
+        >
           🍀
         </span>
 
         {/* Subtle rotating ring around logo */}
-        <div className="absolute inset-0 border border-shamrock-300 rounded-full animate-spin opacity-30"
-             style={{ animationDuration: '3s' }} />
+        <div
+          className="absolute inset-0 border border-shamrock-300 rounded-full animate-spin opacity-30"
+          style={{ animationDuration: '3s' }}
+        />
       </div>
 
       {/* Compact Typing Indicator */}
       <div className="flex space-x-1">
-        {[0, 1, 2].map((index) => (
+        {[0, 1, 2].map(index => (
           <div
             key={index}
             className="w-1.5 h-1.5 bg-shamrock-500 rounded-full animate-bounce"
             style={{
               animationDelay: `${index * 0.2}s`,
-              animationDuration: '1.4s'
+              animationDuration: '1.4s',
             }}
           />
         ))}
       </div>
 
       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-        AI 正在思考...
+        {getLoadingMessage(model)}
       </span>
     </div>
   );
@@ -291,37 +330,40 @@ export function MessageLoadingBubble({
 /**
  * Ultra-Compact Loading Indicator for minimal chat interface
  */
-export function MiniLoadingIndicator({
-  className
-}: {
-  className?: string;
-}) {
+export function MiniLoadingIndicator({ className }: { className?: string }) {
   return (
-    <div className={cn(
-      'flex items-center space-x-1.5 p-2 bg-gray-50 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600 max-w-fit',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex items-center space-x-1.5 p-2 bg-gray-50 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600 max-w-fit',
+        className
+      )}
+    >
       {/* Mini Project Logo */}
       <div className="relative w-4 h-4 flex items-center justify-center">
-        <span className="text-xs animate-pulse" style={{
-          animationDuration: '2s',
-          filter: 'brightness(1.2)'
-        }}>
+        <span
+          className="text-xs animate-pulse"
+          style={{
+            animationDuration: '2s',
+            filter: 'brightness(1.2)',
+          }}
+        >
           🍀
         </span>
-        <div className="absolute inset-0 border border-shamrock-300 rounded-full animate-spin opacity-25"
-             style={{ animationDuration: '3s' }} />
+        <div
+          className="absolute inset-0 border border-shamrock-300 rounded-full animate-spin opacity-25"
+          style={{ animationDuration: '3s' }}
+        />
       </div>
 
       {/* Mini Typing Dots */}
       <div className="flex space-x-0.5">
-        {[0, 1, 2].map((index) => (
+        {[0, 1, 2].map(index => (
           <div
             key={index}
             className="w-1 h-1 bg-shamrock-500 rounded-full animate-bounce"
             style={{
               animationDelay: `${index * 0.2}s`,
-              animationDuration: '1.4s'
+              animationDuration: '1.4s',
             }}
           />
         ))}

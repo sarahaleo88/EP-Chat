@@ -63,25 +63,28 @@ export default function TemplateSelector({
   /**
    * 加载模板选项
    */
-  const loadTemplates = useCallback(async (currentScenario: Scenario) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const options = await getTemplateOptions(currentScenario);
-      setTemplates(options);
-      
-      // 如果当前模板不在新场景中，选择第一个模板
-      if (options.length > 0 && !options.find(t => t.id === templateId)) {
-        onTemplateChange(options[0]!.id);
+  const loadTemplates = useCallback(
+    async (currentScenario: Scenario) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const options = await getTemplateOptions(currentScenario);
+        setTemplates(options);
+
+        // 如果当前模板不在新场景中，选择第一个模板
+        if (options.length > 0 && !options.find(t => t.id === templateId)) {
+          onTemplateChange(options[0]!.id);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '加载模板失败');
+        setTemplates([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '加载模板失败');
-      setTemplates([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [templateId, onTemplateChange]);
+    },
+    [templateId, onTemplateChange]
+  );
 
   // 场景变化时重新加载模板
   useEffect(() => {
@@ -91,11 +94,14 @@ export default function TemplateSelector({
   /**
    * 处理场景变化
    */
-  const handleScenarioChange = useCallback((newScenario: Scenario) => {
-    if (newScenario !== scenario) {
-      onScenarioChange(newScenario);
-    }
-  }, [scenario, onScenarioChange]);
+  const handleScenarioChange = useCallback(
+    (newScenario: Scenario) => {
+      if (newScenario !== scenario) {
+        onScenarioChange(newScenario);
+      }
+    },
+    [scenario, onScenarioChange]
+  );
 
   // 获取当前选中的场景和模板
   const currentScenario = scenarioOptions.find(s => s.id === scenario);
@@ -109,7 +115,7 @@ export default function TemplateSelector({
           选择场景
         </label>
         <div className="grid grid-cols-2 gap-3">
-          {scenarioOptions.map((option) => (
+          {scenarioOptions.map(option => (
             <button
               key={option.id}
               onClick={() => handleScenarioChange(option.id)}
@@ -126,25 +132,29 @@ export default function TemplateSelector({
               <div className="flex items-start space-x-3">
                 <span className="text-2xl">{option.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <h3 className={cn(
-                    'text-sm font-semibold',
-                    scenario === option.id
-                      ? 'text-shamrock-700 dark:text-shamrock-300'
-                      : 'text-gray-900 dark:text-gray-100'
-                  )}>
+                  <h3
+                    className={cn(
+                      'text-sm font-semibold',
+                      scenario === option.id
+                        ? 'text-shamrock-700 dark:text-shamrock-300'
+                        : 'text-gray-900 dark:text-gray-100'
+                    )}
+                  >
                     {option.name}
                   </h3>
-                  <p className={cn(
-                    'text-xs mt-1',
-                    scenario === option.id
-                      ? 'text-shamrock-600 dark:text-shamrock-400'
-                      : 'text-gray-500 dark:text-gray-400'
-                  )}>
+                  <p
+                    className={cn(
+                      'text-xs mt-1',
+                      scenario === option.id
+                        ? 'text-shamrock-600 dark:text-shamrock-400'
+                        : 'text-gray-500 dark:text-gray-400'
+                    )}
+                  >
                     {option.description}
                   </p>
                 </div>
               </div>
-              
+
               {/* 选中指示器 */}
               {scenario === option.id && (
                 <div className="absolute top-2 right-2">
@@ -161,7 +171,7 @@ export default function TemplateSelector({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           选择模板
         </label>
-        
+
         {loading ? (
           <div className="flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-800 rounded-xl">
             <LoadingSpinner size="sm" text="加载模板中..." />
@@ -183,13 +193,15 @@ export default function TemplateSelector({
             disabled={disabled || templates.length === 0}
           >
             <div className="relative">
-              <Listbox.Button className={cn(
-                'relative w-full cursor-default rounded-xl bg-white dark:bg-gray-800 py-3 pl-4 pr-10 text-left shadow-sm',
-                'border border-gray-200 dark:border-gray-700',
-                'focus:border-shamrock-500 focus:outline-none focus:ring-2 focus:ring-shamrock-500 focus:ring-offset-2',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
-                'transition-all duration-200'
-              )}>
+              <Listbox.Button
+                className={cn(
+                  'relative w-full cursor-default rounded-xl bg-white dark:bg-gray-800 py-3 pl-4 pr-10 text-left shadow-sm',
+                  'border border-gray-200 dark:border-gray-700',
+                  'focus:border-shamrock-500 focus:outline-none focus:ring-2 focus:ring-shamrock-500 focus:ring-offset-2',
+                  'disabled:opacity-50 disabled:cursor-not-allowed',
+                  'transition-all duration-200'
+                )}
+              >
                 <span className="block truncate">
                   {currentTemplate ? (
                     <div>
@@ -223,7 +235,7 @@ export default function TemplateSelector({
                 leaveTo="opacity-0"
               >
                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white dark:bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  {templates.map((template) => (
+                  {templates.map(template => (
                     <Listbox.Option
                       key={template.id}
                       className={({ active }) =>
@@ -238,7 +250,12 @@ export default function TemplateSelector({
                     >
                       {({ selected }) => (
                         <>
-                          <div className={cn(selected ? 'font-medium' : 'font-normal', 'block truncate')}>
+                          <div
+                            className={cn(
+                              selected ? 'font-medium' : 'font-normal',
+                              'block truncate'
+                            )}
+                          >
                             <div>{template.title}</div>
                             {template.description && (
                               <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -248,7 +265,10 @@ export default function TemplateSelector({
                           </div>
                           {selected ? (
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-shamrock-600 dark:text-shamrock-400">
-                              <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                              <CheckIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
                             </span>
                           ) : null}
                         </>

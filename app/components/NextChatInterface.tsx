@@ -6,18 +6,43 @@ import {
   PlusIcon as Plus,
   HomeIcon as Home,
   UserIcon as User,
-  ClipboardDocumentIcon as Copy
+  ClipboardDocumentIcon as Copy,
 } from '@heroicons/react/24/outline';
 import { sendPrompt } from '@/lib/deepseek';
 import { cn } from '@/lib/utils';
 
 // 自定义 Bot 图标组件
 const Bot = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z"
+    />
     <circle cx="12" cy="12" r="2" />
   </svg>
 );
@@ -36,7 +61,9 @@ interface NextChatInterfaceProps {
   className?: string;
 }
 
-export default function NextChatInterface({ className = '' }: NextChatInterfaceProps) {
+export default function NextChatInterface({
+  className = '',
+}: NextChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +105,8 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '抱歉，我无法生成回复。';
+      const content =
+        data.choices?.[0]?.message?.content || '抱歉，我无法生成回复。';
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -90,7 +118,9 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('生成失败:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('生成失败:', error);
+      }
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -135,11 +165,15 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">EP Chat</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Enhanced Prompt</p>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                EP Chat
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Enhanced Prompt
+              </p>
             </div>
           </div>
-          
+
           <a
             href="/"
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -167,7 +201,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
           </label>
           <select
             value={model}
-            onChange={(e) => setModel(e.target.value as DeepSeekModel)}
+            onChange={e => setModel(e.target.value as DeepSeekModel)}
             className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent"
           >
             <option value="deepseek-chat">💬 DeepSeek Chat</option>
@@ -178,10 +212,16 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
 
         {/* 快速开始 */}
         <div className="flex-1 px-4 pb-4">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">快速开始</h3>
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            快速开始
+          </h3>
           <div className="space-y-2">
             {[
-              { icon: '🚀', title: '代码生成', prompt: '帮我生成一个React组件' },
+              {
+                icon: '🚀',
+                title: '代码生成',
+                prompt: '帮我生成一个React组件',
+              },
               { icon: '📝', title: '文档写作', prompt: '帮我写一份技术文档' },
               { icon: '🎯', title: '问题解答', prompt: '解释一下这个技术概念' },
               { icon: '💡', title: '创意灵感', prompt: '给我一些创意想法' },
@@ -213,7 +253,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
               {model === 'deepseek-reasoner' && '🧠 推理分析模式'}
             </span>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {messages.length} 条消息
@@ -247,9 +287,17 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
               {/* 示例对话 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl w-full">
                 {[
-                  { icon: '💻', title: '编程助手', desc: '代码生成、调试、优化' },
+                  {
+                    icon: '💻',
+                    title: '编程助手',
+                    desc: '代码生成、调试、优化',
+                  },
                   { icon: '📚', title: '学习伙伴', desc: '知识解答、概念解释' },
-                  { icon: '✍️', title: '写作助手', desc: '文档、邮件、创意写作' },
+                  {
+                    icon: '✍️',
+                    title: '写作助手',
+                    desc: '文档、邮件、创意写作',
+                  },
                   { icon: '🎨', title: '创意灵感', desc: '头脑风暴、创意想法' },
                 ].map((item, index) => (
                   <button
@@ -272,7 +320,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
             // 消息列表
             <div className="px-4 py-6">
               <div className="max-w-3xl mx-auto space-y-6">
-                {messages.map((message) => (
+                {messages.map(message => (
                   <div
                     key={message.id}
                     className={cn(
@@ -285,7 +333,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
                         <Bot className="w-5 h-5 text-white" />
                       </div>
                     )}
-                    
+
                     <div
                       className={cn(
                         'chat-bubble px-4 py-3 rounded-2xl',
@@ -297,7 +345,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
                       <div className="prose prose-sm max-w-none dark:prose-invert">
                         <p className="whitespace-pre-wrap">{message.content}</p>
                       </div>
-                      
+
                       {message.role === 'assistant' && (
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -313,7 +361,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
                         </div>
                       )}
                     </div>
-                    
+
                     {message.role === 'user' && (
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                         <User className="w-5 h-5 text-white" />
@@ -321,7 +369,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
                     )}
                   </div>
                 ))}
-                
+
                 {isLoading && (
                   <div className="flex space-x-4 justify-start">
                     <div className="w-8 h-8 bg-gradient-to-br from-shamrock-500 to-shamrock-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -334,12 +382,14 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
                           <div className="bg-shamrock-500"></div>
                           <div className="bg-shamrock-500"></div>
                         </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">正在思考...</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          正在思考...
+                        </span>
                       </div>
                     </div>
                   </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
               </div>
             </div>
@@ -353,7 +403,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
               <textarea
                 ref={textareaRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={e => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="输入消息..."
                 className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent resize-none min-h-[52px] max-h-[200px]"
@@ -373,7 +423,7 @@ export default function NextChatInterface({ className = '' }: NextChatInterfaceP
                 <Send className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
               <span>按 Enter 发送，Shift + Enter 换行</span>
               <span>Powered by DeepSeek</span>

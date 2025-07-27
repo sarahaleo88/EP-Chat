@@ -22,7 +22,7 @@ import { CopyButton } from './components/CopyButton';
 <CopyButton content="要复制的文本内容" />
 
 // 按钮样式
-<CopyButton 
+<CopyButton
   content="要复制的文本内容"
   variant="button"
   showText={true}
@@ -31,64 +31,60 @@ import { CopyButton } from './components/CopyButton';
 
 ## API 参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `content` | `string` | - | **必需**。要复制的文本内容 |
-| `className` | `string` | `''` | 自定义 CSS 类名 |
-| `style` | `React.CSSProperties` | `{}` | 自定义内联样式 |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | 按钮尺寸 |
-| `variant` | `'icon' \| 'button'` | `'icon'` | 显示样式 |
-| `showText` | `boolean` | `false` | 是否显示文本（仅图标模式） |
+| 参数        | 类型                   | 默认值   | 说明                       |
+| ----------- | ---------------------- | -------- | -------------------------- |
+| `content`   | `string`               | -        | **必需**。要复制的文本内容 |
+| `className` | `string`               | `''`     | 自定义 CSS 类名            |
+| `style`     | `React.CSSProperties`  | `{}`     | 自定义内联样式             |
+| `size`      | `'sm' \| 'md' \| 'lg'` | `'md'`   | 按钮尺寸                   |
+| `variant`   | `'icon' \| 'button'`   | `'icon'` | 显示样式                   |
+| `showText`  | `boolean`              | `false`  | 是否显示文本（仅图标模式） |
 
 ## 尺寸配置
 
 | 尺寸 | 图标大小 | 内边距 | 字体大小 |
-|------|----------|--------|----------|
-| `sm` | 14px | 4px | 11px |
-| `md` | 16px | 6px | 12px |
-| `lg` | 18px | 8px | 13px |
+| ---- | -------- | ------ | -------- |
+| `sm` | 14px     | 4px    | 11px     |
+| `md` | 16px     | 6px    | 12px     |
+| `lg` | 18px     | 8px    | 13px     |
 
 ## 使用示例
 
 ### 1. 基本图标按钮
+
 ```tsx
 <CopyButton content="Hello World" />
 ```
 
 ### 2. 小尺寸按钮样式
+
 ```tsx
-<CopyButton 
-  content="Hello World"
-  size="sm"
-  variant="button"
-  showText={true}
-/>
+<CopyButton content="Hello World" size="sm" variant="button" showText={true} />
 ```
 
 ### 3. 大尺寸图标，带文本
+
 ```tsx
-<CopyButton 
-  content="Hello World"
-  size="lg"
-  showText={true}
-/>
+<CopyButton content="Hello World" size="lg" showText={true} />
 ```
 
 ### 4. 自定义样式
+
 ```tsx
-<CopyButton 
+<CopyButton
   content="Hello World"
   style={{
     color: '#007bff',
-    backgroundColor: '#f8f9fa'
+    backgroundColor: '#f8f9fa',
   }}
   className="my-custom-class"
 />
 ```
 
 ### 5. 复制 Markdown 内容
+
 ```tsx
-<CopyButton 
+<CopyButton
   content="**粗体文本** 和 *斜体文本* 以及 `代码`"
   variant="button"
   showText={true}
@@ -132,11 +128,13 @@ import { CopyButton } from './components/CopyButton';
 ## 测试
 
 运行测试：
+
 ```bash
 npm test CopyButton.test.tsx
 ```
 
 查看测试页面：
+
 ```
 http://localhost:3001/test-copy
 ```

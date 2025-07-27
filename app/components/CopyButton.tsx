@@ -30,21 +30,23 @@ const CheckIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export function CopyButton({ 
-  content, 
-  className = '', 
-  style = {}, 
+export function CopyButton({
+  content,
+  className = '',
+  style = {},
   size = 'md',
   variant = 'icon',
-  showText = false
+  showText = false,
 }: CopyButtonProps) {
-  const [copyState, setCopyState] = useState<'idle' | 'copying' | 'success' | 'error'>('idle');
+  const [copyState, setCopyState] = useState<
+    'idle' | 'copying' | 'success' | 'error'
+  >('idle');
 
   // Size configurations
   const sizeConfig = {
     sm: { iconSize: 14, padding: '4px', fontSize: '11px' },
     md: { iconSize: 16, padding: '6px', fontSize: '12px' },
-    lg: { iconSize: 18, padding: '8px', fontSize: '13px' }
+    lg: { iconSize: 18, padding: '8px', fontSize: '13px' },
   };
 
   const config = sizeConfig[size];
@@ -58,9 +60,9 @@ export function CopyButton({
       // Clean content - remove markdown formatting if needed
       const cleanContent = content
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
-        .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
-        .replace(/`(.*?)`/g, '$1')       // Remove inline code markdown
-        .replace(/#{1,6}\s/g, '')        // Remove headers
+        .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
+        .replace(/`(.*?)`/g, '$1') // Remove inline code markdown
+        .replace(/#{1,6}\s/g, '') // Remove headers
         .trim();
 
       // Try modern Clipboard API first
@@ -76,26 +78,27 @@ export function CopyButton({
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         const successful = document.execCommand('copy');
         document.body.removeChild(textArea);
-        
+
         if (!successful) {
           throw new Error('Fallback copy failed');
         }
       }
 
       setCopyState('success');
-      
+
       // Reset to idle after 2 seconds
       setTimeout(() => {
         setCopyState('idle');
       }, 2000);
-
     } catch (error) {
-      console.error('Copy failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Copy failed:', error);
+      }
       setCopyState('error');
-      
+
       // Reset to idle after 3 seconds
       setTimeout(() => {
         setCopyState('idle');
@@ -106,20 +109,28 @@ export function CopyButton({
   // Get button text based on state
   const getButtonText = () => {
     switch (copyState) {
-      case 'copying': return '复制中...';
-      case 'success': return '已复制!';
-      case 'error': return '复制失败';
-      default: return '复制';
+      case 'copying':
+        return '复制中...';
+      case 'success':
+        return '已复制!';
+      case 'error':
+        return '复制失败';
+      default:
+        return '复制';
     }
   };
 
   // Get button color based on state
   const getButtonColor = () => {
     switch (copyState) {
-      case 'success': return 'var(--shamrock-secondary, #16a34a)'; // Green
-      case 'error': return '#ef4444';   // Red
-      case 'copying': return '#f59e0b'; // Orange
-      default: return 'var(--muted-foreground, #64748b)';
+      case 'success':
+        return 'var(--shamrock-secondary, #16a34a)'; // Green
+      case 'error':
+        return '#ef4444'; // Red
+      case 'copying':
+        return '#f59e0b'; // Orange
+      default:
+        return 'var(--muted-foreground, #64748b)';
     }
   };
 
@@ -139,16 +150,19 @@ export function CopyButton({
     transition: 'all 0.2s ease',
     opacity: copyState === 'copying' ? 0.6 : 1,
     transform: copyState === 'success' ? 'scale(1.05)' : 'scale(1)',
-    ...style
+    ...style,
   };
 
   // Hover effect for icon variant
-  const hoverStyle = variant === 'icon' ? {
-    ':hover': {
-      backgroundColor: 'var(--hover-color)',
-      transform: 'scale(1.1)'
-    }
-  } : {};
+  const hoverStyle =
+    variant === 'icon'
+      ? {
+          ':hover': {
+            backgroundColor: 'var(--hover-color)',
+            transform: 'scale(1.1)',
+          },
+        }
+      : {};
 
   return (
     <button
@@ -157,7 +171,7 @@ export function CopyButton({
       className={className}
       style={buttonStyle}
       title={getButtonText()}
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         if (variant === 'icon' && copyState === 'idle') {
           e.currentTarget.style.backgroundColor = 'var(--muted, #f1f5f9)';
           e.currentTarget.style.transform = 'scale(1.1)';
@@ -165,10 +179,11 @@ export function CopyButton({
           e.currentTarget.style.backgroundColor = 'var(--border, #e2e8f0)';
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         if (variant === 'icon') {
           e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.transform = copyState === 'success' ? 'scale(1.05)' : 'scale(1)';
+          e.currentTarget.style.transform =
+            copyState === 'success' ? 'scale(1.05)' : 'scale(1)';
         } else if (variant === 'button') {
           e.currentTarget.style.backgroundColor = 'var(--muted, #f1f5f9)';
         }
@@ -180,11 +195,9 @@ export function CopyButton({
       ) : (
         <CopyIcon size={config.iconSize} />
       )}
-      
+
       {/* Text (if enabled) */}
-      {(showText || variant === 'button') && (
-        <span>{getButtonText()}</span>
-      )}
+      {(showText || variant === 'button') && <span>{getButtonText()}</span>}
     </button>
   );
 }

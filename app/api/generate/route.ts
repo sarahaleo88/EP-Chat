@@ -49,12 +49,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证模型类型
-    const validModels: DeepSeekModel[] = ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'];
+    const validModels: DeepSeekModel[] = [
+      'deepseek-chat',
+      'deepseek-coder',
+      'deepseek-reasoner',
+    ];
     if (!validModels.includes(model)) {
-      return NextResponse.json(
-        { error: '无效的模型类型' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '无效的模型类型' }, { status: 400 });
     }
 
     // 获取 DeepSeek 客户端
@@ -108,7 +109,9 @@ export async function POST(request: NextRequest) {
             },
             // onError
             (error: Error) => {
-              console.error('流处理错误:', error);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('流处理错误:', error);
+              }
               const errorData = {
                 error: {
                   message: error.message,
@@ -116,7 +119,9 @@ export async function POST(request: NextRequest) {
                 },
               };
               controller.enqueue(
-                new TextEncoder().encode(`data: ${JSON.stringify(errorData)}\n\n`)
+                new TextEncoder().encode(
+                  `data: ${JSON.stringify(errorData)}\n\n`
+                )
               );
               controller.close();
             }
@@ -128,7 +133,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          Connection: 'keep-alive',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'POST',
           'Access-Control-Allow-Headers': 'Content-Type',
@@ -137,7 +142,7 @@ export async function POST(request: NextRequest) {
     } else {
       // 非流式响应
       const content = await client.getNonStreamResponse(response);
-      
+
       return NextResponse.json({
         success: true,
         data: content,
@@ -150,8 +155,10 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error('生成 API 错误:', error);
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.error('生成 API 错误:', error);
+    }
+
     // 处理不同类型的错误
     if (error instanceof Error) {
       if (error.message.includes('API key')) {
@@ -160,31 +167,25 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         );
       }
-      
+
       if (error.message.includes('rate limit')) {
         return NextResponse.json(
           { error: '请求频率过高，请稍后重试' },
           { status: 429 }
         );
       }
-      
+
       if (error.message.includes('quota')) {
         return NextResponse.json(
           { error: 'API 配额不足，请检查账户余额' },
           { status: 402 }
         );
       }
-      
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    
-    return NextResponse.json(
-      { error: '服务器内部错误' },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }
 
@@ -214,7 +215,7 @@ export async function GET() {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { 
+        {
           status: 'error',
           message: '缺少 DEEPSEEK_API_KEY 环境变量',
         },

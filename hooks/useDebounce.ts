@@ -79,7 +79,9 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
  * @param deps - Dependencies array
  * @returns Object with debounced function and cancel method
  */
-export function useDebouncedAsyncCallback<T extends (...args: any[]) => Promise<any>>(
+export function useDebouncedAsyncCallback<
+  T extends (...args: any[]) => Promise<any>,
+>(
   callback: T,
   delay: number,
   deps: React.DependencyList = []
@@ -119,7 +121,7 @@ export function useDebouncedAsyncCallback<T extends (...args: any[]) => Promise<
           try {
             // Create new abort controller for this execution
             abortControllerRef.current = new AbortController();
-            
+
             const result = await callbackRef.current(...args);
             setIsPending(false);
             resolve(result);
@@ -143,7 +145,7 @@ export function useDebouncedAsyncCallback<T extends (...args: any[]) => Promise<
   return {
     debouncedCallback,
     cancel,
-    isPending
+    isPending,
   };
 }
 
@@ -165,7 +167,7 @@ export function useDebouncedSearch(
 
   useEffect(() => {
     setIsSearching(true);
-    
+
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       setIsSearching(false);
@@ -178,6 +180,6 @@ export function useDebouncedSearch(
 
   return {
     debouncedSearchTerm,
-    isSearching
+    isSearching,
   };
 }

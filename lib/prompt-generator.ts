@@ -3,12 +3,12 @@
  * 负责将用户输入和模板配置转换为 Claude Code 提示
  */
 
-import type { 
-  EpPromptSpec, 
-  TemplateConfig, 
-  Language, 
+import type {
+  EpPromptSpec,
+  TemplateConfig,
+  Language,
   Scenario,
-  PromptGenerationOptions 
+  PromptGenerationOptions,
 } from './types';
 import { estimateTokens } from './utils';
 
@@ -48,7 +48,8 @@ const I18N_TEXTS = {
     features: 'Features',
     inputOutput: 'Input/Output',
     codeRules: 'Code Rules',
-    promptInstruction: 'Please generate complete project code based on the above information',
+    promptInstruction:
+      'Please generate complete project code based on the above information',
     tokenWarning: 'Warning: Prompt length may exceed model limits',
   },
 };
@@ -61,7 +62,7 @@ const I18N_TEXTS = {
  */
 function generateMetadataHeader(spec: EpPromptSpec, lang: Language): string {
   const texts = I18N_TEXTS[lang];
-  
+
   return `[EP_META]
 ${texts.metaHeader}
 - ${texts.scenario}: ${spec.scenario.toUpperCase()}
@@ -79,29 +80,32 @@ ${texts.metaHeader}
  * @param lang - 语言
  * @returns 规范字符串
  */
-function generateTemplateSpec(template: TemplateConfig, lang: Language): string {
+function generateTemplateSpec(
+  template: TemplateConfig,
+  lang: Language
+): string {
   const texts = I18N_TEXTS[lang];
-  
+
   let spec = `## ${texts.techStack}\n`;
   spec += `- ${texts.language}: ${template.spec.tech.language}\n`;
   spec += `- Framework: ${template.spec.tech.framework}\n\n`;
-  
+
   spec += `## ${texts.features}\n`;
   template.spec.features.forEach((feature, index) => {
     spec += `${index + 1}. ${feature}\n`;
   });
   spec += '\n';
-  
+
   spec += `## ${texts.inputOutput}\n`;
   spec += `- Input: ${template.spec.io.input}\n`;
   spec += `- Output: ${template.spec.io.output}\n\n`;
-  
+
   spec += `## ${texts.codeRules}\n`;
   template.spec.codeRules.forEach((rule, index) => {
     spec += `${index + 1}. ${rule}\n`;
   });
   spec += '\n';
-  
+
   return spec;
 }
 
@@ -113,7 +117,7 @@ function generateTemplateSpec(template: TemplateConfig, lang: Language): string 
  */
 function generateUserInputSection(userInput: string, lang: Language): string {
   const texts = I18N_TEXTS[lang];
-  
+
   return `## ${texts.userInput}\n${userInput.trim()}\n\n`;
 }
 
@@ -125,9 +129,9 @@ function generateUserInputSection(userInput: string, lang: Language): string {
  */
 function generateFinalInstruction(spec: EpPromptSpec, lang: Language): string {
   const texts = I18N_TEXTS[lang];
-  
+
   let instruction = `## ${texts.promptInstruction}\n\n`;
-  
+
   // 根据场景添加特定指令
   if (spec.scenario === 'code') {
     if (lang === 'zh') {
@@ -190,7 +194,7 @@ Requirements:
 - Follow modern web development best practices`;
     }
   }
-  
+
   return instruction;
 }
 
@@ -202,15 +206,15 @@ Requirements:
  */
 function optimizePromptLength(prompt: string, maxTokens: number): string {
   const currentTokens = estimateTokens(prompt);
-  
+
   if (currentTokens <= maxTokens) {
     return prompt;
   }
-  
+
   // 简单的截断策略，实际项目中可以实现更智能的优化
   const ratio = maxTokens / currentTokens;
   const targetLength = Math.floor(prompt.length * ratio * 0.9); // 留 10% 缓冲
-  
+
   return prompt.substring(0, targetLength) + '\n\n[提示已截断以适应长度限制]';
 }
 
@@ -226,28 +230,28 @@ export function generatePrompt(
 ): string {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const { template, userInput, lang } = spec;
-  
+
   let prompt = '';
-  
+
   // 添加元数据头部
   if (opts.includeMetadata) {
     prompt += generateMetadataHeader(spec, lang);
   }
-  
+
   // 添加模板规范
   prompt += generateTemplateSpec(template, lang);
-  
+
   // 添加用户输入
   if (userInput.trim()) {
     prompt += generateUserInputSection(userInput, lang);
   }
-  
+
   // 添加最终指令
   prompt += generateFinalInstruction(spec, lang);
-  
+
   // 优化长度
   prompt = optimizePromptLength(prompt, opts.maxTokens);
-  
+
   return prompt;
 }
 
@@ -263,24 +267,24 @@ export function validatePromptSpec(spec: EpPromptSpec): {
 } {
   const errors: string[] = [];
   const warnings: string[] = [];
-  
+
   // 检查必需字段
   if (!spec.scenario) errors.push('缺少场景类型');
   if (!spec.lang) errors.push('缺少语言设置');
   if (!spec.mode) errors.push('缺少模式设置');
   if (!spec.template) errors.push('缺少模板配置');
   if (!spec.model) errors.push('缺少模型设置');
-  
+
   // 检查用户输入
   if (!spec.userInput || !spec.userInput.trim()) {
     warnings.push('用户输入为空，将使用模板默认配置');
   }
-  
+
   // 检查输入长度
   if (spec.userInput && spec.userInput.length > 5000) {
     warnings.push('用户输入过长，可能影响生成质量');
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
@@ -294,13 +298,16 @@ export function validatePromptSpec(spec: EpPromptSpec): {
  * @param maxLength - 最大预览长度
  * @returns 提示预览
  */
-export function getPromptPreview(spec: EpPromptSpec, maxLength: number = 500): string {
+export function getPromptPreview(
+  spec: EpPromptSpec,
+  maxLength: number = 500
+): string {
   const prompt = generatePrompt(spec, { includeMetadata: false });
-  
+
   if (prompt.length <= maxLength) {
     return prompt;
   }
-  
+
   return prompt.substring(0, maxLength) + '...';
 }
 

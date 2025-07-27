@@ -32,8 +32,8 @@ class PerformanceTestRunner {
    */
   async runTestSuite(): Promise<void> {
     console.log('🚀 Starting EP Chat Performance Test Suite');
-    console.log('=' .repeat(50));
-    
+    console.log('='.repeat(50));
+
     // Apply optimizations if enabled
     if (this.config.enableOptimizations) {
       console.log('⚡ Applying performance optimizations...');
@@ -47,7 +47,9 @@ class PerformanceTestRunner {
       // Test 1: Basic Performance Evaluation
       console.log('\n📊 Running basic performance evaluation...');
       if (this.config.apiKey) {
-        const evaluation = await this.evaluator.evaluatePerformance(this.config.apiKey);
+        const evaluation = await this.evaluator.evaluatePerformance(
+          this.config.apiKey
+        );
         this.printEvaluationResults(evaluation);
       } else {
         console.log('⚠️  Skipping API tests - no API key provided');
@@ -71,9 +73,8 @@ class PerformanceTestRunner {
 
       // Final Summary
       console.log('\n📈 Final Performance Summary');
-      console.log('=' .repeat(50));
+      console.log('='.repeat(50));
       this.printFinalSummary();
-
     } catch (error) {
       console.error('❌ Test suite failed:', error);
       process.exit(1);
@@ -94,9 +95,13 @@ class PerformanceTestRunner {
     try {
       await Promise.all(promises);
       const duration = Date.now() - startTime;
-      
-      console.log(`✅ Load test completed: ${this.config.concurrentTests} concurrent requests in ${duration}ms`);
-      console.log(`   Average time per request: ${(duration / this.config.concurrentTests).toFixed(2)}ms`);
+
+      console.log(
+        `✅ Load test completed: ${this.config.concurrentTests} concurrent requests in ${duration}ms`
+      );
+      console.log(
+        `   Average time per request: ${(duration / this.config.concurrentTests).toFixed(2)}ms`
+      );
     } catch (error) {
       console.error('❌ Load test failed:', error);
     }
@@ -111,7 +116,7 @@ class PerformanceTestRunner {
       'What is the weather like?',
       'Can you help me with coding?',
       'Explain machine learning',
-      'What are the latest tech trends?'
+      'What are the latest tech trends?',
     ];
 
     const message = interactions[userId % interactions.length];
@@ -129,12 +134,10 @@ class PerformanceTestRunner {
 
       const duration = performance.now() - startTime;
 
-      performanceLogger.logEvent(
-        `user-interaction-${userId}`,
-        duration,
-        true,
-        { userId, message: message.substring(0, 20) + '...' }
-      );
+      performanceLogger.logEvent(`user-interaction-${userId}`, duration, true, {
+        userId,
+        message: message.substring(0, 20) + '...',
+      });
     } catch (error) {
       const duration = performance.now() - startTime;
       performanceLogger.logEvent(
@@ -158,7 +161,7 @@ class PerformanceTestRunner {
     const testMessages = [
       'Write a short story about a robot',
       'Explain quantum computing in detail',
-      'Create a recipe for chocolate cake'
+      'Create a recipe for chocolate cake',
     ];
 
     for (let i = 0; i < testMessages.length; i++) {
@@ -176,37 +179,34 @@ class PerformanceTestRunner {
       try {
         // This would use the actual streaming API
         // For now, simulate streaming behavior
-        await new Promise<void>((resolve) => {
+        await new Promise<void>(resolve => {
           const simulateChunk = () => {
             if (!firstTokenTime) {
               firstTokenTime = performance.now() - startTime;
             }
             chunkCount++;
-            
+
             if (chunkCount < 10) {
               setTimeout(simulateChunk, 100 + Math.random() * 200);
             } else {
               resolve();
             }
           };
-          
+
           setTimeout(simulateChunk, 500 + Math.random() * 1000);
         });
 
         const totalTime = performance.now() - startTime;
-        
-        console.log(`     ✅ Streaming completed: ${totalTime.toFixed(0)}ms total, ${firstTokenTime?.toFixed(0)}ms to first token`);
-        
-        performanceLogger.logEvent(
-          `streaming-test-${i}`,
-          totalTime,
-          true,
-          { 
-            timeToFirstToken: firstTokenTime,
-            chunkCount,
-            message: message.substring(0, 30)
-          }
+
+        console.log(
+          `     ✅ Streaming completed: ${totalTime.toFixed(0)}ms total, ${firstTokenTime?.toFixed(0)}ms to first token`
         );
+
+        performanceLogger.logEvent(`streaming-test-${i}`, totalTime, true, {
+          timeToFirstToken: firstTokenTime,
+          chunkCount,
+          message: message.substring(0, 30),
+        });
       } catch (error) {
         console.log(`     ❌ Streaming failed: ${error}`);
       }
@@ -218,7 +218,7 @@ class PerformanceTestRunner {
    */
   private async testCacheEffectiveness(): Promise<void> {
     console.log('   Testing cache hit rates...');
-    
+
     const testQueries = [
       'What is JavaScript?',
       'Explain React hooks',
@@ -233,31 +233,37 @@ class PerformanceTestRunner {
     for (const query of testQueries) {
       totalRequests++;
       const startTime = performance.now();
-      
+
       // Simulate cache lookup
       const isCacheHit = Math.random() > 0.4; // Simulate 60% cache hit rate
-      const duration = isCacheHit ? 50 + Math.random() * 100 : 1000 + Math.random() * 2000;
-      
+      const duration = isCacheHit
+        ? 50 + Math.random() * 100
+        : 1000 + Math.random() * 2000;
+
       await this.sleep(duration);
-      
+
       if (isCacheHit) {
         cacheHits++;
-        console.log(`     💾 Cache HIT for: "${query.substring(0, 30)}..." (${duration.toFixed(0)}ms)`);
+        console.log(
+          `     💾 Cache HIT for: "${query.substring(0, 30)}..." (${duration.toFixed(0)}ms)`
+        );
       } else {
-        console.log(`     🔄 Cache MISS for: "${query.substring(0, 30)}..." (${duration.toFixed(0)}ms)`);
+        console.log(
+          `     🔄 Cache MISS for: "${query.substring(0, 30)}..." (${duration.toFixed(0)}ms)`
+        );
       }
-      
-      performanceLogger.logEvent(
-        'cache-test',
-        duration,
-        true,
-        { cacheHit: isCacheHit, query: query.substring(0, 30) }
-      );
+
+      performanceLogger.logEvent('cache-test', duration, true, {
+        cacheHit: isCacheHit,
+        query: query.substring(0, 30),
+      });
     }
 
     const hitRate = (cacheHits / totalRequests) * 100;
-    console.log(`   📊 Cache hit rate: ${hitRate.toFixed(1)}% (${cacheHits}/${totalRequests})`);
-    
+    console.log(
+      `   📊 Cache hit rate: ${hitRate.toFixed(1)}% (${cacheHits}/${totalRequests})`
+    );
+
     if (hitRate >= 60) {
       console.log('   ✅ Cache hit rate target achieved (≥60%)');
     } else {
@@ -270,16 +276,32 @@ class PerformanceTestRunner {
    */
   private printEvaluationResults(evaluation: any): void {
     console.log('\n📋 Evaluation Results:');
-    console.log(`   Average Response Time: ${evaluation.summary.averageResponseTime.toFixed(0)}ms`);
-    console.log(`   Average Time to First Token: ${evaluation.summary.averageTimeToFirstToken.toFixed(0)}ms`);
-    console.log(`   Cache Hit Rate: ${evaluation.summary.cacheHitRate.toFixed(1)}%`);
-    console.log(`   Success Rate: ${(100 - (evaluation.summary.errorRate || 0)).toFixed(1)}%`);
-    
+    console.log(
+      `   Average Response Time: ${evaluation.summary.averageResponseTime.toFixed(0)}ms`
+    );
+    console.log(
+      `   Average Time to First Token: ${evaluation.summary.averageTimeToFirstToken.toFixed(0)}ms`
+    );
+    console.log(
+      `   Cache Hit Rate: ${evaluation.summary.cacheHitRate.toFixed(1)}%`
+    );
+    console.log(
+      `   Success Rate: ${(100 - (evaluation.summary.errorRate || 0)).toFixed(1)}%`
+    );
+
     console.log('\n🎯 Target Achievement:');
-    console.log(`   Time to First Token (<2s): ${evaluation.targetsMet.timeToFirstToken ? '✅' : '❌'}`);
-    console.log(`   Complete Response (<8s): ${evaluation.targetsMet.completeResponse ? '✅' : '❌'}`);
-    console.log(`   Cache Hit Rate (>60%): ${evaluation.targetsMet.cacheHitRate ? '✅' : '❌'}`);
-    console.log(`   Streaming Active: ${evaluation.targetsMet.streamingImprovement ? '✅' : '❌'}`);
+    console.log(
+      `   Time to First Token (<2s): ${evaluation.targetsMet.timeToFirstToken ? '✅' : '❌'}`
+    );
+    console.log(
+      `   Complete Response (<8s): ${evaluation.targetsMet.completeResponse ? '✅' : '❌'}`
+    );
+    console.log(
+      `   Cache Hit Rate (>60%): ${evaluation.targetsMet.cacheHitRate ? '✅' : '❌'}`
+    );
+    console.log(
+      `   Streaming Active: ${evaluation.targetsMet.streamingImprovement ? '✅' : '❌'}`
+    );
 
     if (evaluation.recommendations.length > 0) {
       console.log('\n💡 Recommendations:');
@@ -295,19 +317,21 @@ class PerformanceTestRunner {
   private printFinalSummary(): void {
     const stats = performanceLogger.getStats();
     const optimizationStatus = performanceOptimizer.getOptimizationStatus();
-    
+
     console.log(`Total Requests: ${stats.totalRequests}`);
     console.log(`Success Rate: ${(100 - stats.errorRate).toFixed(1)}%`);
-    console.log(`Average Response Time: ${stats.averageResponseTime.toFixed(0)}ms`);
+    console.log(
+      `Average Response Time: ${stats.averageResponseTime.toFixed(0)}ms`
+    );
     console.log(`Cache Hit Rate: ${stats.cacheHitRate.toFixed(1)}%`);
     console.log(`P95 Response Time: ${stats.p95ResponseTime.toFixed(0)}ms`);
     console.log(`P99 Response Time: ${stats.p99ResponseTime.toFixed(0)}ms`);
-    
+
     console.log('\n⚙️ Active Optimizations:');
     optimizationStatus.activeOptimizations.forEach((opt: string) => {
       console.log(`   ✅ ${opt}`);
     });
-    
+
     // Performance grade
     const grade = this.calculatePerformanceGrade(stats);
     console.log(`\n🏆 Overall Performance Grade: ${grade}`);
@@ -318,26 +342,26 @@ class PerformanceTestRunner {
    */
   private calculatePerformanceGrade(stats: any): string {
     let score = 0;
-    
+
     // Response time score (40% weight)
     if (stats.averageResponseTime < 2000) score += 40;
     else if (stats.averageResponseTime < 5000) score += 30;
     else if (stats.averageResponseTime < 8000) score += 20;
     else score += 10;
-    
+
     // Cache hit rate score (30% weight)
     if (stats.cacheHitRate >= 70) score += 30;
     else if (stats.cacheHitRate >= 60) score += 25;
     else if (stats.cacheHitRate >= 40) score += 15;
     else score += 5;
-    
+
     // Success rate score (30% weight)
     const successRate = 100 - stats.errorRate;
     if (successRate >= 98) score += 30;
     else if (successRate >= 95) score += 25;
     else if (successRate >= 90) score += 15;
     else score += 5;
-    
+
     if (score >= 90) return 'A+ (Excellent)';
     if (score >= 80) return 'A (Very Good)';
     if (score >= 70) return 'B (Good)';
@@ -360,7 +384,7 @@ async function main() {
     concurrentTests: 10,
     enableOptimizations: true,
     testStreaming: true,
-    testCaching: true
+    testCaching: true,
   };
 
   if (process.env.DEEPSEEK_API_KEY) {

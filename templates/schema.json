@@ -3,14 +3,7 @@
   "title": "EP Template Schema",
   "description": "Schema for EP (Enhanced Prompt) templates",
   "type": "object",
-  "required": [
-    "schemaVersion",
-    "title",
-    "scenario",
-    "lang",
-    "mode",
-    "spec"
-  ],
+  "required": ["schemaVersion", "title", "scenario", "lang", "mode", "spec"],
   "properties": {
     "schemaVersion": {
       "type": "string",

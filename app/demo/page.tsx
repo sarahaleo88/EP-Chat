@@ -32,7 +32,7 @@ export default function DemoPage() {
               </p>
             </div>
           </div>
-          
+
           <a
             href="/"
             className="px-4 py-2 text-sm font-medium text-clover-600 dark:text-clover-400 hover:text-clover-700 dark:hover:text-clover-300 transition-colors"
@@ -55,19 +55,25 @@ export default function DemoPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-600 dark:text-gray-400">
             <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">垂直滚动优化</h3>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                垂直滚动优化
+              </h3>
               <p>专为垂直滚动页面设计，不会干扰用户的浏览体验</p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">响应式设计</h3>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                响应式设计
+              </h3>
               <p>自适应不同屏幕尺寸，移动端自动切换为底部弹出</p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">无障碍访问</h3>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                无障碍访问
+              </h3>
               <p>支持键盘导航、屏幕阅读器和完整的 ARIA 属性</p>
             </div>
           </div>
-          
+
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               基于 Headless UI 构建 • 使用 Tailwind CSS 样式 • 支持深色模式
