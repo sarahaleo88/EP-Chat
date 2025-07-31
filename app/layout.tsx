@@ -18,8 +18,8 @@ const inter = Inter({
 // 元数据配置
 export const metadata: Metadata = {
   title: {
-    default: 'EP - Enhanced Prompt | 增强提示生成器',
-    template: '%s | EP - Enhanced Prompt',
+    default: 'EP Chat - Enhanced Prompt | 增强提示生成器',
+    template: '%s | EP Chat',
   },
   description:
     '超轻量级、超快速的提示增强 Web 应用，帮助 Claude Code 一次性生成完整项目',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://ep-enhanced-prompt.vercel.app'),
+  metadataBase: new URL('https://ep-chat.vercel.app'),
   alternates: {
     canonical: '/',
     languages: {
@@ -52,22 +52,22 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
-    url: 'https://ep-enhanced-prompt.vercel.app',
-    title: 'EP - Enhanced Prompt | 增强提示生成器',
+    url: 'https://ep-chat.vercel.app',
+    title: 'EP Chat - Enhanced Prompt | 增强提示生成器',
     description: '超轻量级、超快速的提示增强 Web 应用',
-    siteName: 'EP - Enhanced Prompt',
+    siteName: 'EP Chat',
     images: [
       {
         url: '/shamrock-logo.png',
         width: 1200,
         height: 630,
-        alt: 'EP - Enhanced Prompt',
+        alt: 'EP Chat',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EP - Enhanced Prompt | 增强提示生成器',
+    title: 'EP Chat - Enhanced Prompt | 增强提示生成器',
     description: '超轻量级、超快速的提示增强 Web 应用',
     images: ['/shamrock-logo.png'],
   },

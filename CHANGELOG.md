@@ -146,7 +146,7 @@ Special thanks to:
 ### 📞 Support
 
 - **Documentation**: [docs/README.md](docs/README.md)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/ep-enhanced-prompt/issues)
+- **Issues**: [GitHub Issues](https://github.com/sarahaleo88/EP-Chat/issues)
 - **Security**: [SECURITY.md](SECURITY.md)
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
 

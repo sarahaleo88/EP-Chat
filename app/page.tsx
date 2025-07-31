@@ -944,7 +944,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
               color: '#ffffff', // Improved contrast for dark sidebar
             }}
           >
-            🍀 EP - Enhanced Prompt
+            🍀 EP Chat
           </h1>
 
           <div style={{ marginBottom: '20px' }}>

@@ -53,8 +53,8 @@ EP Chat is a production-ready, open-source web application that transforms how y
 ## 🚀 Get Started in 60 Seconds
 
 ```bash
-git clone https://github.com/yourusername/ep-enhanced-prompt.git
-cd ep-enhanced-prompt
+git clone https://github.com/sarahaleo88/EP-Chat.git
+cd EP-Chat
 npm install && npm run build && npm start
 ```
 

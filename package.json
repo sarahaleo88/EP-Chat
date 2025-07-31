@@ -1,7 +1,7 @@
 {
   "name": "ep-enhanced-prompt",
   "version": "1.0.0",
-  "description": "Ultra-lightweight prompt enhancement web application for Claude Code generation",
+  "description": "EP Chat - Ultra-lightweight prompt enhancement web application for Claude Code generation",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -78,11 +78,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sarahaleo88/ep.git"
+    "url": "https://github.com/sarahaleo88/EP-Chat.git"
   },
-  "homepage": "https://github.com/sarahaleo88/ep#readme",
+  "homepage": "https://github.com/sarahaleo88/EP-Chat#readme",
   "bugs": {
-    "url": "https://github.com/sarahaleo88/ep/issues"
+    "url": "https://github.com/sarahaleo88/EP-Chat/issues"
   },
   "engines": {
     "node": ">=18.0.0",

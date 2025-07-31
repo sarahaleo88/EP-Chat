@@ -37,6 +37,9 @@ Welcome to the EP Chat documentation! This index provides quick access to all pr
 |----------|-------------|----------|
 | [Docker Deployment Troubleshooting](./DOCKER_DEPLOYMENT_TROUBLESHOOTING.md) | Comprehensive Docker troubleshooting guide with solutions | DevOps, Developers |
 | [Docker Quick Reference](./DOCKER_QUICK_REFERENCE.md) | Common Docker commands and operations | All users |
+| [Nginx Configuration](./NGINX_CONFIGURATION.md) | Production Nginx reverse proxy setup with SSL and security | DevOps, System Administrators |
+| [Caddy Configuration](./CADDY_CONFIGURATION.md) | Production Caddy reverse proxy setup with automatic SSL | DevOps, System Administrators |
+| [Reverse Proxy Troubleshooting](./REVERSE_PROXY_TROUBLESHOOTING.md) | Troubleshooting guide for Nginx and Caddy configurations | DevOps, Support Teams |
 
 ## 🔧 Development Tools
 
@@ -64,6 +67,8 @@ Welcome to the EP Chat documentation! This index provides quick access to all pr
 3. Plan with [Support & End-of-Life Policy](./SUPPORT_POLICY.md)
 4. Review [Docker Deployment Troubleshooting](./DOCKER_DEPLOYMENT_TROUBLESHOOTING.md)
 5. Use [Docker Quick Reference](./DOCKER_QUICK_REFERENCE.md)
+6. Setup [Nginx Configuration](./NGINX_CONFIGURATION.md) or [Caddy Configuration](./CADDY_CONFIGURATION.md)
+7. Reference [Reverse Proxy Troubleshooting](./REVERSE_PROXY_TROUBLESHOOTING.md)
 
 ### For End Users
 1. Start with [Project README](../README.md)
@@ -93,6 +98,9 @@ All EP Chat documentation follows these standards:
 | [DEPENDENCY_MANAGEMENT.md](./DEPENDENCY_MANAGEMENT.md) | Quarterly | July 2025 | October 2025 |
 | [DOCKER_DEPLOYMENT_TROUBLESHOOTING.md](./DOCKER_DEPLOYMENT_TROUBLESHOOTING.md) | Quarterly | July 2025 | October 2025 |
 | [DOCKER_QUICK_REFERENCE.md](./DOCKER_QUICK_REFERENCE.md) | Quarterly | July 2025 | October 2025 |
+| [NGINX_CONFIGURATION.md](./NGINX_CONFIGURATION.md) | Quarterly | July 2025 | October 2025 |
+| [CADDY_CONFIGURATION.md](./CADDY_CONFIGURATION.md) | Quarterly | July 2025 | October 2025 |
+| [REVERSE_PROXY_TROUBLESHOOTING.md](./REVERSE_PROXY_TROUBLESHOOTING.md) | Quarterly | July 2025 | October 2025 |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Annually | July 2025 | July 2026 |
 
 ## 📞 Documentation Feedback

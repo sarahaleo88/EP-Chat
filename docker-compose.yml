@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # EP 主应用服务
+  # EP Chat 主应用服务
   ep-app:
     build:
       context: .
