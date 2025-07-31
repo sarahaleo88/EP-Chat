@@ -1,4 +1,4 @@
-# EP - Enhanced Prompt | 增强提示生成器
+# EP Chat - Enhanced Prompt | 增强提示生成器
 
 <div align="center">
 
@@ -11,19 +11,19 @@
 [![DeepSeek](https://img.shields.io/badge/DeepSeek-API-green?logo=openai&logoColor=white)](https://platform.deepseek.com/)
 
 <!-- Build & Quality -->
-[![Build Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/build.json)](https://github.com/sarahaleo88/ep/actions)
-[![Code Quality](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/quality.json)](https://github.com/sarahaleo88/ep/actions)
-[![Node.js](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/node.json)](https://nodejs.org/)
+[![Build Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/build.json)](https://github.com/sarahaleo88/EP-Chat/actions)
+[![Code Quality](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/quality.json)](https://github.com/sarahaleo88/EP-Chat/actions)
+[![Node.js](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/node.json)](https://nodejs.org/)
 
 <!-- Security & Compliance -->
-[![Security Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/security.json)](./SECURITY.md)
-[![OpenSSF Baseline](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/openssf.json)](./docs/SECURITY_BASELINE.md)
-[![Vulnerabilities](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/vulnerabilities.json)](https://github.com/sarahaleo88/ep/security/advisories)
-[![Dependencies](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/dependencies.json)](https://github.com/sarahaleo88/ep/network/dependencies)
-[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/coverage.json)](https://github.com/sarahaleo88/ep/actions)
+[![Security Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/security.json)](./SECURITY.md)
+[![OpenSSF Baseline](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/openssf.json)](./docs/SECURITY_BASELINE.md)
+[![Vulnerabilities](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/vulnerabilities.json)](https://github.com/sarahaleo88/EP-Chat/security/advisories)
+[![Dependencies](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/dependencies.json)](https://github.com/sarahaleo88/EP-Chat/network/dependencies)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/coverage.json)](https://github.com/sarahaleo88/EP-Chat/actions)
 
 <!-- License & Docker -->
-[![License](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/license.json)](./LICENSE)
+[![License](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/license.json)](./LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
 [English](#english) | [中文](#中文)
@@ -78,8 +78,8 @@ EP (Enhanced Prompt) 是一个专为 Claude Code 设计的超轻量级提示增�
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/ep-enhanced-prompt.git
-cd ep-enhanced-prompt
+git clone https://github.com/sarahaleo88/EP-Chat.git
+cd EP-Chat
 
 # 安装依赖
 npm install
@@ -123,12 +123,45 @@ curl http://localhost:3000
 # 构建并启动
 docker compose up -d
 
+# 查看状态
+docker compose ps
+
 # 查看日志
 docker compose logs -f
 
 # 停止服务
 docker compose down
 ```
+
+应用将在 `http://localhost:3000` 可用。
+
+##### Docker 架构
+
+EP Chat 应用使用 **3 阶段优化 Docker 构建** 实现高效容器化：
+
+1. **依赖阶段**：安装生产依赖
+2. **构建阶段**：编译 TypeScript 并构建 Next.js 应用（standalone 模式）
+3. **运行阶段**：最终优化镜像，包含安全加固和健康检查
+
+##### 多阶段构建优势
+
+- **构建成功**：编译期间所有依赖可用
+- **优化大小**：最终镜像仅包含生产依赖（~703MB）
+- **安全性**：非 root 用户，适当的文件权限
+- **健康监控**：内置健康检查，支持容器编排
+
+##### 关键特性
+
+- ✅ **模块解析**：正确处理 TypeScript 路径映射和工具导入
+- ✅ **依赖管理**：分离构建时和运行时依赖
+- ✅ **安全加固**：非 root 用户（nextjs:nodejs），最小权限
+- ✅ **健康检查**：HTTP 端点监控容器健康状态
+- ✅ **生产就绪**：优化部署，适当的环境配置
+
+##### Docker 文档
+
+- 📖 [Docker 部署故障排除指南](./docs/DOCKER_DEPLOYMENT_TROUBLESHOOTING.md) - 详细的问题诊断和解决方案
+- 🚀 [Docker 快速参考](./docs/DOCKER_QUICK_REFERENCE.md) - 常用命令和操作指南
 
 ### 📁 项目结构
 
@@ -341,8 +374,8 @@ EP (Enhanced Prompt) is an ultra-lightweight prompt enhancement tool designed fo
 
 ```bash
 # Clone the project
-git clone https://github.com/yourusername/ep-enhanced-prompt.git
-cd ep-enhanced-prompt
+git clone https://github.com/sarahaleo88/EP-Chat.git
+cd EP-Chat
 
 # Install dependencies
 npm install
@@ -386,12 +419,45 @@ curl http://localhost:3000
 # Build and start
 docker compose up -d
 
+# Check status
+docker compose ps
+
 # View logs
 docker compose logs -f
 
 # Stop services
 docker compose down
 ```
+
+The application will be available at `http://localhost:3000`.
+
+##### Docker Architecture
+
+The EP Chat application uses a **3-stage optimized Docker build** for efficient containerization:
+
+1. **Dependencies Stage**: Installs production dependencies
+2. **Builder Stage**: Compiles TypeScript and builds the Next.js application (standalone mode)
+3. **Runtime Stage**: Final optimized image with security hardening and health checks
+
+##### Multi-Stage Benefits
+
+- **Build Success**: All dependencies available during compilation
+- **Optimized Size**: Final image contains only production dependencies (~703MB)
+- **Security**: Non-root user with proper file permissions
+- **Health Monitoring**: Built-in health checks for container orchestration
+
+##### Key Features
+
+- ✅ **Module Resolution**: Properly handles TypeScript path mappings and utility imports
+- ✅ **Dependency Management**: Separates build-time and runtime dependencies
+- ✅ **Security Hardening**: Non-root user (nextjs:nodejs) with minimal privileges
+- ✅ **Health Checks**: HTTP endpoint monitoring for container health
+- ✅ **Production Ready**: Optimized for deployment with proper environment configuration
+
+##### Docker Documentation
+
+- 📖 [Docker Deployment Troubleshooting Guide](./docs/DOCKER_DEPLOYMENT_TROUBLESHOOTING.md) - Detailed problem diagnosis and solutions
+- 🚀 [Docker Quick Reference](./docs/DOCKER_QUICK_REFERENCE.md) - Common commands and operation guide
 
 ### 📱 PWA Installation Guide
 

@@ -31,6 +31,13 @@ Welcome to the EP Chat documentation! This index provides quick access to all pr
 | [Branch Protection Policy](./BRANCH_PROTECTION.md) | Repository protection rules, review requirements, and emergency procedures | Maintainers, DevOps |
 | [Support & End-of-Life Policy](./SUPPORT_POLICY.md) | Support commitments, version lifecycle, and upgrade guidance | All users, Support teams |
 
+## 🐳 Docker & Deployment
+
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [Docker Deployment Troubleshooting](./DOCKER_DEPLOYMENT_TROUBLESHOOTING.md) | Comprehensive Docker troubleshooting guide with solutions | DevOps, Developers |
+| [Docker Quick Reference](./DOCKER_QUICK_REFERENCE.md) | Common Docker commands and operations | All users |
+
 ## 🔧 Development Tools
 
 | Document | Description | Audience |
@@ -55,6 +62,8 @@ Welcome to the EP Chat documentation! This index provides quick access to all pr
 1. Study [Dependency Management](./DEPENDENCY_MANAGEMENT.md)
 2. Configure [Branch Protection Policy](./BRANCH_PROTECTION.md)
 3. Plan with [Support & End-of-Life Policy](./SUPPORT_POLICY.md)
+4. Review [Docker Deployment Troubleshooting](./DOCKER_DEPLOYMENT_TROUBLESHOOTING.md)
+5. Use [Docker Quick Reference](./DOCKER_QUICK_REFERENCE.md)
 
 ### For End Users
 1. Start with [Project README](../README.md)
@@ -82,6 +91,8 @@ All EP Chat documentation follows these standards:
 | [BRANCH_PROTECTION.md](./BRANCH_PROTECTION.md) | Quarterly | July 2025 | October 2025 |
 | [SUPPORT_POLICY.md](./SUPPORT_POLICY.md) | Semi-annually | July 2025 | January 2026 |
 | [DEPENDENCY_MANAGEMENT.md](./DEPENDENCY_MANAGEMENT.md) | Quarterly | July 2025 | October 2025 |
+| [DOCKER_DEPLOYMENT_TROUBLESHOOTING.md](./DOCKER_DEPLOYMENT_TROUBLESHOOTING.md) | Quarterly | July 2025 | October 2025 |
+| [DOCKER_QUICK_REFERENCE.md](./DOCKER_QUICK_REFERENCE.md) | Quarterly | July 2025 | October 2025 |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Annually | July 2025 | July 2026 |
 
 ## 📞 Documentation Feedback
