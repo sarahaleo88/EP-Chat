@@ -17,7 +17,7 @@
     "performance-eval": "npm run performance-test"
   },
   "dependencies": {
-    "@headlessui/react": "^1.7.17",
+    "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.0.18",
     "clsx": "^2.1.1",
     "next": "^15.0.0",
