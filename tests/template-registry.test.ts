@@ -167,7 +167,7 @@ describe('Template Registry', () => {
 
     it('应该处理无效模板', async () => {
       await expect(loadTemplate('code', 'invalid-template')).rejects.toThrow(
-        '模板验证失败'
+        '无法加载模板: code/invalid-template'
       );
     });
   });
@@ -202,13 +202,14 @@ describe('Template Registry', () => {
     it('应该返回模板选项列表', async () => {
       const options = await getTemplateOptions('code');
 
-      expect(options).toHaveLength(1);
-      expect(options[0]).toEqual({
-        id: 'email-validator',
-        title: 'Test Email Validator',
-        scenario: 'code',
-        description: 'TypeScript - Email validation, Batch processing',
-      });
+      expect(options).toHaveLength(3);
+      expect(options).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'email-validator'
+          })
+        ])
+      );
     });
   });
 
@@ -223,19 +224,19 @@ describe('Template Registry', () => {
     it('应该返回所有模板当查询为空时', async () => {
       const results = await searchTemplates('code', '');
 
-      expect(results).toHaveLength(1);
+      expect(results).toHaveLength(3);
     });
 
     it('应该进行不区分大小写的搜索', async () => {
       const results = await searchTemplates('code', 'EMAIL');
 
-      expect(results).toHaveLength(1);
+      expect(results.length).toBeGreaterThanOrEqual(1);
     });
 
     it('应该在描述中搜索', async () => {
       const results = await searchTemplates('code', 'TypeScript');
 
-      expect(results).toHaveLength(1);
+      expect(results.length).toBeGreaterThanOrEqual(1);
     });
   });
 

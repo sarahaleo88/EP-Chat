@@ -225,7 +225,7 @@ export function ModelIndicator({
 }) {
   const currentOption = MODEL_OPTIONS.find(option => option.id === model);
 
-  if (!currentOption) return null;
+  if (!currentOption) {return null;}
 
   return (
     <div className={cn('flex items-center space-x-2 text-sm', className)}>

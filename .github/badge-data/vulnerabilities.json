@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "vulnerabilities",
+  "message": "0",
+  "color": "brightgreen",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "0 security vulnerabilities found",
+  "namedLogo": "security"
+}

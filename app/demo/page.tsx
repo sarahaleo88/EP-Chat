@@ -5,6 +5,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import { DialogExamples } from '../components/DialogExamples';
 
 export default function DemoPage() {
@@ -33,12 +34,12 @@ export default function DemoPage() {
             </div>
           </div>
 
-          <a
+          <Link
             href="/"
             className="px-4 py-2 text-sm font-medium text-clover-600 dark:text-clover-400 hover:text-clover-700 dark:hover:text-clover-300 transition-colors"
           >
             返回主页
-          </a>
+          </Link>
         </div>
       </nav>
 

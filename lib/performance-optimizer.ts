@@ -81,7 +81,7 @@ export class PerformanceOptimizer {
     // Note: This would typically involve configuring HTTP agents
     // For now, we'll implement a simple connection tracking system
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔗 Setting up connection pooling...');
+
     }
 
     // In a real implementation, you would configure:
@@ -105,7 +105,7 @@ export class PerformanceOptimizer {
    */
   private setupRequestBatching(): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('📦 Setting up request batching...');
+
     }
     // Implementation would batch multiple requests together
     // This is typically not useful for chat applications
@@ -130,7 +130,7 @@ export class PerformanceOptimizer {
    */
   private setupSemanticCaching(client: OptimizedDeepSeekClient): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🧠 Setting up semantic caching...');
+
     }
     // This would implement vector-based similarity caching
     // For now, we'll enhance the existing cache key generation
@@ -141,7 +141,7 @@ export class PerformanceOptimizer {
    */
   private setupPredictiveCache(client: OptimizedDeepSeekClient): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔮 Setting up predictive caching...');
+
     }
     // This would analyze user patterns and pre-cache likely requests
   }
@@ -164,7 +164,7 @@ export class PerformanceOptimizer {
    */
   private setupCompression(): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🗜️ Setting up response compression...');
+
     }
     // This would configure gzip/brotli compression for responses
     // Typically handled at the server/proxy level
@@ -175,7 +175,7 @@ export class PerformanceOptimizer {
    */
   private setupPrefetching(): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('⚡ Setting up request prefetching...');
+
     }
     // This would implement predictive request prefetching
   }
@@ -194,7 +194,7 @@ export class PerformanceOptimizer {
    */
   private setupVirtualization(): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('📱 Setting up message virtualization...');
+
     }
     // This would implement virtual scrolling for large message lists
   }
@@ -290,7 +290,7 @@ export class PerformanceOptimizer {
    */
   applyAllOptimizations(client?: OptimizedDeepSeekClient): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 Applying comprehensive performance optimizations...');
+
     }
 
     this.optimizeConnections();
@@ -303,7 +303,7 @@ export class PerformanceOptimizer {
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ All optimizations applied successfully!');
+
     }
   }
 
@@ -318,19 +318,19 @@ export class PerformanceOptimizer {
     const activeOptimizations: string[] = [];
 
     if (this.config.enableConnectionPooling)
-      activeOptimizations.push('Connection Pooling');
+      {activeOptimizations.push('Connection Pooling');}
     if (this.config.enableRequestBatching)
-      activeOptimizations.push('Request Batching');
+      {activeOptimizations.push('Request Batching');}
     if (this.config.enableSemanticCaching)
-      activeOptimizations.push('Semantic Caching');
+      {activeOptimizations.push('Semantic Caching');}
     if (this.config.enablePredictiveCache)
-      activeOptimizations.push('Predictive Cache');
+      {activeOptimizations.push('Predictive Cache');}
     if (this.config.enableCompression)
-      activeOptimizations.push('Response Compression');
+      {activeOptimizations.push('Response Compression');}
     if (this.config.enablePrefetching)
-      activeOptimizations.push('Request Prefetching');
+      {activeOptimizations.push('Request Prefetching');}
     if (this.config.enableVirtualization)
-      activeOptimizations.push('Message Virtualization');
+      {activeOptimizations.push('Message Virtualization');}
 
     return {
       config: this.config,
@@ -378,7 +378,7 @@ export class PerformanceOptimizer {
   updateConfig(newConfig: Partial<OptimizationConfig>): void {
     this.config = { ...this.config, ...newConfig };
     if (process.env.NODE_ENV === 'development') {
-      console.log('⚙️ Optimization configuration updated');
+
     }
   }
 }

@@ -86,12 +86,12 @@ export class PerformanceEvaluator {
     performanceLogger.clearMetrics();
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 Starting comprehensive performance evaluation...');
+
     }
 
     // Test 1: API Response Time (Non-streaming)
     if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Testing API response times...');
+
     }
     for (let i = 0; i < 3; i++) {
       const result = await this.testApiResponseTime(i);
@@ -100,7 +100,7 @@ export class PerformanceEvaluator {
 
     // Test 2: Streaming Performance
     if (process.env.NODE_ENV === 'development') {
-      console.log('🌊 Testing streaming performance...');
+
     }
     for (let i = 0; i < 3; i++) {
       const result = await this.testStreamingPerformance(i);
@@ -109,21 +109,21 @@ export class PerformanceEvaluator {
 
     // Test 3: Cache Performance
     if (process.env.NODE_ENV === 'development') {
-      console.log('💾 Testing cache effectiveness...');
+
     }
     const cacheResults = await this.testCachePerformance();
     testResults.push(...cacheResults);
 
     // Test 4: Error Recovery
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Testing error recovery...');
+
     }
     const errorResult = await this.testErrorRecovery();
     testResults.push(errorResult);
 
     // Test 5: Concurrent Request Handling
     if (process.env.NODE_ENV === 'development') {
-      console.log('⚡ Testing concurrent request handling...');
+
     }
     const concurrentResult = await this.testConcurrentRequests();
     testResults.push(concurrentResult);
@@ -132,7 +132,7 @@ export class PerformanceEvaluator {
     const evaluation = this.analyzeResults(testResults);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Performance evaluation completed!');
+
     }
     return evaluation;
   }

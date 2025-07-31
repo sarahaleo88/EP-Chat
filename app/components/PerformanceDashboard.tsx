@@ -57,7 +57,7 @@ export function PerformanceDashboard({
     return `${value.toFixed(1)}%`;
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div

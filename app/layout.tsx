@@ -6,7 +6,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import '../styles/globals.scss'; // NextChat 样式
+import '../styles/globals.scss'; // 全局样式
 
 // 字体配置
 const inter = Inter({
@@ -175,7 +175,7 @@ export default function RootLayout({
           跳转到主要内容
         </a>
 
-        {/* 主要内容区域 - 使用 NextChat 主题系统 */}
+        {/* 主要内容区域 - 使用现代主题系统 */}
         <div id="main-content" className="light">
           {children}
         </div>
@@ -198,7 +198,7 @@ export default function RootLayout({
                     const perfData = performance.getEntriesByType('navigation')[0];
                     if (perfData && perfData.loadEventEnd > 0) {
                       if (process.env.NODE_ENV === 'development') {
-                        console.log('页面加载时间:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
+
                       }
                     }
                   }, 0);

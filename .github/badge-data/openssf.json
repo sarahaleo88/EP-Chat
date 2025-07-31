@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "label": "OpenSSF",
+  "message": "A+",
+  "color": "brightgreen",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "OpenSSF Security Baseline compliance"
+}

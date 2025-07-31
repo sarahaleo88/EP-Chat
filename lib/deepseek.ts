@@ -120,7 +120,7 @@ export class DeepSeekClient {
         for (const line of lines) {
           const trimmedLine = line.trim();
 
-          if (trimmedLine === '') continue;
+          if (trimmedLine === '') {continue;}
           if (trimmedLine === 'data: [DONE]') {
             onComplete();
             return;

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "label": "coverage",
+  "message": "monitored",
+  "color": "blue",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Test coverage monitoring"
+}

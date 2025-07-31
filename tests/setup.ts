@@ -150,9 +150,13 @@ afterEach(() => {
 
 // 全局错误处理
 process.on('unhandledRejection', reason => {
-  console.error('Unhandled Rejection:', reason);
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Unhandled Rejection:', reason);
+  }
 });
 
 process.on('uncaughtException', error => {
-  console.error('Uncaught Exception:', error);
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Uncaught Exception:', error);
+  }
 });

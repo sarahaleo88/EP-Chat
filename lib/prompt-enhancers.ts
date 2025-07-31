@@ -27,8 +27,8 @@ function analyzeContent(content: string): ContentAnalysis {
   const chineseRatio = chineseChars / totalChars;
 
   let language: 'chinese' | 'english' | 'mixed' = 'english';
-  if (chineseRatio > 0.7) language = 'chinese';
-  else if (chineseRatio > 0.1) language = 'mixed';
+  if (chineseRatio > 0.7) {language = 'chinese';}
+  else if (chineseRatio > 0.1) {language = 'mixed';}
 
   // 检测内容类型
   let type: ContentAnalysis['type'] = 'request';
@@ -59,9 +59,9 @@ function analyzeContent(content: string): ContentAnalysis {
 
   // 检测复杂度
   let complexity: ContentAnalysis['complexity'] = 'simple';
-  if (content.length > 200) complexity = 'medium';
+  if (content.length > 200) {complexity = 'medium';}
   if (content.length > 500 || content.split('\n').length > 5)
-    complexity = 'complex';
+    {complexity = 'complex';}
 
   // 检测领域
   const domains: string[] = [];

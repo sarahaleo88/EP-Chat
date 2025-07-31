@@ -1,27 +1,70 @@
-/**
- * 对话框式UI界面
- * 基于ChatGPT风格的现代化对话界面
- */
-
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  PaperAirplaneIcon as Send,
+  PlusIcon as Plus,
+  HomeIcon as Home,
+  UserIcon as User,
+  ClipboardDocumentIcon as Copy,
+} from '@heroicons/react/24/outline';
+import { sendPrompt } from '@/lib/deepseek';
 import { cn } from '@/lib/utils';
-import type { DeepSeekModel } from '@/lib/types';
+
+// 自定义 Bot 图标组件
+const Bot = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z"
+    />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+type DeepSeekModel = 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  isStreaming?: boolean;
+  model?: string;
 }
 
 interface ChatInterfaceProps {
   className?: string;
 }
 
-export function ChatInterface({ className }: ChatInterfaceProps) {
+export default function ChatInterface({
+  className = '',
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +72,6 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 自动滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -38,22 +80,10 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     scrollToBottom();
   }, [messages]);
 
-  // 自动调整输入框高度
-  const adjustTextareaHeight = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
-    }
-  };
-
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [input]);
-
-  // 发送消息
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) {
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -66,415 +96,340 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     setInput('');
     setIsLoading(true);
 
-    // 模拟AI回复
-    setTimeout(() => {
+    try {
+      const response = await sendPrompt(input.trim(), model, {
+        maxTokens: 2000,
+        temperature: 0.7,
+        stream: false,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content =
+        data.choices?.[0]?.message?.content || '抱歉，我无法生成回复。';
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `这是一个基于 ${model} 模型的回复示例。您的消息："${userMessage.content}" 已收到。`,
+        content,
+        timestamp: new Date(),
+        model,
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('生成失败:', error);
+      }
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '抱歉，生成过程中出现了错误。请稍后重试。',
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  // 处理键盘事件
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const copyMessage = (content: string) => {
+    navigator.clipboard.writeText(content);
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+  };
+
   return (
-    <div
-      className={cn(
-        'flex flex-col h-screen bg-gradient-to-br from-shamrock-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900',
-        className
-      )}
-    >
-      {/* 顶部导航栏 */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-shamrock-400 to-shamrock-600 rounded-lg flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="white" className="w-5 h-5">
-              <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
-              <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
-              <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
-              <path d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
-              <circle cx="12" cy="12" r="2" />
-            </svg>
+    <div className={cn('flex h-screen bg-gray-50 dark:bg-gray-900', className)}>
+      {/* 左侧边栏 - 现代聊天风格 */}
+      <div className="flex flex-col w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        {/* 侧边栏头部 */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-shamrock-500 to-shamrock-600 rounded-lg flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="white" className="w-5 h-5">
+                <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
+                <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
+                <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
+                <path d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                EP Chat
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Enhanced Prompt
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              EP Chat
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Enhanced Prompt Assistant
-            </p>
-          </div>
+
+          <Link
+            href="/"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="返回主页"
+          >
+            <Home className="w-5 h-5" />
+          </Link>
         </div>
 
-        {/* 模型选择器和导航 */}
-        <div className="flex items-center space-x-3">
+        {/* 新对话按钮 */}
+        <div className="p-4">
+          <button
+            onClick={clearChat}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-shamrock-500 hover:bg-shamrock-600 text-white rounded-lg transition-colors font-medium"
+          >
+            <Plus className="w-5 h-5" />
+            <span>新对话</span>
+          </button>
+        </div>
+
+        {/* 模型选择 */}
+        <div className="px-4 pb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            选择模型
+          </label>
           <select
             value={model}
             onChange={e => setModel(e.target.value as DeepSeekModel)}
-            className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent"
           >
-            <option value="deepseek-chat">💬 Chat</option>
-            <option value="deepseek-coder">👨‍💻 Coder</option>
-            <option value="deepseek-reasoner">🧠 Reasoner</option>
+            <option value="deepseek-chat">💬 DeepSeek Chat</option>
+            <option value="deepseek-coder">👨‍💻 DeepSeek Coder</option>
+            <option value="deepseek-reasoner">🧠 DeepSeek Reasoner</option>
           </select>
+        </div>
 
-          <a
-            href="/"
-            className="p-2 text-gray-500 hover:text-shamrock-600 dark:text-gray-400 dark:hover:text-shamrock-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="返回主页"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"
-              />
-            </svg>
-          </a>
-
-          <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </button>
+        {/* 快速开始 */}
+        <div className="flex-1 px-4 pb-4">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            快速开始
+          </h3>
+          <div className="space-y-2">
+            {[
+              {
+                icon: '🚀',
+                title: '代码生成',
+                prompt: '帮我生成一个React组件',
+              },
+              { icon: '📝', title: '文档写作', prompt: '帮我写一份技术文档' },
+              { icon: '🎯', title: '问题解答', prompt: '解释一下这个技术概念' },
+              { icon: '💡', title: '创意灵感', prompt: '给我一些创意想法' },
+            ].map((item, index) => (
+              <button
+                key={index}
+                onClick={() => setInput(item.prompt)}
+                className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200">
+                  {item.title}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 消息区域 */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+      {/* 主聊天区域 */}
+      <div className="flex-1 flex flex-col">
+        {/* 聊天头部 */}
+        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {model === 'deepseek-chat' && '💬 通用对话模式'}
+              {model === 'deepseek-coder' && '👨‍💻 代码生成模式'}
+              {model === 'deepseek-reasoner' && '🧠 推理分析模式'}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {messages.length} 条消息
+            </span>
+          </div>
+        </div>
+
+        {/* 消息区域 */}
+        <div className="flex-1 overflow-y-auto smooth-scroll">
           {messages.length === 0 ? (
-            // 全新现代化欢迎界面
-            <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
-              {/* 主标题区域 */}
-              <div className="text-center mb-16">
-                <div className="relative mb-8">
-                  {/* 背景装饰光晕 */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-shamrock-400/30 via-blue-500/20 to-purple-500/30 rounded-full blur-3xl scale-150 animate-pulse"></div>
-
-                  {/* 主图标 */}
-                  <div className="relative w-28 h-28 bg-gradient-to-br from-shamrock-400 via-shamrock-500 to-shamrock-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-shamrock-500/30 transform hover:scale-105 transition-transform duration-300">
-                    <svg viewBox="0 0 24 24" fill="white" className="w-14 h-14">
-                      <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
-                      <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
-                      <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
-                      <path d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
-
-                    {/* 动态光环效果 */}
-                    <div className="absolute inset-0 bg-white/10 rounded-3xl animate-ping"></div>
-                    <div className="absolute -inset-2 bg-gradient-to-r from-shamrock-400/50 to-blue-500/50 rounded-3xl blur-md animate-pulse"></div>
-                  </div>
+            // 欢迎界面 - 现代聊天风格
+            <div className="flex flex-col items-center justify-center h-full px-4">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-shamrock-500 to-shamrock-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8">
+                    <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
+                    <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
+                    <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
+                    <path d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
+                    <circle cx="12" cy="12" r="2" />
+                  </svg>
                 </div>
-
-                <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-shamrock-600 to-blue-600 dark:from-white dark:via-shamrock-400 dark:to-blue-400 bg-clip-text text-transparent mb-6 animate-fade-in">
-                  EP Chat
-                </h1>
-                <p className="text-2xl text-gray-600 dark:text-gray-300 mb-4 font-light">
-                  Enhanced Prompt Assistant
-                </p>
-                <p className="text-lg text-gray-500 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
-                  基于 DeepSeek 的智能对话助手，帮助您生成高质量的提示词，提升
-                  AI 交互体验
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  开始新对话
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                  选择一个话题开始，或者直接在下方输入您的问题
                 </p>
               </div>
 
-              {/* 功能特性卡片 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto mb-16">
+              {/* 示例对话 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl w-full">
                 {[
                   {
-                    icon: '🚀',
-                    title: '快速生成',
-                    desc: '一键生成专业提示词，提升工作效率',
-                    color: 'from-blue-500 to-blue-600',
-                    bgColor:
-                      'group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20',
-                    prompt: '帮我生成一个专业的代码审查提示词',
+                    icon: '💻',
+                    title: '编程助手',
+                    desc: '代码生成、调试、优化',
                   },
+                  { icon: '📚', title: '学习伙伴', desc: '知识解答、概念解释' },
                   {
-                    icon: '🎯',
-                    title: '精准优化',
-                    desc: '针对性改进提示效果，确保准确性',
-                    color: 'from-purple-500 to-purple-600',
-                    bgColor:
-                      'group-hover:bg-purple-50 dark:group-hover:bg-purple-900/20',
-                    prompt: '帮我优化这个提示词的准确性和清晰度',
+                    icon: '✍️',
+                    title: '写作助手',
+                    desc: '文档、邮件、创意写作',
                   },
-                  {
-                    icon: '💡',
-                    title: '创意灵感',
-                    desc: '激发无限创作可能，突破思维局限',
-                    color: 'from-orange-500 to-orange-600',
-                    bgColor:
-                      'group-hover:bg-orange-50 dark:group-hover:bg-orange-900/20',
-                    prompt: '给我一些创意写作的提示词灵感',
-                  },
-                  {
-                    icon: '⚡',
-                    title: '效率提升',
-                    desc: '大幅提高工作效率，节省宝贵时间',
-                    color: 'from-shamrock-500 to-shamrock-600',
-                    bgColor:
-                      'group-hover:bg-shamrock-50 dark:group-hover:bg-shamrock-900/20',
-                    prompt: '帮我设计一个提高工作效率的AI助手',
-                  },
+                  { icon: '🎨', title: '创意灵感', desc: '头脑风暴、创意想法' },
                 ].map((item, index) => (
                   <button
                     key={index}
-                    onClick={() => setInput(item.prompt)}
-                    className={`group relative p-8 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 hover:border-transparent hover:shadow-2xl hover:shadow-shamrock-500/10 transition-all duration-500 hover:-translate-y-2 ${item.bgColor}`}
+                    onClick={() => setInput(`作为${item.title}，${item.desc}`)}
+                    className="p-4 text-left bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-shamrock-300 dark:hover:border-shamrock-600 hover:shadow-md transition-all duration-200 group"
                   >
-                    {/* 悬停时的背景渐变 */}
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 rounded-3xl transition-opacity duration-500`}
-                    ></div>
-
-                    <div className="relative">
-                      <div className="text-4xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                        {item.icon}
-                      </div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                        {item.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
-
-                    {/* 箭头指示器 */}
-                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
-                      <svg
-                        className="w-6 h-6 text-shamrock-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                    </div>
+                    <div className="text-2xl mb-2">{item.icon}</div>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-shamrock-600 dark:group-hover:text-shamrock-400">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {item.desc}
+                    </p>
                   </button>
                 ))}
-              </div>
-
-              {/* 底部状态和提示 */}
-              <div className="text-center space-y-6">
-                <div className="inline-flex items-center space-x-3 px-6 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700 shadow-lg">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      AI 已就绪
-                    </span>
-                  </div>
-                  <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    支持中英文对话
-                  </span>
-                  <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    实时响应
-                  </span>
-                </div>
-
-                <p className="text-gray-500 dark:text-gray-400">
-                  💬 在下方输入框开始对话，或点击上方卡片快速开始
-                </p>
               </div>
             </div>
           ) : (
             // 消息列表
-            messages.map(message => (
-              <div
-                key={message.id}
-                className={cn(
-                  'flex space-x-4',
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                )}
-              >
-                {message.role === 'assistant' && (
-                  <div className="w-8 h-8 bg-gradient-to-br from-shamrock-400 to-shamrock-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg viewBox="0 0 24 24" fill="white" className="w-4 h-4">
-                      <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
-                      <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
-                      <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
-                      <path d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
-                  </div>
-                )}
-
-                <div
-                  className={cn(
-                    'max-w-3xl px-4 py-3 rounded-2xl',
-                    message.role === 'user'
-                      ? 'bg-shamrock-500 text-white ml-12'
-                      : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
-                  )}
-                >
-                  <div className="whitespace-pre-wrap">{message.content}</div>
+            <div className="px-4 py-6">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {messages.map(message => (
                   <div
+                    key={message.id}
                     className={cn(
-                      'text-xs mt-2 opacity-70',
-                      message.role === 'user'
-                        ? 'text-white'
-                        : 'text-gray-500 dark:text-gray-400'
+                      'flex space-x-4 message-enter',
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
                     )}
                   >
-                    {message.timestamp.toLocaleTimeString()}
-                  </div>
-                </div>
+                    {message.role === 'assistant' && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-shamrock-500 to-shamrock-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-5 h-5 text-white" />
+                      </div>
+                    )}
 
-                {message.role === 'user' && (
-                  <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg
-                      className="w-4 h-4 text-gray-600 dark:text-gray-300"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
+                    <div
+                      className={cn(
+                        'chat-bubble px-4 py-3 rounded-2xl',
+                        message.role === 'user'
+                          ? 'user bg-shamrock-500 text-white ml-12'
+                          : 'assistant bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                      )}
                     >
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                    </svg>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      </div>
+
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {message.model}
+                          </span>
+                          <button
+                            onClick={() => copyMessage(message.content)}
+                            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
+                            title="复制"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {message.role === 'user' && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <User className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isLoading && (
+                  <div className="flex space-x-4 justify-start">
+                    <div className="w-8 h-8 bg-gradient-to-br from-shamrock-500 to-shamrock-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="chat-bubble assistant bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 rounded-2xl">
+                      <div className="flex items-center space-x-3">
+                        <div className="loading-dots">
+                          <div className="bg-shamrock-500"></div>
+                          <div className="bg-shamrock-500"></div>
+                          <div className="bg-shamrock-500"></div>
+                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          正在思考...
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </div>
-            ))
-          )}
 
-          {/* 加载指示器 */}
-          {isLoading && (
-            <div className="flex space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-shamrock-400 to-shamrock-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" fill="white" className="w-4 h-4">
-                  <path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2Z" />
-                  <path d="M4 10C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14C5.1 14 6 13.1 6 12C6 10.9 5.1 10 4 10Z" />
-                  <path d="M20 10C18.9 10 18 10.9 18 12C18 13.1 18.9 14 20 14C21.1 14 22 13.1 22 12C22 10.9 21.1 10 20 10Z" />
-                  <path d="M12 18C10.9 18 10 18.9 10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20C14 18.9 13.1 18 12 18Z" />
-                  <circle cx="12" cy="12" r="2" />
-                </svg>
-              </div>
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: '0.1s' }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: '0.2s' }}
-                  ></div>
-                </div>
+                <div ref={messagesEndRef} />
               </div>
             </div>
           )}
-
-          <div ref={messagesEndRef} />
         </div>
-      </div>
 
-      {/* 输入区域 */}
-      <div className="border-t border-gray-200/50 dark:border-gray-700/50 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl px-4 py-4 shadow-2xl">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative flex items-end space-x-3">
-            <div className="flex-1 relative">
+        {/* 输入区域 */}
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative">
               <textarea
                 ref={textareaRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="输入您的消息... (Shift + Enter 换行)"
-                className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent resize-none min-h-[52px] max-h-[200px]"
+                onKeyPress={handleKeyPress}
+                placeholder="输入消息..."
+                className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent resize-none min-h-[52px] max-h-[200px]"
                 rows={1}
+                disabled={isLoading}
               />
-              <div className="absolute right-3 bottom-3 text-xs text-gray-400 dark:text-gray-500">
-                {input.length}/2000
-              </div>
-            </div>
-
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className={cn(
-                'p-3 rounded-2xl transition-all duration-200',
-                input.trim() && !isLoading
-                  ? 'bg-shamrock-500 hover:bg-shamrock-600 text-white shadow-lg hover:shadow-xl'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-              )}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                className={cn(
+                  'absolute right-2 top-2 p-2 rounded-xl transition-all duration-200',
+                  input.trim() && !isLoading
+                    ? 'bg-shamrock-500 hover:bg-shamrock-600 text-white shadow-lg hover:shadow-xl'
+                    : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                )}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex items-center space-x-4">
-              <span>支持 Markdown 格式</span>
-              <span>•</span>
-              <span>Powered by DeepSeek</span>
+                <Send className="w-5 h-5" />
+              </button>
             </div>
-            <div>
-              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-                Enter
-              </kbd>{' '}
-              发送
-              <span className="mx-2">•</span>
-              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-                Shift + Enter
-              </kbd>{' '}
-              换行
+
+            <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
+              <span>按 Enter 发送，Shift + Enter 换行</span>
+              <span>Powered by DeepSeek</span>
             </div>
           </div>
         </div>

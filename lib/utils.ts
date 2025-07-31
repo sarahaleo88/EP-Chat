@@ -100,7 +100,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
  * @returns 格式化后的文件大小字符串
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) {return '0 Bytes';}
 
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -174,7 +174,7 @@ export function getI18nText(
  * @returns 是否为移动设备
  */
 export function isMobile(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined') {return false;}
   return window.innerWidth < 768;
 }
 
@@ -183,10 +183,10 @@ export function isMobile(): boolean {
  * @returns 语言代码
  */
 export function getPreferredLanguage(): Language {
-  if (typeof window === 'undefined') return 'en';
+  if (typeof window === 'undefined') {return 'en';}
 
   const lang = navigator.language.toLowerCase();
-  if (lang.startsWith('zh')) return 'zh';
+  if (lang.startsWith('zh')) {return 'zh';}
   return 'en';
 }
 

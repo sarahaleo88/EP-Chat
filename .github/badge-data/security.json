@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "security",
+  "message": "secure",
+  "color": "brightgreen",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Overall security status",
+  "namedLogo": "shield"
+}

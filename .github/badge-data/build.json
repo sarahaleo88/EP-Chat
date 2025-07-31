@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "build",
+  "message": "passing",
+  "color": "brightgreen",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Build status",
+  "namedLogo": "githubactions"
+}

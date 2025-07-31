@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "license",
+  "message": "MIT",
+  "color": "blue",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Project license",
+  "namedLogo": "opensourceinitiative"
+}

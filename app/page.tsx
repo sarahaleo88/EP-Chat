@@ -145,10 +145,10 @@ export default function HomePage() {
   function loadQuickButtons(): QuickButtonConfig[] {
     try {
       // 确保只在客户端运行
-      if (typeof window === 'undefined') return DEFAULT_QUICK_BUTTONS;
+      if (typeof window === 'undefined') {return DEFAULT_QUICK_BUTTONS;}
 
       const raw = localStorage.getItem('ep-chat-quick-buttons');
-      if (!raw) return DEFAULT_QUICK_BUTTONS;
+      if (!raw) {return DEFAULT_QUICK_BUTTONS;}
 
       const parsed = JSON.parse(raw);
       // 数据校验和修复逻辑
@@ -242,7 +242,7 @@ export default function HomePage() {
     // Always recreate client if model or API key changed to ensure correct timeout
     if (!optimizedClientRef.current && apiKey.trim()) {
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[Client] Creating new client for model: ${selectedModel}`);
+
       }
       optimizedClientRef.current = createOptimizedDeepSeekClient(
         apiKey.trim(),
@@ -256,14 +256,14 @@ export default function HomePage() {
       );
     }
     return optimizedClientRef.current;
-  }, [apiKey, selectedModel]);
+  }, [apiKey]);
 
   /**
    * 发送消息 - 模型特定的处理逻辑（优化版本）
    */
   const handleSendInternal = useCallback(
     async (inputText: string, attempt: number = 0) => {
-      if (!inputText.trim() || isLoading || isSending) return;
+      if (!inputText.trim() || isLoading || isSending) {return;}
 
       // 清除之前的错误
       setCurrentError(null);
@@ -425,7 +425,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
 
   // 增强版发送函数 - 支持条件增强链路
   const handleSend = useCallback(async () => {
-    if (!userInput.trim() || isLoading || isSending) return;
+    if (!userInput.trim() || isLoading || isSending) {return;}
 
     const activeButton = quickButtons.find(btn => btn.id === activeButtonId);
 
@@ -647,7 +647,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
    */
   const handleQuickButtonClick = useCallback(
     (btn: QuickButtonConfig) => {
-      if (!btn.enabled || isLoading || isSending) return;
+      if (!btn.enabled || isLoading || isSending) {return;}
 
       // 设置高亮状态
       setActiveButtonId(btn.id);
@@ -748,9 +748,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
         if (shouldCleanupApi) {
           const result = client.forceCleanup();
           if (process.env.NODE_ENV === 'development') {
-            console.log(
-              `[Smart Cleanup] API cache: ${result.cleaned} expired entries removed`
-            );
+
           }
           cleanupPerformed = true;
         }
@@ -764,17 +762,13 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       if (shouldCleanupTemplate) {
         const result = forceCleanTemplateCache();
         if (process.env.NODE_ENV === 'development') {
-          console.log(
-            `[Smart Cleanup] Template cache: ${result.cleaned} expired entries removed`
-          );
+
         }
         cleanupPerformed = true;
       }
 
       if (cleanupPerformed && process.env.NODE_ENV === 'development') {
-        console.log(
-          '[Smart Cleanup] Cache optimization completed on new conversation'
-        );
+
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -821,7 +815,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       loadCacheStats();
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('所有缓存已清理');
+
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -850,9 +844,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       loadCacheStats();
 
       if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `清理完成: API缓存 ${apiCleaned} 条, 模板缓存 ${templateResult.cleaned} 条`
-        );
+
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -876,7 +868,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
 
     // Log success in development only
     if (process.env.NODE_ENV === 'development') {
-      console.log('设置已保存');
+
     }
   };
 
@@ -907,9 +899,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
    */
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `[Client] Clearing client due to change - Model: ${selectedModel}, API Key: ${apiKey ? 'Set' : 'Not Set'}`
-      );
+
     }
     // Cancel any ongoing requests before clearing
     if (optimizedClientRef.current) {

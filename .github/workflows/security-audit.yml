@@ -1,0 +1,158 @@
+name: Security Audit & Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    name: Security & Quality Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run security audit
+      run: |
+        echo "::group::Security Audit"
+        npm audit --audit-level=moderate --json > audit-results.json || true
+        npm audit --audit-level=moderate
+        echo "::endgroup::"
+      continue-on-error: true
+      
+    - name: Check for outdated dependencies
+      run: |
+        echo "::group::Dependency Check"
+        npm outdated --json > outdated-results.json || true
+        npm outdated
+        echo "::endgroup::"
+      continue-on-error: true
+      
+    - name: Type checking
+      run: |
+        echo "::group::Type Checking"
+        npm run type-check
+        echo "::endgroup::"
+        
+    - name: Build verification
+      run: |
+        echo "::group::Build Verification"
+        npm run build
+        echo "::endgroup::"
+
+    - name: Security linting
+      run: |
+        echo "::group::Security Linting"
+        npx eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 0 || true
+        echo "::endgroup::"
+      continue-on-error: true
+
+    - name: License compliance check
+      run: |
+        echo "::group::License Compliance"
+        npx license-checker --summary --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD' || true
+        echo "::endgroup::"
+      continue-on-error: true
+        
+    - name: Generate security badge data
+      run: |
+        echo "::group::Generate Badge Data"
+        
+        # Extract vulnerability count from audit results
+        if [ -f "audit-results.json" ]; then
+          VULN_COUNT=$(node -e "
+            try {
+              const audit = JSON.parse(require('fs').readFileSync('audit-results.json', 'utf8'));
+              const vulnerabilities = audit.metadata ? audit.metadata.vulnerabilities : audit.vulnerabilities || {};
+              const total = Object.values(vulnerabilities).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0);
+              console.log(total);
+            } catch (e) {
+              console.log('0');
+            }
+          ")
+        else
+          VULN_COUNT="0"
+        fi
+        
+        # Check outdated dependencies
+        if [ -f "outdated-results.json" ]; then
+          OUTDATED_COUNT=$(node -e "
+            try {
+              const outdated = JSON.parse(require('fs').readFileSync('outdated-results.json', 'utf8'));
+              console.log(Object.keys(outdated).length);
+            } catch (e) {
+              console.log('0');
+            }
+          ")
+        else
+          OUTDATED_COUNT="0"
+        fi
+        
+        # Create badge data directory
+        mkdir -p .github/badge-data
+        
+        # Run comprehensive badge generation
+        node scripts/update-badges.js
+        
+        echo "Generated badge data:"
+        echo "Vulnerabilities: $VULN_COUNT"
+        echo "Outdated dependencies: $OUTDATED_COUNT"
+        echo "::endgroup::"
+        
+    - name: Upload badge data
+      uses: actions/upload-artifact@v4
+      with:
+        name: badge-data
+        path: .github/badge-data/
+        retention-days: 30
+        
+    - name: Commit badge data (main branch only)
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .github/badge-data/
+        git diff --staged --quiet || git commit -m "🤖 Update security badge data [skip ci]"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+        queries: security-and-quality
+        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3

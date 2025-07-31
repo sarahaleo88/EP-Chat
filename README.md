@@ -4,11 +4,27 @@
 
 🍀 **超轻量级、超快速的提示增强 Web 应用**
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![DeepSeek](https://img.shields.io/badge/DeepSeek-API-green)](https://platform.deepseek.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
+<!-- Technology Stack -->
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-API-green?logo=openai&logoColor=white)](https://platform.deepseek.com/)
+
+<!-- Build & Quality -->
+[![Build Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/build.json)](https://github.com/sarahaleo88/ep/actions)
+[![Code Quality](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/quality.json)](https://github.com/sarahaleo88/ep/actions)
+[![Node.js](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/node.json)](https://nodejs.org/)
+
+<!-- Security & Compliance -->
+[![Security Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/security.json)](./SECURITY.md)
+[![OpenSSF Baseline](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/openssf.json)](./docs/SECURITY_BASELINE.md)
+[![Vulnerabilities](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/vulnerabilities.json)](https://github.com/sarahaleo88/ep/security/advisories)
+[![Dependencies](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/dependencies.json)](https://github.com/sarahaleo88/ep/network/dependencies)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/coverage.json)](https://github.com/sarahaleo88/ep/actions)
+
+<!-- License & Docker -->
+[![License](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/ep/main/.github/badge-data/license.json)](./LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
 [English](#english) | [中文](#中文)
 
@@ -410,12 +426,38 @@ EP Chat supports Progressive Web App (PWA) functionality, allowing you to instal
 - ✅ SSR + Static generation
 - ✅ PWA-compliant with offline support
 
-### 🔒 Security
+### 🔒 Security & Privacy
 
-- Server-side API key storage
-- Request rate limiting
-- Input validation
-- XSS protection
+EP Chat implements comprehensive security measures to protect user data and ensure safe operation:
+
+#### 🛡️ Security Features
+- **Zero Data Storage**: No chat history or personal data stored on our servers
+- **Client-Side Processing**: API keys stored locally in browser only
+- **Direct API Communication**: Requests go directly to DeepSeek servers
+- **Input Sanitization**: All user inputs are validated and sanitized
+- **XSS Protection**: Built-in protection against cross-site scripting
+- **CSRF Protection**: Cross-site request forgery prevention
+- **Content Security Policy**: Strict CSP headers for additional security
+
+#### 🔐 Privacy Guarantees
+- **No Tracking**: No analytics, cookies, or user tracking
+- **No Logging**: Chat conversations are not logged or monitored
+- **Local Storage Only**: API keys never leave your device
+- **Open Source**: Full transparency with public source code
+
+#### 🚨 Security Monitoring
+- **Automated Security Audits**: Daily vulnerability scanning
+- **Dependency Monitoring**: Real-time dependency security checks
+- **CodeQL Analysis**: Advanced static code analysis
+- **Security Badges**: Live security status indicators
+
+#### 📋 Security Compliance
+- **OWASP Guidelines**: Following OWASP Top 10 security practices
+- **Secure Development**: Security-first development lifecycle
+- **Regular Updates**: Prompt security patches and updates
+- **Vulnerability Disclosure**: Responsible disclosure program
+
+For detailed security information, see our [Security Policy](./SECURITY.md).
 - CSRF protection
 
 ### 📝 License

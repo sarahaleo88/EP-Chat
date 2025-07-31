@@ -81,7 +81,7 @@ export function PerformanceMonitor({
   };
 
   const formatDuration = (ms: number): string => {
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
+    if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
@@ -97,7 +97,7 @@ export function PerformanceMonitor({
     return met ? '✅' : '❌';
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div
@@ -393,7 +393,7 @@ export function PerformanceMonitor({
                 </div>
               ) : (
                 <div style={{ color: '#6b7280', fontSize: '14px' }}>
-                  No active optimizations. Click "Apply Optimizations" to enable
+                  No active optimizations. Click &quot;Apply Optimizations&quot; to enable
                   them.
                 </div>
               )}

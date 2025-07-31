@@ -1,0 +1,58 @@
+# CODEOWNERS file for EP Chat
+# This file defines code review assignments for different parts of the repository
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global ownership - all files require review from maintainers
+* @sarahaleo88
+
+# Core application code
+/app/ @sarahaleo88
+/lib/ @sarahaleo88
+/types/ @sarahaleo88
+
+# Configuration files
+/next.config.js @sarahaleo88
+/tailwind.config.js @sarahaleo88
+/tsconfig.json @sarahaleo88
+/vitest.config.ts @sarahaleo88
+/package.json @sarahaleo88
+/package-lock.json @sarahaleo88
+
+# Security-critical files
+SECURITY.md @sarahaleo88
+/docs/SECURITY*.md @sarahaleo88
+/.github/workflows/security-audit.yml @sarahaleo88
+
+# Documentation
+/docs/ @sarahaleo88
+README.md @sarahaleo88
+CONTRIBUTING.md @sarahaleo88
+CODE_OF_CONDUCT.md @sarahaleo88
+CHANGELOG.md @sarahaleo88
+
+# GitHub configuration
+/.github/ @sarahaleo88
+/.github/workflows/ @sarahaleo88
+/.github/ISSUE_TEMPLATE/ @sarahaleo88
+
+# Scripts and automation
+/scripts/ @sarahaleo88
+Dockerfile @sarahaleo88
+docker-compose.yml @sarahaleo88
+
+# Templates and data
+/templates/ @sarahaleo88
+
+# Testing
+/tests/ @sarahaleo88
+
+# PWA and public assets
+/public/ @sarahaleo88
+/public/manifest.json @sarahaleo88
+/public/sw.js @sarahaleo88
+
+# Environment and configuration
+.env.example @sarahaleo88
+.gitignore @sarahaleo88
+.eslintrc.json @sarahaleo88
+.prettierrc @sarahaleo88

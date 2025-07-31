@@ -1,9 +1,9 @@
 /**
  * 对话页面
- * 展示ChatGPT风格的对话界面
+ * 展示现代聊天风格的对话界面
  */
 
-import NextChatInterface from '@/app/components/NextChatInterface';
+import ChatInterface from '@/app/components/ChatInterface';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function ChatPage() {
-  return <NextChatInterface />;
+  return <ChatInterface />;
 }

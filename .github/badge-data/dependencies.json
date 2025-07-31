@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "dependencies",
+  "message": "12 outdated",
+  "color": "red",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Dependency update status",
+  "namedLogo": "dependabot"
+}

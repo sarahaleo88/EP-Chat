@@ -244,7 +244,7 @@ export function truncateMessages(
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
-    if (!message) continue;
+    if (!message) {continue;}
     const messageTokens = estimateTokens(message.content);
     if (currentTokens + messageTokens <= maxTokens) {
       result.unshift(message);

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "code quality",
+  "message": "audited",
+  "color": "brightgreen",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Code quality status",
+  "namedLogo": "codeclimate"
+}

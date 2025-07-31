@@ -369,7 +369,7 @@ body {
   }
 }
 
-/* NextChat 风格的消息动画 */
+/* 现代聊天风格的消息动画 */
 @keyframes message-slide-in {
   from {
     opacity: 0;

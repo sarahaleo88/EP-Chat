@@ -237,7 +237,7 @@ export class OptimizedDeepSeekClient {
       this.activeRequests < this.config.maxConcurrentRequests
     ) {
       const request = this.requestQueue.shift();
-      if (!request) break;
+      if (!request) {break;}
 
       this.activeRequests++;
 
@@ -456,7 +456,7 @@ export class OptimizedDeepSeekClient {
         for (const line of lines) {
           const trimmedLine = line.trim();
 
-          if (trimmedLine === '') continue;
+          if (trimmedLine === '') {continue;}
           if (trimmedLine === 'data: [DONE]') {
             performanceLogger.endRequest(requestId, true, {
               cacheHit: false,
@@ -551,9 +551,7 @@ export class OptimizedDeepSeekClient {
     const modelTimeout = getModelTimeout(model);
     // Log timeout configuration in development only
     if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `[Timeout] Model: ${model}, Timeout: ${modelTimeout}ms (${modelTimeout / 1000}s)`
-      );
+
     }
     const { temperature = 0.7, max_tokens = 2048, top_p = 0.95 } = options;
 
@@ -769,9 +767,7 @@ export class OptimizedDeepSeekClient {
     const modelTimeout = getModelTimeout(model);
     // Log timeout configuration in development only
     if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `[Timeout] Model: ${model}, Timeout: ${modelTimeout}ms (${modelTimeout / 1000}s)`
-      );
+
     }
 
     // Start performance tracking

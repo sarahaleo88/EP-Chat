@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // NextChat 深蓝配色主题
+        // EP Chat 深蓝配色主题
         bg: {
           primary: '#0E1525',
           elevated: '#172136',
@@ -16,7 +16,7 @@ module.exports = {
           hover: '#323232',
         },
         accent: '#3B82F6',
-        primary: '#1D93AB', // NextChat primary color
+        primary: '#1D93AB', // EP Chat primary color
         // 三叶草主题色彩 (保留)
         shamrock: {
           50: '#f0fdf4',
@@ -30,7 +30,7 @@ module.exports = {
           800: '#166534',
           900: '#14532d',
         },
-        // 深色主题 (更新为 NextChat 风格)
+        // 深色主题 (现代聊天应用风格)
         dark: {
           50: '#f8fafc',
           100: '#f1f5f9',

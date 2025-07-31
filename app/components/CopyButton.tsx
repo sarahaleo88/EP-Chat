@@ -52,7 +52,7 @@ export function CopyButton({
   const config = sizeConfig[size];
 
   const handleCopy = useCallback(async () => {
-    if (copyState === 'copying') return;
+    if (copyState === 'copying') {return;}
 
     setCopyState('copying');
 

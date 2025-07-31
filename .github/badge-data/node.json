@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "label": "node",
+  "message": ">=18.0.0",
+  "color": "brightgreen",
+  "style": "flat-square",
+  "logoColor": "white",
+  "description": "Node.js version compatibility",
+  "namedLogo": "node.js"
+}

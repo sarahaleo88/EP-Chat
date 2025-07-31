@@ -269,11 +269,11 @@ export function validatePromptSpec(spec: EpPromptSpec): {
   const warnings: string[] = [];
 
   // 检查必需字段
-  if (!spec.scenario) errors.push('缺少场景类型');
-  if (!spec.lang) errors.push('缺少语言设置');
-  if (!spec.mode) errors.push('缺少模式设置');
-  if (!spec.template) errors.push('缺少模板配置');
-  if (!spec.model) errors.push('缺少模型设置');
+  if (!spec.scenario) {errors.push('缺少场景类型');}
+  if (!spec.lang) {errors.push('缺少语言设置');}
+  if (!spec.mode) {errors.push('缺少模式设置');}
+  if (!spec.template) {errors.push('缺少模板配置');}
+  if (!spec.model) {errors.push('缺少模型设置');}
 
   // 检查用户输入
   if (!spec.userInput || !spec.userInput.trim()) {
@@ -308,7 +308,8 @@ export function getPromptPreview(
     return prompt;
   }
 
-  return prompt.substring(0, maxLength) + '...';
+  // Account for the "..." suffix to ensure total length doesn't exceed maxLength
+  return prompt.substring(0, maxLength - 3) + '...';
 }
 
 /**

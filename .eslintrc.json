@@ -16,7 +16,7 @@
   "rules": {
     "prefer-const": "warn",
     "no-var": "error",
-    "no-console": "warn",
+    "no-console": ["warn", { "allow": ["error", "warn"] }],
     "eqeqeq": "warn",
     "curly": "warn"
   },

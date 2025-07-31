@@ -34,7 +34,7 @@ class TemplateLRUCache {
 
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
+    if (!entry) {return false;}
 
     // Check if entry is expired
     if (Date.now() - entry.timestamp > TEMPLATE_CACHE_TTL) {
@@ -47,7 +47,7 @@ class TemplateLRUCache {
 
   get(key: string): TemplateConfig | undefined {
     const entry = this.cache.get(key);
-    if (!entry) return undefined;
+    if (!entry) {return undefined;}
 
     // Check if entry is expired
     if (Date.now() - entry.timestamp > TEMPLATE_CACHE_TTL) {

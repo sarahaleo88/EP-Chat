@@ -45,7 +45,7 @@ export class PerformanceLogger {
    * Start tracking a request
    */
   startRequest(operation: string, model?: string): string {
-    if (!this.enabled) return '';
+    if (!this.enabled) {return '';}
 
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const startTime = performance.now();
@@ -86,12 +86,12 @@ export class PerformanceLogger {
       priority?: number;
     } = {}
   ): void {
-    if (!this.enabled || !requestId) return;
+    if (!this.enabled || !requestId) {return;}
 
     const endTime = performance.now();
     const tempMetric = this.tempMetrics.get(requestId);
 
-    if (!tempMetric) return;
+    if (!tempMetric) {return;}
 
     const metric: PerformanceMetrics = {
       ...tempMetric,
@@ -111,15 +111,7 @@ export class PerformanceLogger {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `[Performance] ${metric.operation}: ${metric.duration.toFixed(2)}ms`,
-        {
-          success: metric.success,
-          cacheHit: metric.cacheHit,
-          retryCount: metric.retryCount,
-          model: metric.model,
-        }
-      );
+
     }
   }
 
@@ -183,13 +175,12 @@ export class PerformanceLogger {
    * Log custom metric for cache operations and other events
    */
   logCustomMetric(operation: string, data: Record<string, any>): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const timestamp = Date.now();
-    console.log(`[Performance] ${operation}:`, {
-      timestamp,
-      ...data,
-    });
+    if (process.env.NODE_ENV === 'development') {
+
+    }
 
     // Store custom metrics in a simple format for potential future analysis
     if (this.metrics.length >= this.maxMetrics) {
@@ -224,7 +215,7 @@ export class PerformanceLogger {
     success: boolean,
     metadata?: any
   ): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const metric: PerformanceMetrics = {
       requestId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

@@ -53,7 +53,7 @@ export default function PromptOutput({
   // 监听滚动位置
   useEffect(() => {
     const element = contentRef.current;
-    if (!element) return;
+    if (!element) {return;}
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = element;
@@ -68,7 +68,7 @@ export default function PromptOutput({
    * 复制内容到剪贴板
    */
   const handleCopy = useCallback(async () => {
-    if (!content.trim()) return;
+    if (!content.trim()) {return;}
 
     const success = await copyToClipboard(content);
     if (success) {
