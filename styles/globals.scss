@@ -104,7 +104,8 @@
   --full-height: 100%;
 }
 
-@media only screen and (max-width: 600px) {
+/* Enhanced mobile support - covers both 768px and 600px breakpoints */
+@media only screen and (max-width: 768px) {
   :root {
     --window-width: 100vw;
     --window-height: var(--full-height);
@@ -115,6 +116,17 @@
 
   .no-mobile {
     display: none;
+  }
+}
+
+/* Additional mobile optimizations for smaller screens */
+@media only screen and (max-width: 600px) {
+  :root {
+    --window-width: 100vw;
+    --window-height: var(--full-height);
+    --sidebar-width: 100vw;
+    --window-content-width: var(--window-width);
+    --message-max-width: 100%;
   }
 }
 

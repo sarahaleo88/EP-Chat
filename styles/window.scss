@@ -108,33 +108,90 @@
   animation: content-fade-in 0.6s ease-out;
 }
 
-@media only screen and (max-width: 600px) {
-  /* Mobile-first sidebar behavior: always visible and inline */
-  .sidebar {
-    position: relative; /* Inline with content */
-    width: 100vw;       /* Full viewport width */
-    height: auto;       /* Let content define height */
-    top: 0;
-    left: 0;
-    z-index: 1;
-    border-radius: 0;   /* No rounded corners on mobile */
+/* Enhanced mobile responsiveness - covers both 768px and 600px breakpoints */
+@media only screen and (max-width: 768px) {
+  /* Mobile hamburger menu button */
+  .mobile-hamburger-menu {
+    display: flex !important; /* Show on mobile */
+    order: -1; /* Place at the beginning */
+  }
 
-    /* Remove effects that can interfere visually on small screens */
-    box-shadow: none;
+  /* Mobile sidebar behavior: toggleable overlay */
+  .sidebar {
+    position: fixed !important;     /* Fixed overlay on mobile */
+    top: 0 !important;
+    left: -100vw !important;        /* Hidden by default */
+    width: 80vw !important;         /* 80% width for better UX */
+    height: 100vh !important;       /* Full height */
+    z-index: 1000;                  /* Above other content */
+    border-radius: 0;               /* No rounded corners on mobile */
+    margin: 0;                      /* Reset any margins */
+
+    /* Smooth slide animation */
+    transition: left 0.3s ease-in-out;
+
+    /* Ensure visibility on mobile */
+    display: flex !important;       /* Override any display: none rules */
+    flex-direction: column;
+
+    /* Remove desktop effects that can interfere on mobile */
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
     backdrop-filter: none;
+
+    /* Mobile-optimized background */
+    background: linear-gradient(
+      135deg,
+      rgba(45, 55, 72, 0.98) 0%,
+      rgba(55, 65, 81, 1) 50%,
+      rgba(45, 55, 72, 0.98) 100%
+    );
+
+    /* Ensure proper padding for mobile touch targets */
+    padding: 0;
+
+    /* Remove the glow effect on mobile */
+    &::before {
+      display: none;
+    }
+
+    /* Show sidebar when mobile-open class is applied */
+    &.mobile-open {
+      left: 0 !important;
+    }
+  }
+
+  /* Mobile overlay backdrop when sidebar is open */
+  .sidebar.mobile-open::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 80vw; /* Start where sidebar ends */
+    width: 20vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    pointer-events: auto;
   }
 
   /* Disable toggle behavior on mobile (sidebar is always visible) */
   .sidebar.show {
-    left: 0;
+    left: 0 !important;
   }
 
   .window-content {
-    margin-left: 0; /* No offset on mobile */
+    margin-left: 0 !important; /* No offset on mobile */
+    width: 100% !important;
 
     &::before {
       display: none; /* Hide the left border on mobile */
     }
+  }
+
+  /* Mobile window layout - stack vertically */
+  .window {
+    flex-direction: column !important;
+    height: 100vh;
+    width: 100vw;
   }
 
   /* Mobile Settings Button (reserved for future enhancements) */
@@ -150,5 +207,16 @@
     backdrop-filter: none;
     box-shadow: none;
     z-index: 2;
+  }
+}
+
+/* Hide mobile-specific elements on desktop */
+@media only screen and (min-width: 769px) {
+  .mobile-hamburger-menu {
+    display: none !important;
+  }
+
+  .mobile-sidebar-overlay {
+    display: none !important;
   }
 }

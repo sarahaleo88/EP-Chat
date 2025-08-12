@@ -73,6 +73,18 @@ const StopIcon = () => (
   </svg>
 );
 
+const HamburgerIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+  </svg>
+);
+
 // 消息类型定义
 interface Message {
   id: string;
@@ -96,6 +108,14 @@ export default function HomePage() {
   const [showSettings, setShowSettings] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [currentError, setCurrentError] = useState<string | null>(null);
+
+  // 移动端侧边栏状态
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // 关闭移动端侧边栏的处理函数
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false);
+  };
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const optimizedClientRef = useRef<ReturnType<
@@ -933,8 +953,26 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
 
   return (
     <div className="window">
+      {/* 移动端侧边栏遮罩层 */}
+      {isMobileSidebarOpen && (
+        <div
+          className="mobile-sidebar-overlay"
+          onClick={closeMobileSidebar}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999,
+            display: 'block',
+          }}
+        />
+      )}
+
       {/* 侧边栏 */}
-      <div className="sidebar">
+      <div className={`sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
         <div style={{ padding: '20px' }}>
           <h1
             style={{
@@ -1354,6 +1392,26 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
               backgroundColor: 'var(--white)',
             }}
           >
+            {/* 移动端汉堡菜单按钮 */}
+            <button
+              className="mobile-hamburger-menu"
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              style={{
+                display: 'none', // Hidden by default, shown on mobile via CSS
+                background: 'none',
+                border: '1px solid var(--border-in-light)',
+                borderRadius: '6px',
+                padding: '8px',
+                cursor: 'pointer',
+                color: 'var(--primary)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title={isMobileSidebarOpen ? '关闭菜单' : '打开菜单'}
+            >
+              {isMobileSidebarOpen ? <CloseIcon /> : <HamburgerIcon />}
+            </button>
+
             <ModelSelector
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}

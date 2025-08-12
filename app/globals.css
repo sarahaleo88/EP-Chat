@@ -630,9 +630,8 @@ body {
     max-width: 85% !important;
   }
 
-  .sidebar {
-    display: none;
-  }
+  /* ❌ REMOVED: .sidebar { display: none; } - This was hiding the sidebar completely on mobile! */
+  /* ✅ The sidebar mobile styles are now handled in styles/window.scss */
 
   .window-content {
     width: 100% !important;
