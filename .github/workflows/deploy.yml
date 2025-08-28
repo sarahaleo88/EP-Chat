@@ -17,7 +17,7 @@ jobs:
 
     steps:
     - name: 📦 Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: 🟢 Setup Node.js 20.x
       uses: actions/setup-node@v4
@@ -54,7 +54,7 @@ jobs:
         echo "Is tag: ${{ startsWith(github.ref, 'refs/tags/v') }}"
         
     - name: 📦 Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: 🔧 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -102,7 +102,7 @@ jobs:
 
     steps:
     - name: 📦 Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0  # Full history for release notes
 

@@ -24,7 +24,7 @@ jobs:
 
     steps:
     - name: 📦 Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         # Limit checkout depth for security
         fetch-depth: 1
@@ -63,7 +63,7 @@ jobs:
 
     steps:
     - name: 📦 Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: 🟢 Setup Node.js 20.x
       uses: actions/setup-node@v4
@@ -93,7 +93,7 @@ jobs:
 
     steps:
     - name: 📦 Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: 🟢 Setup Node.js 20.x
       uses: actions/setup-node@v4
