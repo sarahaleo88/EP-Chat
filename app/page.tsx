@@ -8,9 +8,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { IconButton } from './components/ui/button';
 import { Card, Popover, CenteredModal } from './components/ui/ui-lib';
+import SecureMessageRenderer, { useSanitizedInput } from './components/SecureMessageRenderer';
 import {
   createDeepSeekClient,
-  formatApiError,
   convertToDeepSeekMessages,
   truncateMessages,
   type DeepSeekMessage,
@@ -19,6 +19,10 @@ import {
   createOptimizedDeepSeekClient,
   OptimizedApiError,
 } from '../lib/optimized-deepseek-api';
+import {
+  createEnhancedDeepSeekClient,
+  EnhancedDeepSeekClient,
+} from '../lib/enhanced-deepseek-api';
 import {
   enhanceReasonerPrompt,
   enhanceCoderPrompt,
@@ -115,12 +119,24 @@ export default function HomePage() {
   // 关闭移动端侧边栏的处理函数
   const closeMobileSidebar = () => {
     setIsMobileSidebarOpen(false);
+    // 恢复背景滚动
+    document.body.classList.remove('mobile-sidebar-open');
+  };
+
+  // 打开移动端侧边栏的处理函数
+  const openMobileSidebar = () => {
+    setIsMobileSidebarOpen(true);
+    // 防止背景滚动穿透
+    document.body.classList.add('mobile-sidebar-open');
   };
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const optimizedClientRef = useRef<ReturnType<
     typeof createOptimizedDeepSeekClient
   > | null>(null);
+
+  // 增强版 API 客户端引用（支持长文本和自动续写）
+  const enhancedClientRef = useRef<EnhancedDeepSeekClient | null>(null);
 
   // 设置相关状态
   const [apiKey, setApiKey] = useState('');
@@ -279,6 +295,24 @@ export default function HomePage() {
   }, [apiKey]);
 
   /**
+   * 获取或创建增强版 API 客户端（支持长文本和自动续写）
+   */
+  const getEnhancedClient = useCallback(() => {
+    if (!enhancedClientRef.current && apiKey.trim()) {
+      if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Enhanced Client] Creating enhanced client for model:', selectedModel);
+        }
+      }
+      enhancedClientRef.current = createEnhancedDeepSeekClient(
+        apiKey.trim(),
+        selectedModel
+      );
+    }
+    return enhancedClientRef.current;
+  }, [apiKey, selectedModel]);
+
+  /**
    * 发送消息 - 模型特定的处理逻辑（优化版本）
    */
   const handleSendInternal = useCallback(
@@ -423,10 +457,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
 
         setMessages(prev => [...prev, assistantMessage]);
       } catch (error) {
-        // Only log detailed errors in development
-        if (process.env.NODE_ENV === 'development') {
-          console.error('生成失败:', error);
-        }
+        // 移除控制台错误日志，避免向用户显示技术性信息
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'assistant',
@@ -443,16 +474,26 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
     [isLoading, isSending, selectedModel, apiKey, messages, getOptimizedClient]
   );
 
+  // 安全的用户输入清理
+  const sanitizedUserInput = useSanitizedInput(userInput);
+
   // 增强版发送函数 - 支持条件增强链路
   const handleSend = useCallback(async () => {
-    if (!userInput.trim() || isLoading || isSending) {return;}
+    const trimmedInput = sanitizedUserInput.trim();
+    if (!trimmedInput || isLoading || isSending) {return;}
+
+    // 输入长度验证
+    if (trimmedInput.length > 50000) { // 50K字符限制
+      setCurrentError('输入内容过长，请控制在50,000字符以内');
+      return;
+    }
 
     const activeButton = quickButtons.find(btn => btn.id === activeButtonId);
 
     try {
-      let processedInput = userInput.trim();
+      let processedInput = trimmedInput;
       let modelToUse = selectedModel;
-      let displayContent = userInput.trim(); // 用于显示的用户消息内容
+      let displayContent = trimmedInput; // 用于显示的用户消息内容
 
       // 条件增强处理
       if (activeButton && activeButton.enabled) {
@@ -535,64 +576,160 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
 
             setMessages(prev => [...prev, streamingMessage]);
 
-            // Use streaming API with selected model
-            await client?.chatStream(truncatedMessages, modelToUse, {
-              temperature: 0.7,
-              max_tokens: 2048,
-              onChunk: (content: string) => {
-                setMessages(prev =>
-                  prev.map(msg =>
-                    msg.id === streamingMessageId
-                      ? { ...msg, content: msg.content + content }
-                      : msg
-                  )
-                );
-              },
-              onComplete: () => {
-                setMessages(prev =>
-                  prev.map(msg =>
-                    msg.id === streamingMessageId
-                      ? { ...msg, isStreaming: false }
-                      : msg
-                  )
-                );
-                setIsLoading(false);
-                setIsSending(false);
-                setCurrentAbortController(null);
-                // 重置高亮状态
-                setActiveButtonId(null);
-              },
-              onError: error => {
-                // Only log detailed errors in development
-                if (process.env.NODE_ENV === 'development') {
-                  console.error('Streaming error:', error);
-                }
-                const errorContent = formatApiError(error);
-                setMessages(prev =>
-                  prev.map(msg =>
-                    msg.id === streamingMessageId
-                      ? {
-                          ...msg,
-                          content:
-                            errorContent +
-                            '\n\n💡 *提示：您可以重新发送消息重试*',
-                          isStreaming: false,
+            // 检查是否启用长文本守护
+            const useLongOutputGuard = process.env.NEXT_PUBLIC_EP_LONG_OUTPUT_GUARD !== 'off';
+
+            if (useLongOutputGuard) {
+              // 使用增强版客户端处理长文本
+              const enhancedClient = getEnhancedClient();
+              if (enhancedClient) {
+                await enhancedClient.chatStreamEnhanced(
+                  truncatedMessages.map(m => ({ role: m.role, content: m.content })),
+                  {
+                    temperature: 0.7,
+                    maxTokens: 8192, // 增加到8K输出
+                    topP: 0.95,
+                    maxContinuations: 5,
+                    onChunk: (content: string, metadata) => {
+                      setMessages(prev =>
+                        prev.map(msg =>
+                          msg.id === streamingMessageId
+                            ? { ...msg, content: msg.content + content }
+                            : msg
+                        )
+                      );
+                    },
+                    onContinuation: (context) => {
+                      if (process.env.NODE_ENV === 'development') {
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log('[Enhanced Client] Continuation:', context);
                         }
-                      : msg
-                  )
+                      }
+                      // 可以在这里显示续写提示
+                    },
+                    onComplete: (metadata) => {
+                      if (process.env.NODE_ENV === 'development') {
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log('[Enhanced Client] Completed:', metadata);
+                        }
+                      }
+                      setMessages(prev =>
+                        prev.map(msg =>
+                          msg.id === streamingMessageId
+                            ? { ...msg, isStreaming: false }
+                            : msg
+                        )
+                      );
+                      setIsLoading(false);
+                      setIsSending(false);
+                      setCurrentAbortController(null);
+                      setActiveButtonId(null);
+                    },
+                    onError: error => {
+                      // 使用用户友好的错误格式化
+                      const friendlyError = formatUserFriendlyError(error, modelToUse);
+                      // 移除控制台错误日志，避免向用户显示技术性信息
+                      const errorContent = `❌ **${friendlyError.title}**
+
+${friendlyError.message}
+
+💡 **建议：**
+${friendlyError.suggestion}
+
+${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查设置后重试。'}`;
+
+                      setMessages(prev =>
+                        prev.map(msg =>
+                          msg.id === streamingMessageId
+                            ? {
+                                ...msg,
+                                content: errorContent,
+                                isStreaming: false,
+                              }
+                            : msg
+                        )
+                      );
+                      setIsLoading(false);
+                      setIsSending(false);
+                      setCurrentAbortController(null);
+                      setActiveButtonId(null);
+                    },
+                  }
                 );
-                setIsLoading(false);
-                setIsSending(false);
-                setCurrentAbortController(null);
-                // 重置高亮状态
-                setActiveButtonId(null);
-              },
-            });
+              }
+            } else {
+              // 使用传统的流式API
+              await client?.chatStream(truncatedMessages, modelToUse, {
+                temperature: 0.7,
+                max_tokens: 2048,
+                onChunk: (content: string) => {
+                  setMessages(prev =>
+                    prev.map(msg =>
+                      msg.id === streamingMessageId
+                        ? { ...msg, content: msg.content + content }
+                        : msg
+                    )
+                  );
+                },
+                onComplete: () => {
+                  setMessages(prev =>
+                    prev.map(msg =>
+                      msg.id === streamingMessageId
+                        ? { ...msg, isStreaming: false }
+                        : msg
+                    )
+                  );
+                  setIsLoading(false);
+                  setIsSending(false);
+                  setCurrentAbortController(null);
+                  setActiveButtonId(null);
+                },
+                onError: error => {
+                  // 使用用户友好的错误格式化
+                  const friendlyError = formatUserFriendlyError(error, modelToUse);
+                  // 移除控制台错误日志，避免向用户显示技术性信息
+                  const errorContent = `❌ **${friendlyError.title}**
+
+${friendlyError.message}
+
+💡 **建议：**
+${friendlyError.suggestion}
+
+${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查设置后重试。'}`;
+
+                  setMessages(prev =>
+                    prev.map(msg =>
+                      msg.id === streamingMessageId
+                        ? {
+                            ...msg,
+                            content: errorContent,
+                            isStreaming: false,
+                          }
+                        : msg
+                    )
+                  );
+                  setIsLoading(false);
+                  setIsSending(false);
+                  setCurrentAbortController(null);
+                  setActiveButtonId(null);
+                },
+              });
+            }
 
             // Early return for streaming - loading state handled in callbacks
             return;
           } catch (error) {
-            const responseContent = formatApiError(error);
+            // 使用用户友好的错误格式化
+            const friendlyError = formatUserFriendlyError(error, modelToUse);
+            const responseContent = `❌ **${friendlyError.title}**
+
+${friendlyError.message}
+
+💡 **建议：**
+${friendlyError.suggestion}
+
+${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查设置后重试。'}`;
+
             const assistantMessage: Message = {
               id: (Date.now() + 1).toString(),
               type: 'assistant',
@@ -625,10 +762,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
         setMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
-      // Only log detailed errors in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('生成失败:', error);
-      }
+      // 移除控制台错误日志，避免向用户显示技术性信息
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
@@ -644,7 +778,8 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       setActiveButtonId(null);
     }
   }, [
-    userInput,
+    sanitizedUserInput,
+    userInput, // 保留原始输入用于条件增强
     isLoading,
     isSending,
     selectedModel,
@@ -653,6 +788,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
     activeButtonId,
     quickButtons,
     getOptimizedClient,
+    getEnhancedClient,
   ]);
 
   // 防抖处理的发送函数 - 优化为200ms提升响应速度
@@ -694,6 +830,12 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       client.cancel();
     }
 
+    // 如果有增强版客户端，也调用其 cancel 方法
+    const enhancedClient = getEnhancedClient();
+    if (enhancedClient) {
+      enhancedClient.cancel();
+    }
+
     // 重置状态
     setIsSending(false);
     setIsLoading(false);
@@ -719,7 +861,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       }
       return prev;
     });
-  }, [currentAbortController, getOptimizedClient]);
+  }, [currentAbortController, getOptimizedClient, getEnhancedClient]);
 
   /**
    * 处理键盘事件
@@ -886,6 +1028,11 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
     // 关闭设置面板
     setShowSettings(false);
 
+    // 在移动端设备上，保存设置后自动关闭侧边栏
+    if (window.innerWidth <= 768) {
+      closeMobileSidebar();
+    }
+
     // Log success in development only
     if (process.env.NODE_ENV === 'development') {
 
@@ -932,6 +1079,18 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       }
     }
     optimizedClientRef.current = null;
+
+    // Cancel and clear enhanced client
+    if (enhancedClientRef.current) {
+      try {
+        enhancedClientRef.current.cancel();
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Enhanced Client] Error canceling previous requests:', error);
+        }
+      }
+    }
+    enhancedClientRef.current = null;
   }, [apiKey, selectedModel]);
 
   /**
@@ -948,6 +1107,15 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
       if (client) {
         client.cancel();
       }
+
+      // 清理增强版客户端
+      const enhancedClient = enhancedClientRef.current;
+      if (enhancedClient) {
+        enhancedClient.dispose();
+      }
+
+      // 清理移动端侧边栏状态
+      document.body.classList.remove('mobile-sidebar-open');
     };
   }, [currentAbortController]);
 
@@ -967,6 +1135,15 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 999,
             display: 'block',
+            cursor: 'pointer',
+          }}
+          role="button"
+          aria-label="关闭侧边栏"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              closeMobileSidebar();
+            }
           }}
         />
       )}
@@ -1383,6 +1560,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
         >
           {/* 聊天头部 */}
           <div
+            className="chat-header"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1395,7 +1573,7 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
             {/* 移动端汉堡菜单按钮 */}
             <button
               className="mobile-hamburger-menu"
-              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              onClick={() => isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar()}
               style={{
                 display: 'none', // Hidden by default, shown on mobile via CSS
                 background: 'none',
@@ -1557,15 +1735,11 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
                             : 'none',
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: '14px',
-                          lineHeight: '1.5',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        {message.content}
-                      </div>
+                      <SecureMessageRenderer
+                        content={message.content}
+                        isStreaming={message.isStreaming}
+                        className="text-sm leading-relaxed whitespace-pre-wrap"
+                      />
 
                       {message.type === 'assistant' && (
                         <div

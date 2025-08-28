@@ -14,23 +14,36 @@
     "type-check": "tsc --noEmit",
     "prepare": "husky install",
     "performance-test": "ts-node scripts/performance-test.ts",
-    "performance-eval": "npm run performance-test"
+    "performance-eval": "npm run performance-test",
+    "stress-test": "node scripts/long-text-stress-test.js",
+    "stress-test:full": "DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY node scripts/long-text-stress-test.js",
+    "test:v3.1": "node scripts/v3.1-upgrade-test.js",
+    "test:v3.1:full": "DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY node scripts/v3.1-upgrade-test.js",
+    "deploy:prod": "bash scripts/deploy-production.sh",
+    "rollback": "bash scripts/rollback.sh"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "autoprefixer": "^10.4.16",
     "clsx": "^2.1.1",
+    "dompurify": "^3.2.6",
     "next": "^15.0.0",
+    "next-pwa": "^5.6.0",
+    "postcss": "^8.4.31",
+    "prom-client": "^15.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sass": "^1.89.2",
-    "tailwind-merge": "^2.0.0"
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss": "^3.3.5"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/jest-dom": "^6.1.0",
     "@testing-library/react": "^14.0.0",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^20.8.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -41,7 +54,6 @@
     "husky": "^8.0.3",
     "jsdom": "^26.1.0",
     "lint-staged": "^15.0.0",
-    "next-pwa": "^5.6.0",
     "postcss": "^8.4.31",
     "prettier": "^3.0.3",
     "tailwindcss": "^3.3.5",
@@ -85,7 +97,7 @@
     "url": "https://github.com/sarahaleo88/EP-Chat/issues"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   }
 }

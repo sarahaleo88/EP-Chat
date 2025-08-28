@@ -1,10 +1,17 @@
 /**
- * 生成 API 路由
- * 处理提示生成请求
+ * 生成 API 路由 - DeepSeek v3.1 升级版
+ * 集成能力协商、预算控制和续写功能
  */
+
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL ?? "deepseek-v3.1";
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDeepSeekClient } from '@/lib/deepseek';
+import { getCapabilityManager } from '@/lib/model-capabilities';
+import { getBudgetGuardian } from '@/lib/budget-guardian';
+import { BudgetAwareContinuationEngine } from '@/lib/budget-aware-continuation';
+import { formatUserFriendlyError } from '@/lib/error-handler';
+import { estimateTokens } from '@/lib/utils';
 import type { DeepSeekModel } from '@/lib/types';
 
 // 请求体接口
@@ -14,24 +21,36 @@ interface GenerateRequest {
   stream?: boolean;
   temperature?: number;
   maxTokens?: number;
+  userId?: string;
+  requestId?: string;
+  enableBudgetGuard?: boolean;
+  enableContinuation?: boolean;
 }
 
 /**
- * POST 请求处理器
+ * POST 请求处理器 - v3.1 升级版
  * @param request - 请求对象
  * @returns 响应
  */
 export async function POST(request: NextRequest) {
+  let model: DeepSeekModel = DEFAULT_MODEL as DeepSeekModel; // Default model, will be overridden by request body
+
   try {
     // 解析请求体
     const body: GenerateRequest = await request.json();
     const {
       prompt,
-      model = 'deepseek-chat',
+      model: requestModel = DEFAULT_MODEL as DeepSeekModel,
       stream = true,
       temperature = 0.7,
-      maxTokens = 4000,
+      maxTokens = 128000, // 128k tokens
+      userId = 'anonymous',
+      requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      enableBudgetGuard = process.env.EP_LONG_OUTPUT_GUARD === 'on',
+      enableContinuation = process.env.EP_AUTO_CONTINUATION === 'true',
     } = body;
+
+    model = requestModel as DeepSeekModel; // Set the model from request
 
     // 验证请求参数
     if (!prompt || typeof prompt !== 'string') {
@@ -41,21 +60,81 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (prompt.length > 50000) {
+    if (prompt.length > 200000) { // 增加到200K字符支持长输入
       return NextResponse.json(
         { error: '提示内容过长，请精简后重试' },
         { status: 400 }
       );
     }
 
-    // 验证模型类型
+    // 验证模型类型 - 支持v3.1
     const validModels: DeepSeekModel[] = [
       'deepseek-chat',
       'deepseek-coder',
       'deepseek-reasoner',
+      'deepseek-v3.1',
     ];
     if (!validModels.includes(model)) {
       return NextResponse.json({ error: '无效的模型类型' }, { status: 400 });
+    }
+
+    // 获取API密钥
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'API密钥未配置' },
+        { status: 500 }
+      );
+    }
+
+    // 初始化能力协商和预算系统
+    const capabilityManager = getCapabilityManager(apiKey);
+    const budgetGuardian = getBudgetGuardian();
+
+    // 获取模型能力
+    const capabilities = await capabilityManager.getCapabilities(model);
+
+    // 估算输入token数
+    const inputTokens = estimateTokens(prompt);
+
+    // 计算最优输出token数
+    const optimalMaxTokens = capabilityManager.calculateOptimalMaxTokens(
+      capabilities,
+      inputTokens,
+      maxTokens
+    );
+
+    // 预算检查（如果启用）
+    if (enableBudgetGuard) {
+      const preflightResult = await budgetGuardian.preflightCheck(
+        userId,
+        capabilities,
+        inputTokens,
+        optimalMaxTokens
+      );
+
+      if (!preflightResult.allowed) {
+        return NextResponse.json(
+          {
+            error: '预算限制',
+            reason: preflightResult.reason,
+            costEstimate: preflightResult.costBreakdown.estimated,
+            recommendations: {
+              recommendedOutputTokens: preflightResult.recommendedOutputTokens,
+              suggestedActions: preflightResult.suggestedActions,
+            },
+          },
+          { status: 402 } // Payment Required
+        );
+      }
+
+      // 记录使用情况
+      budgetGuardian.recordUsage(
+        requestId,
+        userId,
+        preflightResult.costBreakdown.estimated,
+        true
+      );
     }
 
     // 获取 DeepSeek 客户端
@@ -112,10 +191,14 @@ export async function POST(request: NextRequest) {
               if (process.env.NODE_ENV === 'development') {
                 console.error('流处理错误:', error);
               }
+              // 使用用户友好的错误格式化
+              const friendlyError = formatUserFriendlyError(error, model);
               const errorData = {
                 error: {
-                  message: error.message,
+                  message: `${friendlyError.title}: ${friendlyError.message}`,
                   type: 'stream_error',
+                  suggestion: friendlyError.suggestion,
+                  retryable: friendlyError.retryable,
                 },
               };
               controller.enqueue(
@@ -159,33 +242,27 @@ export async function POST(request: NextRequest) {
       console.error('生成 API 错误:', error);
     }
 
-    // 处理不同类型的错误
+    // 使用用户友好的错误格式化
+    const friendlyError = formatUserFriendlyError(error, model);
+
+    // 根据错误类型返回适当的HTTP状态码
+    let statusCode = 500;
     if (error instanceof Error) {
-      if (error.message.includes('API key')) {
-        return NextResponse.json(
-          { error: 'API 密钥配置错误，请检查环境变量' },
-          { status: 401 }
-        );
+      if (error.message.includes('API key') || error.message.includes('unauthorized')) {
+        statusCode = 401;
+      } else if (error.message.includes('rate limit')) {
+        statusCode = 429;
+      } else if (error.message.includes('quota')) {
+        statusCode = 402;
       }
-
-      if (error.message.includes('rate limit')) {
-        return NextResponse.json(
-          { error: '请求频率过高，请稍后重试' },
-          { status: 429 }
-        );
-      }
-
-      if (error.message.includes('quota')) {
-        return NextResponse.json(
-          { error: 'API 配额不足，请检查账户余额' },
-          { status: 402 }
-        );
-      }
-
-      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
+    return NextResponse.json({
+      error: friendlyError.title,
+      message: friendlyError.message,
+      suggestion: friendlyError.suggestion,
+      retryable: friendlyError.retryable
+    }, { status: statusCode });
   }
 }
 
@@ -231,13 +308,16 @@ export async function GET() {
       models: ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'],
     });
   } catch (error) {
+    const friendlyError = formatUserFriendlyError(error);
     return NextResponse.json(
       {
         status: 'error',
         message: '健康检查失败',
-        error: error instanceof Error ? error.message : '未知错误',
+        error: friendlyError.title,
+        details: friendlyError.message,
       },
       { status: 500 }
     );
   }
 }
+

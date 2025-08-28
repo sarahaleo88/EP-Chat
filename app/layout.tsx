@@ -119,7 +119,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" className={inter.variable}>
+    <html lang="zh-CN" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* Favicon 链接 */}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

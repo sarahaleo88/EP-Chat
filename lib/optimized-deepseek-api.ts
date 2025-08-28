@@ -9,6 +9,7 @@ import {
   DeepSeekApiError,
 } from './deepseek-api';
 import { performanceLogger } from './performance-logger';
+import { longTextTimeoutManager, TimeoutContext } from './long-text-timeout-manager';
 
 // Cache interface
 interface CacheEntry {
@@ -45,19 +46,42 @@ interface ApiConfig {
 }
 
 /**
- * Get model-specific timeout configuration
- * DeepSeek Reasoner requires longer timeout for complex reasoning tasks
+ * Get model-specific timeout configuration with progressive timeout strategy
+ * Supports different timeout phases for long text generation
  */
-function getModelTimeout(model: string): number {
-  switch (model) {
-    case 'deepseek-reasoner':
-      return 120000; // 2 minutes for complex reasoning
-    case 'deepseek-coder':
-      return 60000; // 1 minute for code generation
-    case 'deepseek-chat':
-    default:
-      return 30000; // 30 seconds for general chat
+function getModelTimeout(model: string, phase: 'initial' | 'streaming' | 'continuation' = 'initial'): number {
+  const baseTimeouts = {
+    'deepseek-chat': {
+      initial: 45000,      // 45s for initial connection
+      streaming: 180000,   // 3min for streaming response
+      continuation: 120000 // 2min for continuation segments
+    },
+    'deepseek-coder': {
+      initial: 60000,      // 1min for initial connection
+      streaming: 300000,   // 5min for code generation
+      continuation: 180000 // 3min for continuation segments
+    },
+    'deepseek-reasoner': {
+      initial: 90000,      // 1.5min for initial connection
+      streaming: 600000,   // 10min for complex reasoning
+      continuation: 300000 // 5min for continuation segments
+    }
+  };
+
+  const modelConfig = baseTimeouts[model as keyof typeof baseTimeouts] || baseTimeouts['deepseek-chat'];
+  let timeout = modelConfig[phase];
+
+  // Apply long output guard multiplier if enabled
+  const longOutputMultiplier = process.env.EP_LONG_OUTPUT_GUARD === 'off' ? 1 : 2;
+  timeout *= longOutputMultiplier;
+
+  // Apply environment override if specified
+  const envTimeout = parseInt(process.env.API_TIMEOUT || '0');
+  if (envTimeout > 0 && phase === 'initial') {
+    timeout = Math.max(timeout, envTimeout);
   }
+
+  return timeout;
 }
 
 // Default configuration
@@ -406,7 +430,7 @@ export class OptimizedDeepSeekClient {
   }
 
   /**
-   * Handle streaming response
+   * Handle streaming response with progressive timeout management
    */
   private async handleStreamingResponse(
     response: Response,
@@ -435,6 +459,23 @@ export class OptimizedDeepSeekClient {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let totalTokens = 0;
+    let lastChunkTime = Date.now();
+    let streamingTimeout: NodeJS.Timeout | null = null;
+
+    // Set up progressive streaming timeout
+    const streamingTimeoutMs = getModelTimeout(model, 'streaming');
+    const resetStreamingTimeout = () => {
+      if (streamingTimeout) {
+        clearTimeout(streamingTimeout);
+      }
+      streamingTimeout = setTimeout(() => {
+        if (this.abortController) {
+          this.abortController.abort();
+        }
+      }, streamingTimeoutMs);
+    };
+
+    resetStreamingTimeout();
 
     try {
       while (true) {
@@ -475,10 +516,15 @@ export class OptimizedDeepSeekClient {
               const content = data.choices?.[0]?.delta?.content;
               if (content) {
                 totalTokens++;
+                lastChunkTime = Date.now();
+                resetStreamingTimeout(); // Reset timeout on each chunk
                 onChunk?.(content);
               }
 
               if (data.choices?.[0]?.finish_reason) {
+                if (streamingTimeout) {
+                  clearTimeout(streamingTimeout);
+                }
                 performanceLogger.endRequest(requestId, true, {
                   cacheHit: false,
                   model,
@@ -499,9 +545,18 @@ export class OptimizedDeepSeekClient {
     } catch (error) {
       let streamError: OptimizedApiError;
 
+      if (streamingTimeout) {
+        clearTimeout(streamingTimeout);
+      }
+
       if (error instanceof Error && error.name === 'AbortError') {
+        const timeSinceLastChunk = Date.now() - lastChunkTime;
+        const isStreamingTimeout = timeSinceLastChunk > streamingTimeoutMs * 0.8;
+
         streamError = this.createError(
-          'Streaming request timeout',
+          isStreamingTimeout
+            ? `长文本生成超时 (${Math.round(streamingTimeoutMs/1000)}秒无响应)`
+            : 'Streaming request timeout',
           ApiErrorType.TIMEOUT,
           true,
           undefined,
@@ -531,6 +586,9 @@ export class OptimizedDeepSeekClient {
       });
       onError?.(streamError);
     } finally {
+      if (streamingTimeout) {
+        clearTimeout(streamingTimeout);
+      }
       reader.releaseLock();
     }
   }
@@ -547,11 +605,13 @@ export class OptimizedDeepSeekClient {
       top_p?: number;
     }
   ): Promise<DeepSeekApiResponse> {
-    // Get model-specific timeout
-    const modelTimeout = getModelTimeout(model);
+    // Get model-specific timeout for initial connection
+    const modelTimeout = getModelTimeout(model, 'initial');
     // Log timeout configuration in development only
     if (process.env.NODE_ENV === 'development') {
-
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API] Using ${modelTimeout}ms timeout for ${model} initial connection`);
+      }
     }
     const { temperature = 0.7, max_tokens = 2048, top_p = 0.95 } = options;
 
@@ -763,11 +823,13 @@ export class OptimizedDeepSeekClient {
       onError,
     } = options;
 
-    // Get model-specific timeout
-    const modelTimeout = getModelTimeout(model);
+    // Get model-specific timeout for initial connection
+    const modelTimeout = getModelTimeout(model, 'initial');
     // Log timeout configuration in development only
     if (process.env.NODE_ENV === 'development') {
-
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API] Using ${modelTimeout}ms timeout for ${model} streaming connection`);
+      }
     }
 
     // Start performance tracking

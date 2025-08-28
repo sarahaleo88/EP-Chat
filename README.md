@@ -50,7 +50,8 @@ EP (Enhanced Prompt) 是一个专为 Claude Code 设计的超轻量级提示增�
 - 🔒 仅依赖 **DeepSeek API**（chat|coder|reasoner 模型）
 - 🍀 统一四叶草图标主题（favicon/loading/UI）
 - 🌐 双语支持（中文/英文）
-- 📱 移动端响应式设计
+- 📱 **移动端完美适配**（Android/iOS 全面优化）
+- ⚡ **长文本处理优化**（智能超时管理 + 流式响应）
 
 ### 🛠 技术栈
 
@@ -152,6 +153,12 @@ TEMPLATE_CACHE_TTL=3600
 API_TIMEOUT=30000
 MAX_CONCURRENT_REQUESTS=10
 ENABLE_PERFORMANCE_MONITORING=true
+
+# 长文本生成超时配置
+STREAMING_TIMEOUT=300000        # 流式响应超时 (5分钟)
+CHUNK_INTERVAL_TIMEOUT=30000    # 数据块间隔超时 (30秒)
+CONTINUATION_TIMEOUT=180000     # 续写段超时 (3分钟)
+EP_LONG_OUTPUT_GUARD=on         # 启用长文本保护
 ```
 
 ##### ✅ 配置验证
@@ -269,6 +276,7 @@ docker compose logs -f
 - 🚀 [Docker 快速参考](./docs/DOCKER_QUICK_REFERENCE.md) - 常用命令和操作指南
 - 🌐 [Nginx 配置指南](./docs/NGINX_CONFIGURATION.md) - 生产环境反向代理配置
 - 🔧 [Caddy 配置指南](./docs/CADDY_CONFIGURATION.md) - 自动 SSL 反向代理配置
+- 📱 [移动端使用指南](./docs/MOBILE_GUIDE.md) - 移动设备优化和使用说明
 
 #### 5. 版本管理与升级
 
