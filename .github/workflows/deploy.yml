@@ -83,7 +83,7 @@ jobs:
         images: ghcr.io/sarahaleo88/ep-chat
         tags: |
           type=ref,event=tag
-          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=latest
 
     - name: 🐳 Build and push Docker image
       uses: docker/build-push-action@v6
@@ -95,6 +95,11 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          NPM_REGISTRY=https://registry.npmjs.org
+          HTTP_PROXY=${{ secrets.HTTP_PROXY }}
+          HTTPS_PROXY=${{ secrets.HTTPS_PROXY }}
+          NO_PROXY=${{ secrets.NO_PROXY }}
 
   release:
     name: 📦 Create Signed Release

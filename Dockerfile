@@ -1,61 +1,57 @@
-# EP (Enhanced Prompt) Dockerfile
-# 多阶段构建，优化镜像大小和构建速度
+## EP (Enhanced Prompt) - Stable Dockerfile
+## Debian slim + Next.js standalone + reproducible installs
 
-# 阶段 1: 依赖安装
-FROM node:22-alpine AS deps
-RUN apk add --no-cache libc6-compat
+# ---------- deps ----------
+FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 
-# 复制包管理文件
+# Optional registry/proxy for reliability in CI (set via build-args)
+ARG NPM_REGISTRY=https://registry.npmjs.org
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ENV npm_config_registry=$NPM_REGISTRY \
+    http_proxy=$HTTP_PROXY https_proxy=$HTTPS_PROXY no_proxy=$NO_PROXY \
+    npm_config_fetch_timeout=600000 npm_config_fetch_retries=5 npm_config_progress=false
+
+# Toolchain for native deps (e.g., sharp/next-swc fallback)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates python3 make g++ git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy lockfiles only for deterministic install
 COPY package.json package-lock.json* ./
 COPY .npmrc* ./
 
-# 安装依赖
-RUN npm ci --omit=dev --ignore-scripts
+# Full install with scripts enabled to fetch prebuilt binaries
+RUN npm ci --no-audit --no-fund
 
-# 阶段 2: 构建应用
-FROM node:22-alpine AS builder
+# ---------- build ----------
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
-
-# 复制依赖
+ENV NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# 设置环境变量
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
-
-# 构建应用
 RUN npm run build
 
-# 阶段 3: 运行时镜像
-FROM node:22-alpine AS runner
+# ---------- run ----------
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 
-# 创建非 root 用户
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user
+RUN useradd -m -u 1001 nextjs
 
-# 设置环境变量
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-# 复制构建产物
-COPY --from=builder /app/public ./public
+# Copy only runtime artifacts from standalone output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# 设置文件权限
 USER nextjs
-
-# 暴露端口
 EXPOSE 3000
 
-# 健康检查 - 使用 wget 替代 curl (alpine 默认包含)
+# Healthcheck using Node (no extra packages)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD node -e "require('http').get('http://127.0.0.1:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
-# 启动应用
 CMD ["node", "server.js"]
