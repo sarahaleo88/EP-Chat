@@ -154,7 +154,9 @@ export class ModelCapabilityManager {
             return data as ModelMetadata;
           } else if (endpoint === '/models') {
             const model = data.data?.find((m: any) => m.id === modelName);
-            if (model) return model as ModelMetadata;
+            if (model) {
+              return model as ModelMetadata;
+            }
           } else if (endpoint === '/info') {
             return {
               id: modelName,
@@ -275,7 +277,9 @@ export class ModelCapabilityManager {
    */
   private getEnvNumber(key: string, defaultValue: number): number {
     const value = process.env[key];
-    if (!value) return defaultValue;
+    if (!value) {
+      return defaultValue;
+    }
     const parsed = parseFloat(value);
     return isNaN(parsed) ? defaultValue : parsed;
   }

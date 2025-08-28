@@ -3,6 +3,8 @@
  * 集成能力协商、预算控制和续写功能
  */
 
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL ?? "deepseek-v3.1";
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getDeepSeekClient } from '@/lib/deepseek';
 import { getCapabilityManager } from '@/lib/model-capabilities';
@@ -30,20 +32,24 @@ interface GenerateRequest {
  * @returns 响应
  */
 export async function POST(request: NextRequest) {
+  let model: DeepSeekModel = DEFAULT_MODEL as DeepSeekModel; // Default model, will be overridden by request body
+
   try {
     // 解析请求体
     const body: GenerateRequest = await request.json();
     const {
       prompt,
-      model = 'deepseek-v3.1',
+      model: requestModel = DEFAULT_MODEL as DeepSeekModel,
       stream = true,
       temperature = 0.7,
-      maxTokens = 4000,
+      maxTokens = 128000, // 128k tokens
       userId = 'anonymous',
       requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       enableBudgetGuard = process.env.EP_LONG_OUTPUT_GUARD === 'on',
       enableContinuation = process.env.EP_AUTO_CONTINUATION === 'true',
     } = body;
+
+    model = requestModel as DeepSeekModel; // Set the model from request
 
     // 验证请求参数
     if (!prompt || typeof prompt !== 'string') {

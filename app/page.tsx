@@ -299,7 +299,9 @@ export default function HomePage() {
   const getEnhancedClient = useCallback(() => {
     if (!enhancedClientRef.current && apiKey.trim()) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Enhanced Client] Creating enhanced client for model:', selectedModel);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Enhanced Client] Creating enhanced client for model:', selectedModel);
+        }
       }
       enhancedClientRef.current = createEnhancedDeepSeekClient(
         apiKey.trim(),
@@ -588,13 +590,17 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
                     },
                     onContinuation: (context) => {
                       if (process.env.NODE_ENV === 'development') {
-                        console.log('[Enhanced Client] Continuation:', context);
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log('[Enhanced Client] Continuation:', context);
+                        }
                       }
                       // 可以在这里显示续写提示
                     },
                     onComplete: (metadata) => {
                       if (process.env.NODE_ENV === 'development') {
-                        console.log('[Enhanced Client] Completed:', metadata);
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log('[Enhanced Client] Completed:', metadata);
+                        }
                       }
                       setMessages(prev =>
                         prev.map(msg =>
@@ -770,6 +776,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
     activeButtonId,
     quickButtons,
     getOptimizedClient,
+    getEnhancedClient,
   ]);
 
   // 防抖处理的发送函数 - 优化为200ms提升响应速度
@@ -842,7 +849,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
       }
       return prev;
     });
-  }, [currentAbortController, getOptimizedClient]);
+  }, [currentAbortController, getOptimizedClient, getEnhancedClient]);
 
   /**
    * 处理键盘事件

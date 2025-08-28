@@ -609,7 +609,9 @@ export class OptimizedDeepSeekClient {
     const modelTimeout = getModelTimeout(model, 'initial');
     // Log timeout configuration in development only
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] Using ${modelTimeout}ms timeout for ${model} initial connection`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API] Using ${modelTimeout}ms timeout for ${model} initial connection`);
+      }
     }
     const { temperature = 0.7, max_tokens = 2048, top_p = 0.95 } = options;
 
@@ -825,7 +827,9 @@ export class OptimizedDeepSeekClient {
     const modelTimeout = getModelTimeout(model, 'initial');
     // Log timeout configuration in development only
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] Using ${modelTimeout}ms timeout for ${model} streaming connection`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API] Using ${modelTimeout}ms timeout for ${model} streaming connection`);
+      }
     }
 
     // Start performance tracking

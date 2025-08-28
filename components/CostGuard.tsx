@@ -61,15 +61,21 @@ export default function CostGuard({
   const [showDetails, setShowDetails] = useState(false);
   const [adjustedTokens, setAdjustedTokens] = useState(recommendations?.recommendedOutputTokens || 0);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   const hasViolations = !budgetStatus.withinRequestLimit || 
                        !budgetStatus.withinUserLimit || 
                        !budgetStatus.withinSiteLimit;
 
   const getViolationLevel = () => {
-    if (!budgetStatus.withinRequestLimit) return 'critical';
-    if (!budgetStatus.withinUserLimit || !budgetStatus.withinSiteLimit) return 'warning';
+    if (!budgetStatus.withinRequestLimit) {
+      return 'critical';
+    }
+    if (!budgetStatus.withinUserLimit || !budgetStatus.withinSiteLimit) {
+      return 'warning';
+    }
     return 'info';
   };
 

@@ -29,9 +29,15 @@ export async function GET(request: NextRequest) {
     const endDateParam = searchParams.get('endDate');
     const userIdParam = searchParams.get('userId');
 
-    if (startDateParam) query.startDate = startDateParam;
-    if (endDateParam) query.endDate = endDateParam;
-    if (userIdParam) query.userId = userIdParam;
+    if (startDateParam) {
+      query.startDate = startDateParam;
+    }
+    if (endDateParam) {
+      query.endDate = endDateParam;
+    }
+    if (userIdParam) {
+      query.userId = userIdParam;
+    }
 
     // 解析时间范围
     const now = Date.now();

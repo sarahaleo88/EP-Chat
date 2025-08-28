@@ -354,7 +354,9 @@ export class BudgetAwareContinuationEngine {
    */
   private getEnvNumber(key: string, defaultValue: number): number {
     const value = process.env[key];
-    if (!value) return defaultValue;
+    if (!value) {
+      return defaultValue;
+    }
     const parsed = parseFloat(value);
     return isNaN(parsed) ? defaultValue : parsed;
   }

@@ -208,7 +208,9 @@ export class BudgetGuardian {
     capabilities: ModelCapabilities
   ): void {
     const record = this.usageRecords.get(requestId);
-    if (!record) return;
+    if (!record) {
+      return;
+    }
 
     const actual = this.estimateCost(
       capabilities,
@@ -263,7 +265,7 @@ export class BudgetGuardian {
   getUsageRecords(userId?: string, limit: number = 100): UsageRecord[] {
     const records = Array.from(this.usageRecords.values());
     
-    let filtered = userId 
+    const filtered = userId 
       ? records.filter(r => r.userId === userId)
       : records;
 
@@ -379,7 +381,9 @@ export class BudgetGuardian {
    */
   private getEnvNumber(key: string, defaultValue: number): number {
     const value = process.env[key];
-    if (!value) return defaultValue;
+    if (!value) {
+      return defaultValue;
+    }
     const parsed = parseFloat(value);
     return isNaN(parsed) ? defaultValue : parsed;
   }

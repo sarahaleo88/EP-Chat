@@ -25,12 +25,16 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "autoprefixer": "^10.4.16",
     "clsx": "^2.1.1",
     "next": "^15.0.0",
+    "next-pwa": "^5.6.0",
+    "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sass": "^1.89.2",
     "tailwind-merge": "^2.0.0",
+    "tailwindcss": "^3.3.5",
     "prom-client": "^15.1.0"
   },
   "devDependencies": {
@@ -48,7 +52,6 @@
     "husky": "^8.0.3",
     "jsdom": "^26.1.0",
     "lint-staged": "^15.0.0",
-    "next-pwa": "^5.6.0",
     "postcss": "^8.4.31",
     "prettier": "^3.0.3",
     "tailwindcss": "^3.3.5",

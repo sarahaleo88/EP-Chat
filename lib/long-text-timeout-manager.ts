@@ -151,15 +151,15 @@ export class LongTextTimeoutManager {
 
     const resetTimeout = () => {
       if (timeoutId) {
-        clearTimeout(timeoutId);
+        globalThis.clearTimeout(timeoutId);
       }
       context.lastChunkTime = Date.now();
       setupTimeout();
     };
 
-    const clearTimeout = () => {
+    const clearTimeoutHandler = () => {
       if (timeoutId) {
-        clearTimeout(timeoutId);
+        globalThis.clearTimeout(timeoutId);
         this.activeTimeouts.delete(requestId);
       }
     };
@@ -169,7 +169,7 @@ export class LongTextTimeoutManager {
 
     // 返回重置和清除函数
     return () => {
-      clearTimeout();
+      clearTimeoutHandler();
     };
   }
 
@@ -258,7 +258,7 @@ export class LongTextTimeoutManager {
   cleanup(): void {
     // 清除所有活动的超时
     for (const timeoutId of this.activeTimeouts.values()) {
-      clearTimeout(timeoutId);
+      globalThis.clearTimeout(timeoutId);
     }
     this.activeTimeouts.clear();
   }

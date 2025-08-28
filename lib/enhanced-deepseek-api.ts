@@ -105,7 +105,7 @@ export class EnhancedDeepSeekClient {
     };
 
     const modelConfig = baseTimeouts[model as keyof typeof baseTimeouts] || baseTimeouts['deepseek-chat'];
-    let timeout = modelConfig[phase];
+    const timeout = modelConfig[phase];
 
     // 应用长文本守护倍数
     const longOutputMultiplier = process.env.EP_LONG_OUTPUT_GUARD === 'off' ? 1 : 1.5;
@@ -136,7 +136,7 @@ export class EnhancedDeepSeekClient {
 
     let totalContent = '';
     let totalTokens = 0;
-    let segmentIndex = 0;
+    const segmentIndex = 0;
     let continuationUsed = false;
     let lastFinishReason = '';
 
@@ -145,7 +145,9 @@ export class EnhancedDeepSeekClient {
       const budget = this.tokenManager.calculateBudget(messages, maxTokens);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Enhanced API] Token budget:', budget);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Enhanced API] Token budget:', budget);
+        }
       }
 
       // 如果需要截断，先处理消息历史
@@ -155,7 +157,9 @@ export class EnhancedDeepSeekClient {
         processedMessages = this.tokenManager.truncateMessages(messages, targetTokens);
 
         if (process.env.NODE_ENV === 'development') {
-          console.log(`[Enhanced API] Truncated messages: ${messages.length} -> ${processedMessages.length}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[Enhanced API] Truncated messages: ${messages.length} -> ${processedMessages.length}`);
+          }
         }
       }
 
