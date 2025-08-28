@@ -16,7 +16,8 @@ export type Mode = 'full' | 'minimal';
 export type DeepSeekModel =
   | 'deepseek-chat'
   | 'deepseek-coder'
-  | 'deepseek-reasoner';
+  | 'deepseek-reasoner'
+  | 'deepseek-v3.1';
 
 // 模板配置接口
 export interface TemplateConfig {

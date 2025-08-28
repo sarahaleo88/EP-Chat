@@ -4,6 +4,7 @@
  */
 
 import { ApiErrorType, OptimizedApiError } from './optimized-deepseek-api';
+import { EnhancedApiError } from './enhanced-deepseek-api';
 
 export interface UserFriendlyError {
   title: string;
@@ -21,9 +22,9 @@ export function formatUserFriendlyError(
   error: unknown,
   model?: string
 ): UserFriendlyError {
-  // Handle OptimizedApiError
-  if (error instanceof Error && (error as OptimizedApiError).type) {
-    const apiError = error as OptimizedApiError;
+  // Handle EnhancedApiError and OptimizedApiError
+  if (error instanceof Error && ((error as OptimizedApiError).type || (error as EnhancedApiError).type)) {
+    const apiError = error as OptimizedApiError | EnhancedApiError;
 
     switch (apiError.type) {
       case ApiErrorType.NETWORK:
@@ -143,12 +144,36 @@ export function formatUserFriendlyError(
       };
     }
 
-    // Timeout errors
+    // Timeout errors - enhanced handling for streaming timeouts
     if (error.message.includes('timeout') || error.message.includes('abort')) {
+      // Special handling for long text generation timeout
+      if (error.message.includes('长文本生成超时')) {
+        return {
+          title: '长文本生成超时',
+          message: '生成长文本时服务器响应中断，这通常发生在生成特别长的内容时。',
+          suggestion: '建议：1) 将问题分解为多个较短的部分；2) 使用"继续"功能分段获取内容；3) 或者稍后重试。',
+          retryable: true,
+          icon: '📝',
+          actionLabel: '重试',
+        };
+      }
+
+      // Special handling for streaming timeout messages
+      if (error.message.includes('Streaming request timeout')) {
+        return {
+          title: '流式响应超时',
+          message: '服务器在流式响应过程中超时，可能是网络不稳定或内容生成时间过长。',
+          suggestion: '请尝试提出更简洁的问题，或将复杂问题分解为多个简单问题。对于长文本生成，建议使用分段方式。',
+          retryable: true,
+          icon: '⏱️',
+          actionLabel: '重试',
+        };
+      }
+
       return {
         title: '连接超时',
-        message: '请求处理时间过长。',
-        suggestion: '请稍后重试，或尝试缩短您的输入内容。',
+        message: '请求处理时间过长，可能是网络延迟或服务器繁忙。',
+        suggestion: '请稍后重试，或尝试缩短您的输入内容。如果问题持续，请检查网络连接。',
         retryable: true,
         icon: '⏱️',
         actionLabel: '重试',
@@ -169,7 +194,7 @@ export function formatUserFriendlyError(
 
     return {
       title: '操作失败',
-      message: error.message,
+      message: '系统遇到了一个问题，无法完成您的请求。',
       suggestion: '请重试，如果问题持续存在，请联系技术支持。',
       retryable: true,
       icon: '⚠️',

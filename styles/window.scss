@@ -123,12 +123,15 @@
     left: -100vw !important;        /* Hidden by default */
     width: 80vw !important;         /* 80% width for better UX */
     height: 100vh !important;       /* Full height */
+    height: 100dvh !important;      /* Dynamic viewport height for mobile browsers */
     z-index: 1000;                  /* Above other content */
     border-radius: 0;               /* No rounded corners on mobile */
     margin: 0;                      /* Reset any margins */
 
-    /* Smooth slide animation */
-    transition: left 0.3s ease-in-out;
+    /* Smooth slide animation with hardware acceleration */
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(-100%);   /* Use transform for better performance */
+    will-change: transform;         /* Optimize for animations */
 
     /* Ensure visibility on mobile */
     display: flex !important;       /* Override any display: none rules */
@@ -157,6 +160,7 @@
     /* Show sidebar when mobile-open class is applied */
     &.mobile-open {
       left: 0 !important;
+      transform: translateX(0);     /* Slide in using transform */
     }
   }
 

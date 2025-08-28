@@ -500,6 +500,43 @@ body {
   .mobile-text-sm {
     font-size: 0.875rem;
   }
+
+  /* 移动端顶部栏优化 */
+  .chat-header {
+    padding: 8px 12px !important;
+    min-height: 50px;
+    flex-wrap: nowrap;
+  }
+
+  .mobile-hamburger-menu {
+    min-width: 40px;
+    min-height: 40px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  /* 确保顶部栏元素不会溢出 */
+  .chat-header > * {
+    flex-shrink: 0;
+  }
+
+  .chat-header .model-selector {
+    max-width: calc(100vw - 120px);
+    overflow: hidden;
+  }
+
+  /* 移动端侧边栏遮罩层优化 */
+  .mobile-sidebar-overlay {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* 防止移动端滚动穿透 */
+  body.mobile-sidebar-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
 }
 
 /* 打印样式 */

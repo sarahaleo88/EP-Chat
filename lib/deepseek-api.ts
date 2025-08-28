@@ -141,6 +141,7 @@ export function createDeepSeekClient(apiKey: string): DeepSeekApiClient {
 
 /**
  * 格式化 API 错误消息
+ * @deprecated 请使用 formatUserFriendlyError 替代，它提供更好的用户体验
  * @param error - 错误对象
  * @returns 用户友好的错误消息
  */

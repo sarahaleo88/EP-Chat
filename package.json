@@ -14,7 +14,13 @@
     "type-check": "tsc --noEmit",
     "prepare": "husky install",
     "performance-test": "ts-node scripts/performance-test.ts",
-    "performance-eval": "npm run performance-test"
+    "performance-eval": "npm run performance-test",
+    "stress-test": "node scripts/long-text-stress-test.js",
+    "stress-test:full": "DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY node scripts/long-text-stress-test.js",
+    "test:v3.1": "node scripts/v3.1-upgrade-test.js",
+    "test:v3.1:full": "DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY node scripts/v3.1-upgrade-test.js",
+    "deploy:prod": "bash scripts/deploy-production.sh",
+    "rollback": "bash scripts/rollback.sh"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -24,7 +30,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sass": "^1.89.2",
-    "tailwind-merge": "^2.0.0"
+    "tailwind-merge": "^2.0.0",
+    "prom-client": "^15.1.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
