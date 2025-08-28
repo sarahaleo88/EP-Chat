@@ -63,13 +63,13 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: your-dockerhub-username/ep-enhanced-prompt
+        images: sarahaleo88/ep-chat
         tags: |
           type=ref,event=tag
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: 🐳 Build and push Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         platforms: linux/amd64,linux/arm64
@@ -115,7 +115,7 @@ jobs:
         echo "checksum=$(cat checksums.txt)" >> $GITHUB_OUTPUT
 
     - name: ✍️ Sign release with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v2.1.1
+      uses: sigstore/gh-action-sigstore-python@v3.0.1
       with:
         inputs: ./ep-chat-${{ github.ref_name }}.tar.gz ./checksums.txt
 
@@ -160,43 +160,16 @@ jobs:
         # Add commit messages since last tag
         git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")..HEAD >> release_notes.md
 
-    - name: 🎉 Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: 🎉 Create GitHub Release with Assets
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: EP Chat ${{ steps.release_notes.outputs.version }}
+        tag_name: ${{ github.ref_name }}
+        name: EP Chat ${{ steps.release_notes.outputs.version }}
         body_path: release_notes.md
         draft: false
         prerelease: false
-
-    - name: 📤 Upload release assets
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./ep-chat-${{ github.ref_name }}.tar.gz
-        asset_name: ep-chat-${{ github.ref_name }}.tar.gz
-        asset_content_type: application/gzip
-
-    - name: 📤 Upload checksums
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./checksums.txt
-        asset_name: checksums.txt
-        asset_content_type: text/plain
-
-    - name: 📤 Upload SBOM
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./sbom.json
-        asset_name: sbom.json
-        asset_content_type: application/json
+        files: |
+          ep-chat-${{ github.ref_name }}.tar.gz
+          checksums.txt
+          sbom.json
+          *.sigstore.json

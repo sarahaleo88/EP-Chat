@@ -53,9 +53,9 @@ USER nextjs
 # 暴露端口
 EXPOSE 3000
 
-# 健康检查
+# 健康检查 - 使用 wget 替代 curl (alpine 默认包含)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/generate || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # 启动应用
 CMD ["node", "server.js"]
