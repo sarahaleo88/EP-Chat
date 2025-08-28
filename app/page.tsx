@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { IconButton } from './components/ui/button';
 import { Card, Popover, CenteredModal } from './components/ui/ui-lib';
+import SecureMessageRenderer, { useSanitizedInput } from './components/SecureMessageRenderer';
 import {
   createDeepSeekClient,
   convertToDeepSeekMessages,
@@ -473,16 +474,26 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
     [isLoading, isSending, selectedModel, apiKey, messages, getOptimizedClient]
   );
 
+  // 安全的用户输入清理
+  const sanitizedUserInput = useSanitizedInput(userInput);
+
   // 增强版发送函数 - 支持条件增强链路
   const handleSend = useCallback(async () => {
-    if (!userInput.trim() || isLoading || isSending) {return;}
+    const trimmedInput = sanitizedUserInput.trim();
+    if (!trimmedInput || isLoading || isSending) {return;}
+
+    // 输入长度验证
+    if (trimmedInput.length > 50000) { // 50K字符限制
+      setCurrentError('输入内容过长，请控制在50,000字符以内');
+      return;
+    }
 
     const activeButton = quickButtons.find(btn => btn.id === activeButtonId);
 
     try {
-      let processedInput = userInput.trim();
+      let processedInput = trimmedInput;
       let modelToUse = selectedModel;
-      let displayContent = userInput.trim(); // 用于显示的用户消息内容
+      let displayContent = trimmedInput; // 用于显示的用户消息内容
 
       // 条件增强处理
       if (activeButton && activeButton.enabled) {
@@ -767,7 +778,8 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
       setActiveButtonId(null);
     }
   }, [
-    userInput,
+    sanitizedUserInput,
+    userInput, // 保留原始输入用于条件增强
     isLoading,
     isSending,
     selectedModel,
@@ -1723,15 +1735,11 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
                             : 'none',
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: '14px',
-                          lineHeight: '1.5',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        {message.content}
-                      </div>
+                      <SecureMessageRenderer
+                        content={message.content}
+                        isStreaming={message.isStreaming}
+                        className="text-sm leading-relaxed whitespace-pre-wrap"
+                      />
 
                       {message.type === 'assistant' && (
                         <div

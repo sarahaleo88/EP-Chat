@@ -73,10 +73,10 @@ const nextConfig = {
   },
   // Docker 部署配置
   output: 'standalone',
-  // 环境变量配置
-  env: {
-    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
-  },
+  // 环境变量配置 - API密钥不暴露给客户端
+  // env: {
+  //   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY, // 已移除：防止API密钥泄露
+  // },
   // 静态资源优化
   images: {
     formats: ['image/webp', 'image/avif'],
@@ -90,7 +90,7 @@ const nextConfig = {
   async redirects() {
     return [];
   },
-  // 头部配置
+  // 安全头部配置
   async headers() {
     return [
       {
@@ -107,6 +107,18 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.deepseek.com;",
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },

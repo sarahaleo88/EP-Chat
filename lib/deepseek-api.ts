@@ -3,6 +3,8 @@
  * 处理与 DeepSeek API 的通信
  */
 
+import { estimateTokens } from './utils';
+
 export interface DeepSeekMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -192,21 +194,6 @@ export function convertToDeepSeekMessages(
   }));
 }
 
-/**
- * 估算消息的 token 数量（粗略估算）
- * @param text - 文本内容
- * @returns 估算的 token 数量
- */
-export function estimateTokens(text: string): number {
-  // 粗略估算：中文字符约 1.5 tokens，英文单词约 1.3 tokens
-  const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-  const englishWords = text
-    .replace(/[\u4e00-\u9fff]/g, '')
-    .split(/\s+/)
-    .filter(word => word.length > 0).length;
-
-  return Math.ceil(chineseChars * 1.5 + englishWords * 1.3);
-}
 
 /**
  * 检查消息历史是否超过 token 限制

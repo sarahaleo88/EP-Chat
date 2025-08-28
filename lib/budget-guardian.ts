@@ -59,6 +59,8 @@ export class BudgetGuardian {
   private siteSpending: { hourlyUSD: number; lastReset: number } = { hourlyUSD: 0, lastReset: Date.now() };
   private usageRecords: Map<string, UsageRecord> = new Map();
   private readonly limits: BudgetLimits;
+  private cleanupTimer: NodeJS.Timeout | null = null;
+  private readonly maxRecords: number;
 
   constructor() {
     this.limits = {
@@ -66,6 +68,9 @@ export class BudgetGuardian {
       userDailyMaxUSD: this.getEnvNumber('BUDGET_USER_DAILY_USD', 2.50),
       siteHourlyMaxUSD: this.getEnvNumber('BUDGET_SITE_HOURLY_USD', 8.00),
     };
+    
+    // 设置最大记录数限制
+    this.maxRecords = this.getEnvNumber('BUDGET_MAX_RECORDS', 10000);
 
     // 启动定期清理
     this.startPeriodicCleanup();
@@ -80,6 +85,11 @@ export class BudgetGuardian {
     outputTokens: number,
     reasoningTokens: number = 0
   ): CostEstimate {
+    // 输入验证
+    if (inputTokens < 0 || outputTokens < 0 || reasoningTokens < 0) {
+      throw new Error('Token数量不能为负数');
+    }
+    
     const inputCost = (inputTokens / 1000) * capabilities.pricing.inputPer1K;
     const outputCost = (outputTokens / 1000) * capabilities.pricing.outputPer1K;
     const reasoningCost = (reasoningTokens / 1000) * capabilities.pricing.reasoningPer1K;
@@ -363,17 +373,107 @@ export class BudgetGuardian {
    * 启动定期清理
    */
   private startPeriodicCleanup(): void {
-    setInterval(() => {
-      const now = Date.now();
-      const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+    // 清除之前的定时器
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+    
+    this.cleanupTimer = setInterval(() => {
+      this.performCleanup();
+    }, 30 * 60 * 1000); // 每30分钟清理一次
+  }
 
-      // 清理过期的使用记录
-      for (const [requestId, record] of this.usageRecords.entries()) {
-        if (now - record.timestamp > oneWeekMs) {
-          this.usageRecords.delete(requestId);
-        }
+  /**
+   * 执行内存清理
+   */
+  private performCleanup(): void {
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const oneWeekMs = 7 * oneDayMs;
+    
+    // 清理过期的使用记录
+    let deletedRecords = 0;
+    for (const [requestId, record] of this.usageRecords.entries()) {
+      if (now - record.timestamp > oneWeekMs) {
+        this.usageRecords.delete(requestId);
+        deletedRecords++;
       }
-    }, 60 * 60 * 1000); // 每小时清理一次
+    }
+    
+    // 清理过期的用户消费记录
+    let deletedUsers = 0;
+    for (const [userId, spending] of this.userSpending.entries()) {
+      if (now - spending.lastReset > oneDayMs) {
+        this.userSpending.delete(userId);
+        deletedUsers++;
+      }
+    }
+    
+    // 重置站点每小时消费（如果超过1小时）
+    if (now - this.siteSpending.lastReset > 60 * 60 * 1000) {
+      this.siteSpending = { hourlyUSD: 0, lastReset: now };
+    }
+    
+    // 如果记录过多，强制清理最旧的记录
+    if (this.usageRecords.size > this.maxRecords) {
+      const recordsArray = Array.from(this.usageRecords.entries())
+        .sort(([,a], [,b]) => a.timestamp - b.timestamp);
+      
+      const toDelete = recordsArray.slice(0, recordsArray.length - this.maxRecords);
+      toDelete.forEach(([requestId]) => {
+        this.usageRecords.delete(requestId);
+        deletedRecords++;
+      });
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[BudgetGuardian] 清理完成: 删除${deletedRecords}条记录, ${deletedUsers}个用户`);
+    }
+  }
+  
+  /**
+   * 获取内存使用统计
+   */
+  getMemoryStats(): {
+    totalRecords: number;
+    userRecords: number;
+    estimatedMemoryKB: number;
+  } {
+    const totalRecords = this.usageRecords.size;
+    const userRecords = this.userSpending.size;
+    
+    // 估算内存使用（粗略计算）
+    const avgRecordSize = 200; // 字节
+    const avgUserSize = 100; // 字节
+    const estimatedMemoryKB = Math.round(
+      (totalRecords * avgRecordSize + userRecords * avgUserSize) / 1024
+    );
+    
+    return {
+      totalRecords,
+      userRecords,
+      estimatedMemoryKB
+    };
+  }
+  
+  /**
+   * 手动触发清理
+   */
+  forceCleanup(): void {
+    this.performCleanup();
+  }
+  
+  /**
+   * 销毁实例，清理资源
+   */
+  destroy(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    
+    this.usageRecords.clear();
+    this.userSpending.clear();
   }
 
   /**

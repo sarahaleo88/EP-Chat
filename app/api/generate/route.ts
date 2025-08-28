@@ -11,6 +11,7 @@ import { getCapabilityManager } from '@/lib/model-capabilities';
 import { getBudgetGuardian } from '@/lib/budget-guardian';
 import { BudgetAwareContinuationEngine } from '@/lib/budget-aware-continuation';
 import { formatUserFriendlyError } from '@/lib/error-handler';
+import { estimateTokens } from '@/lib/utils';
 import type { DeepSeekModel } from '@/lib/types';
 
 // 请求体接口
@@ -320,12 +321,3 @@ export async function GET() {
   }
 }
 
-/**
- * 估算文本的token数量（简化版本）
- */
-function estimateTokens(text: string): number {
-  // 简化估算：中文约1.5字符/token，英文约4字符/token
-  const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-  const otherChars = text.length - chineseChars;
-  return Math.ceil(chineseChars / 1.5 + otherChars / 4);
-}
