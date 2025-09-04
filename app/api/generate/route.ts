@@ -13,6 +13,9 @@ import { BudgetAwareContinuationEngine } from '@/lib/budget-aware-continuation';
 import { formatUserFriendlyError } from '@/lib/error-handler';
 import { estimateTokens } from '@/lib/utils';
 import type { DeepSeekModel } from '@/lib/types';
+import { validateDeepSeekModel, safeValidateDeepSeekModel } from '@/lib/types';
+import { getApiKeyFromSession } from '@/lib/session-manager';
+import { validateCSRFToken } from '@/lib/csrf';
 
 // 请求体接口
 interface GenerateRequest {
@@ -34,8 +37,11 @@ interface GenerateRequest {
  */
 export async function POST(request: NextRequest) {
   let model: DeepSeekModel = DEFAULT_MODEL as DeepSeekModel; // Default model, will be overridden by request body
+  let validatedModel: DeepSeekModel = model; // Will be set after validation
 
   try {
+    // CSRF protection is handled by middleware, but we can add additional validation here if needed
+    // The middleware will have already validated the CSRF token for POST requests
     // 解析请求体
     const body: GenerateRequest = await request.json();
     const {
@@ -67,23 +73,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证模型类型 - 支持v3.1
-    const validModels: DeepSeekModel[] = [
-      'deepseek-chat',
-      'deepseek-coder',
-      'deepseek-reasoner',
-      'deepseek-v3.1',
-    ];
-    if (!validModels.includes(model)) {
-      return NextResponse.json({ error: '无效的模型类型' }, { status: 400 });
+    // 验证模型类型 - 使用 Zod 运行时验证
+    const modelValidation = safeValidateDeepSeekModel(model);
+    if (!modelValidation.success) {
+      return NextResponse.json(
+        {
+          error: '无效的模型类型',
+          details: modelValidation.error.issues.map(e => e.message).join(', ')
+        },
+        { status: 400 }
+      );
+    }
+    validatedModel = modelValidation.data;
+
+    // 获取API密钥 - 优先从会话获取，回退到环境变量
+    let apiKey = getApiKeyFromSession(request);
+
+    // 如果会话中没有API密钥，回退到环境变量（向后兼容）
+    if (!apiKey) {
+      apiKey = process.env.DEEPSEEK_API_KEY || null;
     }
 
-    // 获取API密钥
-    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API密钥未配置' },
-        { status: 500 }
+        { error: 'API密钥未配置。请在设置中配置您的DeepSeek API密钥。' },
+        { status: 401 }
       );
     }
 
@@ -92,7 +106,7 @@ export async function POST(request: NextRequest) {
     const budgetGuardian = getBudgetGuardian();
 
     // 获取模型能力
-    const capabilities = await capabilityManager.getCapabilities(model);
+    const capabilities = await capabilityManager.getCapabilities(validatedModel);
 
     // 估算输入token数
     const inputTokens = estimateTokens(prompt);
@@ -141,7 +155,7 @@ export async function POST(request: NextRequest) {
     const client = getDeepSeekClient();
 
     // 发送请求到 DeepSeek API
-    const response = await client.sendPrompt(prompt, model, {
+    const response = await client.sendPrompt(prompt, validatedModel, {
       stream,
       temperature,
       maxTokens,
@@ -192,7 +206,7 @@ export async function POST(request: NextRequest) {
                 console.error('流处理错误:', error);
               }
               // 使用用户友好的错误格式化
-              const friendlyError = formatUserFriendlyError(error, model);
+              const friendlyError = formatUserFriendlyError(error, validatedModel);
               const errorData = {
                 error: {
                   message: `${friendlyError.title}: ${friendlyError.message}`,
@@ -229,7 +243,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: content,
-        model,
+        model: validatedModel,
         usage: {
           prompt_tokens: Math.ceil(prompt.length / 4), // 粗略估算
           completion_tokens: Math.ceil(content.length / 4),
@@ -243,7 +257,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 使用用户友好的错误格式化
-    const friendlyError = formatUserFriendlyError(error, model);
+    const friendlyError = formatUserFriendlyError(error, validatedModel);
 
     // 根据错误类型返回适当的HTTP状态码
     let statusCode = 500;
@@ -286,17 +300,22 @@ export async function OPTIONS() {
  * GET 请求处理器（健康检查）
  * @returns 响应
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // 检查环境变量
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    // 检查API密钥 - 优先从会话获取，回退到环境变量
+    let apiKey = getApiKeyFromSession(request);
+
+    if (!apiKey) {
+      apiKey = process.env.DEEPSEEK_API_KEY || null;
+    }
+
     if (!apiKey) {
       return NextResponse.json(
         {
           status: 'error',
-          message: '缺少 DEEPSEEK_API_KEY 环境变量',
+          message: 'API密钥未配置。请在设置中配置您的DeepSeek API密钥。',
         },
-        { status: 500 }
+        { status: 401 }
       );
     }
 

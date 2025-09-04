@@ -3,76 +3,89 @@
  * 定义了整个应用的数据结构和接口
  */
 
-// 支持的语言类型
-export type Language = 'zh' | 'en';
+import { z } from 'zod';
 
-// 支持的场景类型
-export type Scenario = 'code' | 'web';
+// Zod schemas for runtime validation
+export const LanguageSchema = z.enum(['zh', 'en']);
+export const ScenarioSchema = z.enum(['code', 'web']);
+export const ModeSchema = z.enum(['full', 'minimal']);
+export const DeepSeekModelSchema = z.enum([
+  'deepseek-chat',
+  'deepseek-coder',
+  'deepseek-reasoner',
+  'deepseek-v3.1'
+]);
 
-// 支持的模式类型
-export type Mode = 'full' | 'minimal';
+// TypeScript types derived from Zod schemas
+export type Language = z.infer<typeof LanguageSchema>;
+export type Scenario = z.infer<typeof ScenarioSchema>;
+export type Mode = z.infer<typeof ModeSchema>;
+export type DeepSeekModel = z.infer<typeof DeepSeekModelSchema>;
 
-// DeepSeek 模型类型
-export type DeepSeekModel =
-  | 'deepseek-chat'
-  | 'deepseek-coder'
-  | 'deepseek-reasoner'
-  | 'deepseek-v3.1';
+// Zod schema for TemplateConfig
+export const TemplateConfigSchema = z.object({
+  schemaVersion: z.string().min(1, 'Schema version is required'),
+  title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
+  scenario: ScenarioSchema,
+  lang: LanguageSchema,
+  mode: ModeSchema,
+  spec: z.object({
+    tech: z.object({
+      language: z.string().min(1, 'Language is required'),
+      framework: z.string().min(1, 'Framework is required'),
+    }),
+    features: z.array(z.string()).min(1, 'At least one feature is required'),
+    io: z.object({
+      input: z.string().min(1, 'Input description is required'),
+      output: z.string().min(1, 'Output description is required'),
+    }),
+    codeRules: z.array(z.string()),
+  }),
+});
 
-// 模板配置接口
-export interface TemplateConfig {
-  schemaVersion: string;
-  title: string;
-  scenario: Scenario;
-  lang: Language;
-  mode: Mode;
-  spec: {
-    tech: {
-      language: string;
-      framework: string;
-    };
-    features: string[];
-    io: {
-      input: string;
-      output: string;
-    };
-    codeRules: string[];
-  };
-}
+// TypeScript interface derived from Zod schema
+export type TemplateConfig = z.infer<typeof TemplateConfigSchema>;
 
-// EP 提示规范接口
-export interface EpPromptSpec {
-  scenario: Scenario;
-  lang: Language;
-  mode: Mode;
-  template: TemplateConfig;
-  userInput: string;
-  model: DeepSeekModel;
-}
+// Zod schema for EpPromptSpec
+export const EpPromptSpecSchema = z.object({
+  scenario: ScenarioSchema,
+  lang: LanguageSchema,
+  mode: ModeSchema,
+  template: TemplateConfigSchema,
+  userInput: z.string().min(1, 'User input is required').max(10000, 'User input too long'),
+  model: DeepSeekModelSchema,
+});
 
-// API 响应接口
-export interface ApiResponse {
-  success: boolean;
-  data?: string;
-  error?: string;
-  stream?: boolean;
-}
+// Zod schema for ApiResponse
+export const ApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.string().optional(),
+  error: z.string().optional(),
+  stream: z.boolean().optional(),
+});
 
-// 流式响应接口
-export interface StreamResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    delta: {
-      content?: string;
-      role?: string;
-    };
-    finish_reason?: string;
-  }>;
-}
+// TypeScript interfaces derived from Zod schemas
+export type EpPromptSpec = z.infer<typeof EpPromptSpecSchema>;
+export type ApiResponse = z.infer<typeof ApiResponseSchema>;
+
+// Zod schema for StreamResponse
+export const StreamResponseSchema = z.object({
+  id: z.string().min(1, 'ID is required'),
+  object: z.string().min(1, 'Object type is required'),
+  created: z.number().int().positive('Created timestamp must be positive'),
+  model: z.string().min(1, 'Model is required'),
+  choices: z.array(z.object({
+    index: z.number().int().nonnegative('Index must be non-negative'),
+    delta: z.object({
+      content: z.string().optional(),
+      role: z.string().optional(),
+    }),
+    finish_reason: z.string().optional(),
+  })),
+});
+
+// TypeScript interface derived from Zod schema
+export type StreamResponse = z.infer<typeof StreamResponseSchema>;
 
 // 模板注册表接口
 export interface TemplateRegistry {
@@ -153,3 +166,105 @@ export interface I18nTexts {
   zh: Record<string, string>;
   en: Record<string, string>;
 }
+
+// Runtime validation functions
+export const validateDeepSeekModel = (model: unknown): DeepSeekModel => {
+  try {
+    return DeepSeekModelSchema.parse(model);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new EpError(
+        `Invalid DeepSeek model: ${error.issues.map(e => e.message).join(', ')}`,
+        'INVALID_MODEL',
+        { model, errors: error.issues }
+      );
+    }
+    throw error;
+  }
+};
+
+export const validateTemplateConfig = (config: unknown): TemplateConfig => {
+  try {
+    return TemplateConfigSchema.parse(config);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new EpError(
+        `Invalid template configuration: ${error.issues.map(e => e.message).join(', ')}`,
+        'INVALID_TEMPLATE_CONFIG',
+        { config, errors: error.issues }
+      );
+    }
+    throw error;
+  }
+};
+
+export const validateEpPromptSpec = (spec: unknown): EpPromptSpec => {
+  try {
+    return EpPromptSpecSchema.parse(spec);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new EpError(
+        `Invalid prompt specification: ${error.issues.map(e => e.message).join(', ')}`,
+        'INVALID_PROMPT_SPEC',
+        { spec, errors: error.issues }
+      );
+    }
+    throw error;
+  }
+};
+
+export const validateApiResponse = (response: unknown): ApiResponse => {
+  try {
+    return ApiResponseSchema.parse(response);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new EpError(
+        `Invalid API response: ${error.issues.map(e => e.message).join(', ')}`,
+        'INVALID_API_RESPONSE',
+        { response, errors: error.issues }
+      );
+    }
+    throw error;
+  }
+};
+
+export const validateStreamResponse = (response: unknown): StreamResponse => {
+  try {
+    return StreamResponseSchema.parse(response);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new EpError(
+        `Invalid stream response: ${error.issues.map(e => e.message).join(', ')}`,
+        'INVALID_STREAM_RESPONSE',
+        { response, errors: error.issues }
+      );
+    }
+    throw error;
+  }
+};
+
+// Safe validation functions that return validation results instead of throwing
+export const safeValidateDeepSeekModel = (model: unknown): { success: true; data: DeepSeekModel } | { success: false; error: z.ZodError } => {
+  const result = DeepSeekModelSchema.safeParse(model);
+  return result.success ? { success: true, data: result.data } : { success: false, error: result.error };
+};
+
+export const safeValidateTemplateConfig = (config: unknown): { success: true; data: TemplateConfig } | { success: false; error: z.ZodError } => {
+  const result = TemplateConfigSchema.safeParse(config);
+  return result.success ? { success: true, data: result.data } : { success: false, error: result.error };
+};
+
+export const safeValidateEpPromptSpec = (spec: unknown): { success: true; data: EpPromptSpec } | { success: false; error: z.ZodError } => {
+  const result = EpPromptSpecSchema.safeParse(spec);
+  return result.success ? { success: true, data: result.data } : { success: false, error: result.error };
+};
+
+export const safeValidateApiResponse = (response: unknown): { success: true; data: ApiResponse } | { success: false; error: z.ZodError } => {
+  const result = ApiResponseSchema.safeParse(response);
+  return result.success ? { success: true, data: result.data } : { success: false, error: result.error };
+};
+
+export const safeValidateStreamResponse = (response: unknown): { success: true; data: StreamResponse } | { success: false; error: z.ZodError } => {
+  const result = StreamResponseSchema.safeParse(response);
+  return result.success ? { success: true, data: result.data } : { success: false, error: result.error };
+};

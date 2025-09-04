@@ -29,10 +29,11 @@ export default defineConfig({
     // 排除的文件
     exclude: ['node_modules', 'dist', '.next', 'coverage'],
 
-    // 覆盖率配置
+    // 覆盖率配置 - Enhanced for 100% coverage target
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'lcov', 'text-summary'],
+      reportsDirectory: './coverage',
       exclude: [
         'coverage/**',
         'dist/**',
@@ -42,7 +43,29 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.{js,ts}',
         '**/types.ts',
+        'public/**',
+        'scripts/**',
+        '**/*.stories.{js,ts,jsx,tsx}',
       ],
+      include: [
+        'app/**/*.{js,ts,jsx,tsx}',
+        'lib/**/*.{js,ts}',
+        'components/**/*.{js,ts,jsx,tsx}',
+        'middleware.ts',
+      ],
+      // Coverage thresholds for quality gates
+      thresholds: {
+        lines: 95,
+        functions: 95,
+        branches: 90,
+        statements: 95,
+      },
+      // Enable all coverage types
+      all: true,
+      skipFull: false,
+      // Detailed reporting
+      reportOnFailure: true,
+      allowExternal: false,
     },
 
     // 测试超时

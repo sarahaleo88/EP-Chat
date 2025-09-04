@@ -1,6 +1,46 @@
 /**
- * 模板注册表
- * 负责加载、验证和管理 JSON 模板
+ * 模板注册表系统
+ *
+ * 提供高性能的模板管理和缓存系统，包括：
+ *
+ * 🗂️ **模板管理**
+ * - JSON 模板加载和解析
+ * - 模板验证和格式检查
+ * - 场景分类和组织
+ * - 动态模板注册
+ *
+ * ⚡ **性能优化**
+ * - LRU 缓存机制
+ * - 模板预加载
+ * - 访问频率统计
+ * - 内存使用优化
+ *
+ * 🔍 **模板发现**
+ * - 按场景筛选模板
+ * - 模板搜索和匹配
+ * - 标签和分类支持
+ * - 模板推荐算法
+ *
+ * 🛡️ **数据完整性**
+ * - 模板格式验证
+ * - 必填字段检查
+ * - 类型安全保障
+ * - 错误处理机制
+ *
+ * @example
+ * ```typescript
+ * // 获取模板注册表实例
+ * const registry = getTemplateRegistry();
+ *
+ * // 按场景获取模板
+ * const codeTemplates = await registry.getTemplatesByScenario('code');
+ *
+ * // 获取特定模板
+ * const template = await registry.getTemplate('code', 'react-component');
+ *
+ * // 验证模板格式
+ * const validation = registry.validateTemplate(templateData);
+ * ```
  */
 
 import type {
@@ -11,23 +51,63 @@ import type {
   TemplateOption,
 } from './types';
 
-// 模板缓存配置
+/**
+ * 模板缓存配置常量
+ *
+ * 定义模板缓存系统的核心参数：
+ * - MAX_TEMPLATE_CACHE_SIZE: 最大缓存模板数量，平衡内存使用和性能
+ * - TEMPLATE_CACHE_TTL: 缓存生存时间，1小时后自动过期
+ */
 const MAX_TEMPLATE_CACHE_SIZE = 100;
 const TEMPLATE_CACHE_TTL = 3600000; // 1 hour in milliseconds
 
-// 缓存条目接口
+/**
+ * 缓存模板条目接口
+ *
+ * 定义缓存中每个模板条目的数据结构：
+ * - template: 缓存的模板配置对象
+ * - timestamp: 缓存创建时间戳
+ * - accessCount: 访问次数统计
+ * - lastAccessed: 最后访问时间
+ */
 interface CachedTemplate {
+  /** 缓存的模板配置对象 */
   template: TemplateConfig;
+  /** 缓存创建时间戳 */
   timestamp: number;
+  /** 模板访问次数统计 */
   accessCount: number;
+  /** 最后访问时间戳 */
   lastAccessed: number;
 }
 
-// LRU 模板缓存实现
+/**
+ * LRU 模板缓存实现
+ *
+ * 基于最近最少使用 (LRU) 算法的模板缓存系统：
+ * - 自动淘汰最少使用的模板
+ * - 支持 TTL 过期机制
+ * - 访问频率统计
+ * - 内存使用控制
+ *
+ * @example
+ * ```typescript
+ * const cache = new TemplateLRUCache(50);
+ * cache.set('key', template);
+ * const cached = cache.get('key');
+ * ```
+ */
 class TemplateLRUCache {
+  /** 内部缓存存储 */
   private cache = new Map<string, CachedTemplate>();
+  /** 最大缓存大小 */
   private maxSize: number;
 
+  /**
+   * 创建 LRU 缓存实例
+   *
+   * @param maxSize - 最大缓存条目数量
+   */
   constructor(maxSize: number) {
     this.maxSize = maxSize;
   }

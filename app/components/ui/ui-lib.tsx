@@ -194,8 +194,7 @@ export function Modal(props: ModalProps) {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props.onClose]);
 
   const [isMax, setMax] = useState(!!props.defaultMax);
 

@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCapabilityManager } from '@/lib/model-capabilities';
 import { getBudgetGuardian } from '@/lib/budget-guardian';
+import { getApiKeyFromSession } from '@/lib/session-manager';
+import { safeValidateDeepSeekModel, type DeepSeekModel } from '@/lib/types';
 
 interface PreflightRequest {
   model: string;
@@ -74,18 +76,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取API密钥
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    // 验证模型类型 - 使用 Zod 运行时验证
+    const modelValidation = safeValidateDeepSeekModel(model);
+    if (!modelValidation.success) {
+      return NextResponse.json(
+        {
+          error: '无效的模型类型',
+          details: modelValidation.error.issues.map(e => e.message).join(', ')
+        },
+        { status: 400 }
+      );
+    }
+    const validatedModel = modelValidation.data;
+
+    // 获取API密钥 - 优先从会话获取，回退到环境变量
+    let apiKey = getApiKeyFromSession(request);
+
+    if (!apiKey) {
+      apiKey = process.env.DEEPSEEK_API_KEY || null;
+    }
+
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API密钥未配置' },
-        { status: 500 }
+        { error: 'API密钥未配置。请在设置中配置您的DeepSeek API密钥。' },
+        { status: 401 }
       );
     }
 
     // 获取模型能力
     const capabilityManager = getCapabilityManager(apiKey);
-    const capabilities = await capabilityManager.getCapabilities(model);
+    const capabilities = await capabilityManager.getCapabilities(validatedModel);
 
     // 获取预算守护器
     const budgetGuardian = getBudgetGuardian();

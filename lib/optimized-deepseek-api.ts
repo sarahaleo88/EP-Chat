@@ -1,6 +1,45 @@
 /**
  * Optimized DeepSeek API Client
- * Enhanced with timeout, retry logic, caching, and better error handling
+ *
+ * 高性能 DeepSeek API 客户端，提供企业级功能：
+ *
+ * 🚀 **性能优化**
+ * - 智能缓存系统 (LRU + TTL)
+ * - 请求去重和合并
+ * - 并发请求限制
+ * - 渐进式超时策略
+ *
+ * 🛡️ **可靠性保障**
+ * - 指数退避重试机制
+ * - 网络错误自动恢复
+ * - 速率限制处理
+ * - 详细错误分类
+ *
+ * 📊 **监控和分析**
+ * - 性能指标收集
+ * - 请求链路追踪
+ * - 错误统计分析
+ * - 缓存命中率监控
+ *
+ * 🔧 **配置灵活性**
+ * - 模型特定超时配置
+ * - 动态重试策略
+ * - 缓存策略自定义
+ * - 并发控制调优
+ *
+ * @example
+ * ```typescript
+ * const client = new OptimizedDeepSeekClient({
+ *   timeout: 30000,
+ *   maxRetries: 3,
+ *   cacheSize: 100
+ * });
+ *
+ * const response = await client.createChatCompletion({
+ *   model: 'deepseek-chat',
+ *   messages: [{ role: 'user', content: 'Hello!' }]
+ * });
+ * ```
  */
 
 import {
@@ -11,37 +50,87 @@ import {
 import { performanceLogger } from './performance-logger';
 import { longTextTimeoutManager, TimeoutContext } from './long-text-timeout-manager';
 
-// Cache interface
+/**
+ * 缓存条目接口
+ *
+ * 定义 API 响应缓存的数据结构：
+ * - response: 缓存的 API 响应数据
+ * - timestamp: 缓存创建时间戳
+ * - ttl: 缓存生存时间（毫秒）
+ */
 interface CacheEntry {
+  /** 缓存的 API 响应数据 */
   response: DeepSeekApiResponse;
+  /** 缓存创建时间戳 */
   timestamp: number;
+  /** 缓存生存时间（毫秒） */
   ttl: number;
 }
 
-// Error types for better handling
+/**
+ * API 错误类型枚举
+ *
+ * 对不同类型的 API 错误进行分类，便于：
+ * - 错误处理策略选择
+ * - 重试逻辑判断
+ * - 用户友好错误消息
+ * - 监控和统计分析
+ */
 export enum ApiErrorType {
+  /** 网络连接错误 */
   NETWORK = 'network',
+  /** 请求超时错误 */
   TIMEOUT = 'timeout',
+  /** 速率限制错误 */
   RATE_LIMIT = 'rate_limit',
+  /** API 服务错误 */
   API_ERROR = 'api_error',
+  /** API 密钥无效 */
   INVALID_KEY = 'invalid_key',
+  /** 未知错误类型 */
   UNKNOWN = 'unknown',
 }
 
+/**
+ * 优化 API 错误接口
+ *
+ * 扩展标准 Error 接口，添加：
+ * - type: 错误类型分类
+ * - retryable: 是否可重试标志
+ * - statusCode: HTTP 状态码（如果适用）
+ */
 export interface OptimizedApiError extends Error {
+  /** 错误类型分类 */
   type: ApiErrorType;
+  /** 是否可以重试此错误 */
   retryable: boolean;
+  /** HTTP 状态码（如果适用） */
   statusCode?: number;
 }
 
-// Configuration interface
+/**
+ * API 客户端配置接口
+ *
+ * 定义客户端的所有可配置参数：
+ * - 超时和重试设置
+ * - 缓存配置参数
+ * - 并发控制选项
+ * - 性能优化开关
+ */
 interface ApiConfig {
+  /** 请求超时时间（毫秒） */
   timeout: number;
+  /** 最大重试次数 */
   maxRetries: number;
+  /** 重试延迟时间（毫秒） */
   retryDelay: number;
+  /** 缓存最大条目数 */
   cacheSize: number;
+  /** 缓存生存时间（毫秒） */
   cacheTtl: number;
+  /** 最大并发请求数 */
   maxConcurrentRequests: number;
+  /** 是否启用请求优先级 */
   requestPriority: boolean;
 }
 

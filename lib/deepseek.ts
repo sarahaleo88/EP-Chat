@@ -12,18 +12,61 @@ const DEEPSEEK_API_VERSION = 'v1';
 
 /**
  * DeepSeek API 客户端类
+ *
+ * 提供与 DeepSeek API 的完整集成功能，包括：
+ * - 聊天完成 (Chat Completions)
+ * - 流式响应处理
+ * - 错误处理和重试机制
+ * - API 密钥验证
+ * - 请求参数验证
+ *
+ * @example
+ * ```typescript
+ * const client = new DeepSeekClient('sk-your-api-key');
+ * const response = await client.createChatCompletion({
+ *   model: 'deepseek-chat',
+ *   messages: [{ role: 'user', content: 'Hello!' }]
+ * });
+ * ```
  */
 export class DeepSeekClient {
+  /** DeepSeek API 密钥 */
   private apiKey: string;
+  /** API 基础 URL */
   private baseUrl: string;
 
+  /**
+   * 创建 DeepSeek API 客户端实例
+   *
+   * @param apiKey - 可选的 API 密钥，如果未提供则从环境变量 DEEPSEEK_API_KEY 获取
+   * @throws {Error} 当 API 密钥无效或格式不正确时抛出错误
+   *
+   * @example
+   * ```typescript
+   * // 使用环境变量中的 API 密钥
+   * const client = new DeepSeekClient();
+   *
+   * // 使用指定的 API 密钥
+   * const client = new DeepSeekClient('sk-your-api-key');
+   * ```
+   */
   constructor(apiKey?: string) {
     this.apiKey = this.validateApiKeyFormat(apiKey || getRequiredEnv('DEEPSEEK_API_KEY'));
     this.baseUrl = `${DEEPSEEK_API_BASE}/${DEEPSEEK_API_VERSION}`;
   }
 
   /**
-   * 验证API密钥格式
+   * 验证 API 密钥格式
+   *
+   * 确保 API 密钥符合 DeepSeek 的格式要求：
+   * - 必须是非空字符串
+   * - 必须以 'sk-' 开头
+   *
+   * @param apiKey - 要验证的 API 密钥
+   * @returns 验证通过的 API 密钥
+   * @throws {Error} 当密钥格式无效时抛出错误
+   *
+   * @private
    */
   private validateApiKeyFormat(apiKey: string): string {
     if (!apiKey || typeof apiKey !== 'string') {
@@ -37,6 +80,17 @@ export class DeepSeekClient {
 
   /**
    * 验证和清理输入提示
+   *
+   * 对用户输入的提示进行验证和清理：
+   * - 检查提示是否为有效字符串
+   * - 去除首尾空白字符
+   * - 验证长度限制（最大 200,000 字符）
+   *
+   * @param prompt - 用户输入的提示内容
+   * @returns 清理后的提示内容
+   * @throws {Error} 当提示无效、为空或过长时抛出错误
+   *
+   * @private
    */
   private validatePrompt(prompt: string): string {
     if (!prompt || typeof prompt !== 'string') {

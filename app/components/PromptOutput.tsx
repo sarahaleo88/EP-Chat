@@ -40,6 +40,7 @@ export default function PromptOutput({
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   // 自动滚动到底部（流式输出时）
@@ -64,6 +65,15 @@ export default function PromptOutput({
     return () => element.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // 清理timeout，防止内存泄漏
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
   /**
    * 复制内容到剪贴板
    */
@@ -73,7 +83,14 @@ export default function PromptOutput({
     const success = await copyToClipboard(content);
     if (success) {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+
+      // 清除之前的timeout
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+
+      // 设置新的timeout
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     }
   }, [content]);
 
