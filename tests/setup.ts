@@ -4,7 +4,13 @@
  */
 
 import '@testing-library/jest-dom';
-import { vi, afterEach } from 'vitest';
+import { vi, afterEach, beforeEach } from 'vitest';
+import { TextEncoder, TextDecoder } from 'util';
+import { setupTemplateMocks, resetTemplateMocks } from './mocks/templates';
+
+// Set up global variables for Node.js compatibility
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 
 // 模拟环境变量
 process.env.DEEPSEEK_API_KEY = 'test-api-key';
@@ -93,12 +99,37 @@ Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,
 });
 
-// 模拟 clipboard API
+// Enhanced clipboard API mock with proper error handling
+const mockClipboard = {
+  writeText: vi.fn().mockResolvedValue(undefined),
+  readText: vi.fn().mockResolvedValue(''),
+};
+
 Object.defineProperty(navigator, 'clipboard', {
+  value: mockClipboard,
+  writable: true,
+  configurable: true,
+});
+
+// Mock crypto API for CSRF token generation
+Object.defineProperty(global, 'crypto', {
   value: {
-    writeText: vi.fn().mockResolvedValue(undefined),
-    readText: vi.fn().mockResolvedValue(''),
+    getRandomValues: vi.fn().mockImplementation((array) => {
+      for (let i = 0; i < array.length; i++) {
+        array[i] = Math.floor(Math.random() * 256);
+      }
+      return array;
+    }),
+    randomUUID: vi.fn().mockImplementation(() =>
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      })
+    ),
   },
+  writable: true,
+  configurable: true,
 });
 
 // 模拟 console 方法（避免测试输出污染）
@@ -159,4 +190,15 @@ process.on('uncaughtException', error => {
   if (process.env.NODE_ENV === 'development') {
     console.error('Uncaught Exception:', error);
   }
+});
+
+// Setup and teardown for enhanced mocking
+beforeEach(() => {
+  vi.clearAllMocks();
+  setupTemplateMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  resetTemplateMocks();
 });
