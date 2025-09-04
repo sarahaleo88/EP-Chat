@@ -2,7 +2,7 @@
 ## Debian slim + Next.js standalone + reproducible installs
 
 # ---------- deps ----------
-FROM node:22-bookworm-slim AS deps
+FROM node:24-bookworm-slim AS deps
 WORKDIR /app
 
 # Optional registry/proxy for reliability in CI (set via build-args)
@@ -27,7 +27,7 @@ COPY .npmrc* ./
 RUN npm ci --no-audit --no-fund
 
 # ---------- build ----------
-FROM node:22-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
@@ -35,7 +35,7 @@ COPY . .
 RUN npm run build
 
 # ---------- run ----------
-FROM node:22-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 
