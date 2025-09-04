@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react';
 import { IconButton } from './components/ui/button';
 import { Card, Popover, CenteredModal } from './components/ui/ui-lib';
 import SecureMessageRenderer, { useSanitizedInput } from './components/SecureMessageRenderer';
@@ -27,14 +27,12 @@ import {
   enhanceReasonerPrompt,
   enhanceCoderPrompt,
 } from '../lib/prompt-enhancers';
-import {
-  getTemplateCacheStats,
-  forceCleanTemplateCache,
-  clearTemplateCache,
-} from '../lib/template-registry';
+// 延迟导入模板注册表功能以减少初始包大小
+const getTemplateCacheStats = () => import('../lib/template-registry').then(mod => mod.getTemplateCacheStats);
+const forceCleanTemplateCache = () => import('../lib/template-registry').then(mod => mod.forceCleanTemplateCache);
+const clearTemplateCache = () => import('../lib/template-registry').then(mod => mod.clearTemplateCache);
 import { ModelSelector } from './components/ModelSelector';
 import { MessageLoadingBubble } from './components/EnhancedLoadingIndicator';
-import { PerformanceDashboard } from './components/PerformanceDashboard';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { CopyButton } from './components/CopyButton';
 import {
@@ -47,8 +45,29 @@ import {
   QuickButtonConfig,
   DEFAULT_QUICK_BUTTONS,
 } from '../types/quickButtons';
-import QuickButtonEditor from './components/QuickButtonEditor';
+import dynamic from 'next/dynamic';
+
+// 动态导入重型组件以实现代码分割
+const PerformanceDashboard = dynamic(
+  () => import('./components/PerformanceDashboard').then(mod => ({ default: mod.PerformanceDashboard })),
+  {
+    loading: () => <div className="animate-pulse bg-gray-200 h-32 rounded"></div>,
+    ssr: false,
+  }
+);
+
+const QuickButtonEditor = dynamic(
+  () => import('./components/QuickButtonEditor'),
+  {
+    loading: () => <div className="animate-pulse bg-gray-200 h-16 rounded"></div>,
+    ssr: false,
+  }
+);
+import { SessionManager } from '../lib/session-manager';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import ErrorBoundary from './components/ErrorBoundary';
 import { enhancePrompt } from '../lib/prompt-enhancer';
+import { getCSRFApiClient, csrfPost } from '../lib/csrf-client';
 
 // 简单的图标组件
 const SettingsIcon = () => (
@@ -104,7 +123,7 @@ interface Message {
  * EP 主页面组件 - Chat 风格界面
  * @returns JSX 元素
  */
-export default function HomePage() {
+function HomePage() {
   // 聊天式应用状态
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -116,12 +135,12 @@ export default function HomePage() {
   // 移动端侧边栏状态
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // 关闭移动端侧边栏的处理函数
-  const closeMobileSidebar = () => {
+  // 关闭移动端侧边栏的处理函数 - 使用 useCallback 优化
+  const closeMobileSidebar = useCallback(() => {
     setIsMobileSidebarOpen(false);
     // 恢复背景滚动
     document.body.classList.remove('mobile-sidebar-open');
-  };
+  }, []);
 
   // 打开移动端侧边栏的处理函数
   const openMobileSidebar = () => {
@@ -145,6 +164,8 @@ export default function HomePage() {
   >('deepseek-chat');
   const [showPerformanceDashboard, setShowPerformanceDashboard] =
     useState(false);
+  const [sessionAuthenticated, setSessionAuthenticated] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
 
   // 发送/停止按钮状态
@@ -177,6 +198,38 @@ export default function HomePage() {
   );
   const [activeButtonId, setActiveButtonId] = useState<number | null>(null);
 
+  // 集中式错误处理
+  const {
+    handleError,
+    handleApiError,
+    handleComponentError,
+    handleAsyncError,
+    clearError,
+    lastError
+  } = useErrorHandler();
+
+  // 安全的用户输入清理 - 直接调用Hook（已内置useMemo优化）
+  const sanitizedUserInput = useSanitizedInput(userInput);
+
+  // 优化消息列表渲染 - 使用 useMemo 避免不必要的重新计算
+  const sortedMessages = useMemo(() => {
+    return messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messages]);
+
+  // 计算是否可以发送消息 - 使用 useMemo 优化
+  const canSendMessage = useMemo(() => {
+    return sanitizedUserInput.trim().length > 0 && !isLoading && !isSending;
+  }, [sanitizedUserInput, isLoading, isSending]);
+
+  // 计算当前会话状态 - 使用 useMemo 优化
+  const sessionStatus = useMemo(() => {
+    return {
+      hasApiKey: sessionAuthenticated || apiKey.trim().length > 0,
+      isReady: !sessionLoading && (sessionAuthenticated || apiKey.trim().length > 0),
+      isLoading: sessionLoading,
+    };
+  }, [sessionAuthenticated, apiKey, sessionLoading]);
+
   // 快速按钮工具函数
   function loadQuickButtons(): QuickButtonConfig[] {
     try {
@@ -198,10 +251,9 @@ export default function HomePage() {
         id: (index + 1) as 1 | 2 | 3 | 4,
       }) as QuickButtonConfig);
     } catch (error) {
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Failed to load quick buttons config:', error);
-      }
+      handleComponentError(error, 'loadQuickButtons', {
+        action: 'load_quick_buttons_config'
+      });
       return DEFAULT_QUICK_BUTTONS;
     }
   }
@@ -210,20 +262,20 @@ export default function HomePage() {
     try {
       localStorage.setItem('ep-chat-quick-buttons', JSON.stringify(buttons));
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to save quick buttons config:', error);
-      }
+      handleComponentError(error, 'saveQuickButtons', {
+        action: 'save_quick_buttons_config'
+      });
     }
   };
 
-  // 自动滚动到底部
-  const scrollToBottom = () => {
+  // 自动滚动到底部 - 使用 useCallback 优化
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [sortedMessages, scrollToBottom]);
 
   // 重置发送状态（当用户开始输入新内容时）
   const resetSendingState = useCallback(() => {
@@ -277,9 +329,7 @@ export default function HomePage() {
   const getOptimizedClient = useCallback(() => {
     // Always recreate client if model or API key changed to ensure correct timeout
     if (!optimizedClientRef.current && apiKey.trim()) {
-      if (process.env.NODE_ENV === 'development') {
 
-      }
       optimizedClientRef.current = createOptimizedDeepSeekClient(
         apiKey.trim(),
         {
@@ -300,9 +350,7 @@ export default function HomePage() {
   const getEnhancedClient = useCallback(() => {
     if (!enhancedClientRef.current && apiKey.trim()) {
       if (process.env.NODE_ENV === 'development') {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Enhanced Client] Creating enhanced client for model:', selectedModel);
-        }
+        console.log('[Enhanced Client] Creating enhanced client for model:', selectedModel);
       }
       enhancedClientRef.current = createEnhancedDeepSeekClient(
         apiKey.trim(),
@@ -407,16 +455,19 @@ export default function HomePage() {
                 '抱歉，没有收到有效的响应。';
               isApiResponse = true;
             } catch (error) {
-              // 使用优化的错误处理，传递模型信息以获得更好的错误提示
-              const friendlyError = formatUserFriendlyError(
-                error,
-                selectedModel
-              );
+              // 使用集中式错误处理
+              const errorResult = handleApiError(error, {
+                model: selectedModel,
+                action: 'chat_completion',
+                endpoint: '/api/generate',
+                userId: 'anonymous',
+                additionalData: { attempt, inputText: inputText.substring(0, 100) }
+              });
 
               // 检查是否应该自动重试
-              if (shouldAutoRetry(error, attempt, 3)) {
+              if (errorResult.shouldRetry && attempt < 3) {
                 setIsLoading(false);
-                const retryDelay = getRetryDelay(error);
+                const retryDelay = errorResult.retryDelay || 1000;
 
                 setTimeout(() => {
                   handleSendInternal(inputText, attempt + 1);
@@ -424,15 +475,8 @@ export default function HomePage() {
                 return;
               }
 
-              responseContent = `❌ **${friendlyError.title}**
-
-${friendlyError.message}
-
-💡 **建议：**
-${friendlyError.suggestion}
-
-${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请检查设置后重试。'}`;
-              setCurrentError(friendlyError.title);
+              responseContent = errorResult.userMessage;
+              setCurrentError(errorResult.errorId);
             }
           }
         } else {
@@ -457,11 +501,17 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
 
         setMessages(prev => [...prev, assistantMessage]);
       } catch (error) {
-        // 移除控制台错误日志，避免向用户显示技术性信息
+        // 使用集中式错误处理
+        const errorResult = handleComponentError(error, 'handleSendInternal', {
+          action: 'send_message_wrapper',
+          model: selectedModel,
+          additionalData: { inputText: inputText.substring(0, 100) }
+        });
+
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'assistant',
-          content: '生成失败，请重试。',
+          content: errorResult.userMessage,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, errorMessage]);
@@ -471,11 +521,130 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
         setCurrentAbortController(null);
       }
     },
-    [isLoading, isSending, selectedModel, apiKey, messages, getOptimizedClient]
+    [isLoading, isSending, selectedModel, apiKey, messages, getOptimizedClient, handleApiError, handleComponentError]
   );
 
-  // 安全的用户输入清理
-  const sanitizedUserInput = useSanitizedInput(userInput);
+
+
+  // 优化的消息项组件 - 使用 memo 防止不必要的重新渲染
+  const MessageItem = memo(({ message }: { message: Message }) => (
+    <div
+      key={message.id}
+      className="chat-message"
+      style={{
+        display: 'flex',
+        justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start',
+        marginBottom: '16px',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '70%',
+          padding: '12px 16px',
+          borderRadius: '18px',
+          backgroundColor: message.type === 'user' ? 'var(--primary)' : 'white',
+          color: message.type === 'user' ? 'white' : 'var(--black)',
+          border: message.type === 'assistant' ? '1px solid var(--border)' : 'none',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+          position: 'relative',
+        }}
+      >
+        {message.type === 'assistant' ? (
+          <SecureMessageRenderer content={message.content} />
+        ) : (
+          <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
+        )}
+
+        <div
+          style={{
+            fontSize: '11px',
+            opacity: 0.7,
+            marginTop: '8px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>
+            {message.timestamp.toLocaleTimeString('zh-CN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            {message.model && (
+              <span
+                style={{
+                  marginLeft: '8px',
+                  padding: '2px 6px',
+                  backgroundColor: 'rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                }}
+              >
+                {message.model}
+              </span>
+            )}
+          </span>
+          {message.type === 'assistant' && (
+            <CopyButton
+              content={message.content}
+              style={{ marginLeft: '8px', opacity: 0.5 }}
+            />
+          )}
+        </div>
+
+        {message.isStreaming && (
+          <div
+            style={{
+              marginTop: '8px',
+              fontSize: '11px',
+              opacity: 0.7,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                gap: '2px',
+                marginRight: '6px',
+              }}
+            >
+              <div
+                style={{
+                  width: '4px',
+                  height: '4px',
+                  backgroundColor: 'currentColor',
+                  borderRadius: '50%',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                }}
+              />
+              <div
+                style={{
+                  width: '4px',
+                  height: '4px',
+                  backgroundColor: 'currentColor',
+                  borderRadius: '50%',
+                  animation: 'pulse 1.5s ease-in-out infinite 0.5s',
+                }}
+              />
+              <div
+                style={{
+                  width: '4px',
+                  height: '4px',
+                  backgroundColor: 'currentColor',
+                  borderRadius: '50%',
+                  animation: 'pulse 1.5s ease-in-out infinite 1s',
+                }}
+              />
+            </div>
+            正在生成...
+          </div>
+        )}
+      </div>
+    </div>
+  ));
+
+  MessageItem.displayName = 'MessageItem';
 
   // 增强版发送函数 - 支持条件增强链路
   const handleSend = useCallback(async () => {
@@ -601,17 +770,13 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
                     },
                     onContinuation: (context) => {
                       if (process.env.NODE_ENV === 'development') {
-                        if (process.env.NODE_ENV === 'development') {
-                          console.log('[Enhanced Client] Continuation:', context);
-                        }
+                        console.log('[Enhanced Client] Continuation:', context);
                       }
                       // 可以在这里显示续写提示
                     },
                     onComplete: (metadata) => {
                       if (process.env.NODE_ENV === 'development') {
-                        if (process.env.NODE_ENV === 'development') {
-                          console.log('[Enhanced Client] Completed:', metadata);
-                        }
+                        console.log('[Enhanced Client] Completed:', metadata);
                       }
                       setMessages(prev =>
                         prev.map(msg =>
@@ -626,24 +791,20 @@ ${friendlyError.retryable ? '您可以点击重试按钮再次尝试。' : '请�
                       setActiveButtonId(null);
                     },
                     onError: error => {
-                      // 使用用户友好的错误格式化
-                      const friendlyError = formatUserFriendlyError(error, modelToUse);
-                      // 移除控制台错误日志，避免向用户显示技术性信息
-                      const errorContent = `❌ **${friendlyError.title}**
-
-${friendlyError.message}
-
-💡 **建议：**
-${friendlyError.suggestion}
-
-${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查设置后重试。'}`;
+                      // 使用集中式错误处理
+                      const errorResult = handleApiError(error, {
+                        model: modelToUse,
+                        action: 'streaming_chat',
+                        endpoint: '/api/generate',
+                        additionalData: { streamingMessageId }
+                      });
 
                       setMessages(prev =>
                         prev.map(msg =>
                           msg.id === streamingMessageId
                             ? {
                                 ...msg,
-                                content: errorContent,
+                                content: errorResult.userMessage,
                                 isStreaming: false,
                               }
                             : msg
@@ -892,7 +1053,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
   /**
    * 智能缓存清理 - 仅在需要时清理
    */
-  const performSmartCacheCleanup = useCallback(() => {
+  const performSmartCacheCleanup = useCallback(async () => {
     try {
       let cleanupPerformed = false;
 
@@ -909,29 +1070,30 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
 
         if (shouldCleanupApi) {
           const result = client.forceCleanup();
-          if (process.env.NODE_ENV === 'development') {
 
-          }
           cleanupPerformed = true;
         }
       }
 
       // Check template cache health
-      const templateStats = getTemplateCacheStats();
-      const shouldCleanupTemplate =
-        templateStats.utilization > 80 || templateStats.expiredEntries > 10;
+      try {
+        const getStats = await getTemplateCacheStats();
+        const templateStats = getStats();
+        const shouldCleanupTemplate =
+          templateStats.utilization > 80 || templateStats.expiredEntries > 10;
 
-      if (shouldCleanupTemplate) {
-        const result = forceCleanTemplateCache();
-        if (process.env.NODE_ENV === 'development') {
-
+        if (shouldCleanupTemplate) {
+          const forceClean = await forceCleanTemplateCache();
+          const result = forceClean();
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Template cache cleanup result:', result);
+          }
+          cleanupPerformed = true;
         }
-        cleanupPerformed = true;
+      } catch (error) {
+        console.warn('Template cache check failed:', error);
       }
 
-      if (cleanupPerformed && process.env.NODE_ENV === 'development') {
-
-      }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Smart cache cleanup failed:', error);
@@ -946,7 +1108,15 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
     try {
       const client = getOptimizedClient();
       const apiStats = client ? client.getCacheStats() : null;
-      const templateStats = getTemplateCacheStats();
+
+      // 异步加载模板统计
+      let templateStats = null;
+      try {
+        const getStats = await getTemplateCacheStats();
+        templateStats = getStats();
+      } catch (error) {
+        console.warn('Failed to load template stats:', error);
+      }
 
       setCacheStats({
         api: apiStats,
@@ -962,7 +1132,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
   /**
    * 清理所有缓存
    */
-  const clearAllCaches = useCallback(() => {
+  const clearAllCaches = useCallback(async () => {
     try {
       // 清理 API 缓存
       const client = getOptimizedClient();
@@ -971,14 +1141,16 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
       }
 
       // 清理模板缓存
-      clearTemplateCache();
+      try {
+        const clearCache = await clearTemplateCache();
+        clearCache();
+      } catch (error) {
+        console.warn('Failed to clear template cache:', error);
+      }
 
       // 重新加载统计信息
       loadCacheStats();
 
-      if (process.env.NODE_ENV === 'development') {
-
-      }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Failed to clear caches:', error);
@@ -989,7 +1161,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
   /**
    * 清理过期缓存
    */
-  const cleanExpiredCaches = useCallback(() => {
+  const cleanExpiredCaches = useCallback(async () => {
     try {
       // 清理 API 缓存中的过期条目
       const client = getOptimizedClient();
@@ -1000,14 +1172,17 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
       }
 
       // 清理模板缓存中的过期条目
-      const templateResult = forceCleanTemplateCache();
+      let templateResult = null;
+      try {
+        const forceClean = await forceCleanTemplateCache();
+        templateResult = forceClean();
+      } catch (error) {
+        console.warn('Failed to force clean template cache:', error);
+      }
 
       // 重新加载统计信息
       loadCacheStats();
 
-      if (process.env.NODE_ENV === 'development') {
-
-      }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Failed to clean expired caches:', error);
@@ -1016,12 +1191,22 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
   }, [getOptimizedClient, loadCacheStats]);
 
   /**
-   * 保存设置
+   * 保存设置 - 使用 useCallback 优化
    */
-  const saveSettings = () => {
-    // 保存到 localStorage
+  const saveSettings = useCallback(async () => {
+    // 保存 API key 到安全会话
     if (apiKey.trim()) {
-      localStorage.setItem('deepseek-api-key', apiKey.trim());
+      const result = await SessionManager.createSession(apiKey.trim());
+      if (result.success) {
+        setSessionAuthenticated(true);
+        // 移除任何遗留的 localStorage API key
+        localStorage.removeItem('deepseek-api-key');
+      } else {
+        console.error('Failed to create secure session:', result.error);
+        // 显示错误消息给用户
+        alert('Failed to save API key securely. Please try again.');
+        return;
+      }
     }
     localStorage.setItem('selected-model', selectedModel);
 
@@ -1035,39 +1220,98 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
 
     // Log success in development only
     if (process.env.NODE_ENV === 'development') {
-
+      console.log('Settings saved successfully');
     }
-  };
+  }, [apiKey, selectedModel, setSessionAuthenticated]);
 
   /**
-   * 加载设置
+   * 加载设置和初始化会话
    */
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('deepseek-api-key');
-    const savedModel = localStorage.getItem('selected-model') as
-      | 'deepseek-chat'
-      | 'deepseek-coder'
-      | 'deepseek-reasoner';
+    let isMounted = true; // 用于检查组件是否仍然挂载
+    const initAbortController = new AbortController();
 
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-    }
-    if (savedModel) {
-      setSelectedModel(savedModel);
-    }
+    const initializeSession = async () => {
+      if (!isMounted) return;
 
-    // 加载快速按钮配置
-    const loadedButtons = loadQuickButtons();
-    setQuickButtons(loadedButtons);
+      setSessionLoading(true);
+
+      try {
+        // 首先检查是否有有效的会话
+        const sessionStatus = await SessionManager.validateSession();
+
+        if (!isMounted || initAbortController.signal.aborted) return;
+
+        if (sessionStatus.authenticated && sessionStatus.hasApiKey) {
+          setSessionAuthenticated(true);
+          setApiKey('***'); // 显示占位符，实际密钥在服务端
+        } else {
+          // 尝试从 localStorage 迁移
+          const migrationResult = await SessionManager.migrateFromLocalStorage();
+
+          if (!isMounted || initAbortController.signal.aborted) return;
+
+          if (migrationResult.success && migrationResult.migrated) {
+            setSessionAuthenticated(true);
+            setApiKey('***'); // 显示占位符
+          } else {
+            // 检查是否有遗留的 localStorage API key
+            const savedApiKey = localStorage.getItem('deepseek-api-key');
+            if (savedApiKey && isMounted) {
+              setApiKey(savedApiKey);
+            }
+          }
+        }
+
+        if (!isMounted || initAbortController.signal.aborted) return;
+
+        // 加载其他设置
+        const savedModel = localStorage.getItem('selected-model') as
+          | 'deepseek-chat'
+          | 'deepseek-coder'
+          | 'deepseek-reasoner';
+
+        if (savedModel) {
+          setSelectedModel(savedModel);
+        }
+
+        // 加载快速按钮配置
+        const loadedButtons = loadQuickButtons();
+        setQuickButtons(loadedButtons);
+      } catch (error) {
+        if (!initAbortController.signal.aborted) {
+          handleAsyncError(error, 'session_initialization', {
+            component: 'HomePage',
+            additionalData: { aborted: initAbortController.signal.aborted }
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setSessionLoading(false);
+        }
+      }
+    };
+
+    initializeSession();
+
+    // 清理函数
+    return () => {
+      isMounted = false;
+      initAbortController.abort();
+    };
   }, []);
 
   /**
    * 清理客户端引用当 API 密钥或模型改变时
    */
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    // 创建一个 AbortController 来管理这个 effect 的清理
+    const effectAbortController = new AbortController();
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Effect] Initializing client cleanup for API key/model change');
     }
+
     // Cancel any ongoing requests before clearing
     if (optimizedClientRef.current) {
       try {
@@ -1091,6 +1335,39 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
       }
     }
     enhancedClientRef.current = null;
+
+    // 清理函数
+    return () => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Effect] Cleaning up client references');
+      }
+
+      // 中止任何正在进行的操作
+      effectAbortController.abort();
+
+      // 确保客户端被正确清理
+      if (optimizedClientRef.current) {
+        try {
+          optimizedClientRef.current.cancel();
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Cleanup] Error canceling optimized client:', error);
+          }
+        }
+        optimizedClientRef.current = null;
+      }
+
+      if (enhancedClientRef.current) {
+        try {
+          enhancedClientRef.current.cancel();
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Cleanup] Error canceling enhanced client:', error);
+          }
+        }
+        enhancedClientRef.current = null;
+      }
+    };
   }, [apiKey, selectedModel]);
 
   /**
@@ -1098,29 +1375,70 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
    */
   useEffect(() => {
     return () => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Component] Unmounting - cleaning up all resources');
+      }
+
       // 清理 AbortController
       if (currentAbortController) {
-        currentAbortController.abort();
+        try {
+          currentAbortController.abort();
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Cleanup] Error aborting controller:', error);
+          }
+        }
       }
+
       // 清理客户端
       const client = optimizedClientRef.current;
       if (client) {
-        client.cancel();
+        try {
+          client.cancel();
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Cleanup] Error canceling optimized client:', error);
+          }
+        }
       }
 
       // 清理增强版客户端
       const enhancedClient = enhancedClientRef.current;
       if (enhancedClient) {
-        enhancedClient.dispose();
+        try {
+          enhancedClient.dispose();
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Cleanup] Error disposing enhanced client:', error);
+          }
+        }
       }
 
       // 清理移动端侧边栏状态
-      document.body.classList.remove('mobile-sidebar-open');
+      try {
+        document.body.classList.remove('mobile-sidebar-open');
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Cleanup] Error removing mobile sidebar class:', error);
+        }
+      }
+
+      // 清理引用
+      optimizedClientRef.current = null;
+      enhancedClientRef.current = null;
     };
   }, [currentAbortController]);
 
   return (
-    <div className="window">
+    <ErrorBoundary
+      onError={(error, errorInfo, errorId) => {
+        handleComponentError(error, 'HomePage', {
+          action: 'render',
+          additionalData: { errorId, componentStack: errorInfo.componentStack }
+        });
+      }}
+    >
+      <div className="window">
       {/* 移动端侧边栏遮罩层 */}
       {isMobileSidebarOpen && (
         <div
@@ -1634,7 +1952,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
                 📊 性能
               </button>
               <span style={{ fontSize: '12px', color: 'var(--gray)' }}>
-                {messages.length} 条消息
+                {sortedMessages.length} 条消息
               </span>
             </div>
           </div>
@@ -1648,7 +1966,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
               backgroundColor: 'var(--gray)',
             }}
           >
-            {messages.length === 0 ? (
+            {sortedMessages.length === 0 ? (
               // 欢迎界面
               <div
                 style={{
@@ -1697,9 +2015,9 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
                 </p>
               </div>
             ) : (
-              // 消息列表
+              // 消息列表 - 使用优化的排序和渲染
               <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                {messages.map(message => (
+                {sortedMessages.map(message => (
                   <div
                     key={message.id}
                     className="chat-message"
@@ -1788,7 +2106,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
                   </div>
                 ))}
 
-                {isLoading && !messages.some(m => m.isStreaming) && (
+                {isLoading && !sortedMessages.some(m => m.isStreaming) && (
                   <div
                     style={{
                       display: 'flex',
@@ -1913,5 +2231,9 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
         apiKey={apiKey}
       />
     </div>
+    </ErrorBoundary>
   );
 }
+
+// 使用 React.memo 优化主组件，防止不必要的重新渲染
+export default memo(HomePage);

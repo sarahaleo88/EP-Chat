@@ -227,3 +227,15 @@ pnpm-lock.yaml
 generate-favicon.html
 test-api.js
 test-stream.js
+
+# MCP (Model Context Protocol) related files
+.mcp/
+.env.mcp
+mcp-*.sh
+mcp-*.json
+test-mcp-*.sh
+chrome-mcp-extension.zip
+
+# Task and requirement documents (temporary)
+ACTIONABLE_TASK_LIST.md
+REQUIREMENTS_DOCUMENT.md
