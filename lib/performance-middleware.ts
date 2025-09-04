@@ -204,7 +204,7 @@ export function performanceMonitor(target: any, propertyName: string, descriptor
       
       // Log performance in development
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[Performance] ${target.constructor.name}.${propertyName}: ${duration}ms`);
+
       }
       
       return result;

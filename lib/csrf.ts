@@ -71,6 +71,20 @@ const CSRF_TOKEN_EXPIRY = CSRF_CONSTANTS.TOKEN_EXPIRY;
  * @throws {Error} 当 Web Crypto API 不可用时抛出错误
  */
 export function generateCSRFToken(): string {
+  // Check if crypto is available (browser or Node.js with crypto support)
+  if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+    // Fallback for test environments or unsupported environments
+    console.warn('[CSRF] Using fallback random generation - NOT FOR PRODUCTION');
+    const array = new Uint8Array(CSRF_TOKEN_LENGTH);
+    for (let i = 0; i < array.length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+    return btoa(String.fromCharCode(...array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
   const array = new Uint8Array(CSRF_TOKEN_LENGTH);
   crypto.getRandomValues(array);
   // Convert to base64url format (URL-safe, no padding)

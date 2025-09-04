@@ -68,16 +68,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, []);
 
+  // Sanitize input value using hook at component level
+  const sanitizedInputValue = useSanitizedInput(inputValue);
+
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = useSanitizedInput(e.target.value);
+    const value = e.target.value;
     setInputValue(value);
     adjustTextareaHeight();
   }, [adjustTextareaHeight]);
 
   // Handle send message
   const handleSend = useCallback(() => {
-    const trimmedValue = inputValue.trim();
+    const trimmedValue = sanitizedInputValue.trim();
     if (trimmedValue && !isLoading && !isSending) {
       onSendMessage(trimmedValue);
       setInputValue('');
@@ -86,7 +89,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         textareaRef.current.style.height = 'auto';
       }
     }
-  }, [inputValue, isLoading, isSending, onSendMessage]);
+  }, [sanitizedInputValue, isLoading, isSending, onSendMessage]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {

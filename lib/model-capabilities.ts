@@ -108,7 +108,7 @@ export class ModelCapabilityManager {
       };
 
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[Capability] Detected for ${modelName} in ${Date.now() - startTime}ms:`, capabilities);
+
       }
 
       return capabilities;

@@ -19,7 +19,7 @@ class MockOptimizedApiError extends Error {
   constructor(type: ApiErrorType, message: string, statusCode?: number, retryable = true) {
     super(message);
     this.type = type;
-    this.statusCode = statusCode;
+    this.statusCode = statusCode ?? 500;
     this.retryable = retryable;
     this.name = 'OptimizedApiError';
   }

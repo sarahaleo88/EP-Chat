@@ -68,6 +68,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import ErrorBoundary from './components/ErrorBoundary';
 import { enhancePrompt } from '../lib/prompt-enhancer';
 import { getCSRFApiClient, csrfPost } from '../lib/csrf-client';
+import { useModelState } from './hooks/useModelState';
 
 // 简单的图标组件
 const SettingsIcon = () => (
@@ -159,9 +160,17 @@ function HomePage() {
 
   // 设置相关状态
   const [apiKey, setApiKey] = useState('');
-  const [selectedModel, setSelectedModel] = useState<
-    'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner'
-  >('deepseek-chat');
+  
+  // 使用定制Hook管理模型状态
+  const { selectedModel, handleModelChange, isInitialized } = useModelState();
+
+  // Debug: Monitor selectedModel changes with enhanced logging
+  useEffect(() => {
+    // Safe development logging
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+
+    }
+  }, [selectedModel, isInitialized]);
   const [showPerformanceDashboard, setShowPerformanceDashboard] =
     useState(false);
   const [sessionAuthenticated, setSessionAuthenticated] = useState(false);
@@ -231,13 +240,17 @@ function HomePage() {
   }, [sessionAuthenticated, apiKey, sessionLoading]);
 
   // 快速按钮工具函数
-  function loadQuickButtons(): QuickButtonConfig[] {
+  const loadQuickButtons = useCallback((): QuickButtonConfig[] => {
     try {
       // 确保只在客户端运行
-      if (typeof window === 'undefined') {return DEFAULT_QUICK_BUTTONS;}
+      if (typeof window === 'undefined') {
+        return DEFAULT_QUICK_BUTTONS;
+      }
 
       const raw = localStorage.getItem('ep-chat-quick-buttons');
-      if (!raw) {return DEFAULT_QUICK_BUTTONS;}
+      if (!raw) {
+        return DEFAULT_QUICK_BUTTONS;
+      }
 
       const parsed = JSON.parse(raw);
       // 数据校验和修复逻辑
@@ -256,7 +269,7 @@ function HomePage() {
       });
       return DEFAULT_QUICK_BUTTONS;
     }
-  }
+  }, [handleComponentError]);
 
   const saveQuickButtons = (buttons: QuickButtonConfig[]) => {
     try {
@@ -350,7 +363,7 @@ function HomePage() {
   const getEnhancedClient = useCallback(() => {
     if (!enhancedClientRef.current && apiKey.trim()) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Enhanced Client] Creating enhanced client for model:', selectedModel);
+
       }
       enhancedClientRef.current = createEnhancedDeepSeekClient(
         apiKey.trim(),
@@ -365,7 +378,9 @@ function HomePage() {
    */
   const handleSendInternal = useCallback(
     async (inputText: string, attempt: number = 0) => {
-      if (!inputText.trim() || isLoading || isSending) {return;}
+      if (!inputText.trim() || isLoading || isSending) {
+        return;
+      }
 
       // 清除之前的错误
       setCurrentError(null);
@@ -524,8 +539,6 @@ function HomePage() {
     [isLoading, isSending, selectedModel, apiKey, messages, getOptimizedClient, handleApiError, handleComponentError]
   );
 
-
-
   // 优化的消息项组件 - 使用 memo 防止不必要的重新渲染
   const MessageItem = memo(({ message }: { message: Message }) => (
     <div
@@ -649,7 +662,9 @@ function HomePage() {
   // 增强版发送函数 - 支持条件增强链路
   const handleSend = useCallback(async () => {
     const trimmedInput = sanitizedUserInput.trim();
-    if (!trimmedInput || isLoading || isSending) {return;}
+    if (!trimmedInput || isLoading || isSending) {
+      return;
+    }
 
     // 输入长度验证
     if (trimmedInput.length > 50000) { // 50K字符限制
@@ -770,13 +785,13 @@ function HomePage() {
                     },
                     onContinuation: (context) => {
                       if (process.env.NODE_ENV === 'development') {
-                        console.log('[Enhanced Client] Continuation:', context);
+
                       }
                       // 可以在这里显示续写提示
                     },
                     onComplete: (metadata) => {
                       if (process.env.NODE_ENV === 'development') {
-                        console.log('[Enhanced Client] Completed:', metadata);
+
                       }
                       setMessages(prev =>
                         prev.map(msg =>
@@ -964,7 +979,9 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
    */
   const handleQuickButtonClick = useCallback(
     (btn: QuickButtonConfig) => {
-      if (!btn.enabled || isLoading || isSending) {return;}
+      if (!btn.enabled || isLoading || isSending) {
+        return;
+      }
 
       // 设置高亮状态
       setActiveButtonId(btn.id);
@@ -1086,7 +1103,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
           const forceClean = await forceCleanTemplateCache();
           const result = forceClean();
           if (process.env.NODE_ENV === 'development') {
-            console.log('Template cache cleanup result:', result);
+
           }
           cleanupPerformed = true;
         }
@@ -1208,7 +1225,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
         return;
       }
     }
-    localStorage.setItem('selected-model', selectedModel);
+    // 模型状态由useModelState Hook管理，不需要手动保存
 
     // 关闭设置面板
     setShowSettings(false);
@@ -1220,9 +1237,9 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
 
     // Log success in development only
     if (process.env.NODE_ENV === 'development') {
-      console.log('Settings saved successfully');
+
     }
-  }, [apiKey, selectedModel, setSessionAuthenticated]);
+  }, [apiKey, selectedModel, setSessionAuthenticated, closeMobileSidebar]);
 
   /**
    * 加载设置和初始化会话
@@ -1232,7 +1249,9 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
     const initAbortController = new AbortController();
 
     const initializeSession = async () => {
-      if (!isMounted) return;
+      if (!isMounted) {
+        return;
+      }
 
       setSessionLoading(true);
 
@@ -1240,7 +1259,9 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
         // 首先检查是否有有效的会话
         const sessionStatus = await SessionManager.validateSession();
 
-        if (!isMounted || initAbortController.signal.aborted) return;
+        if (!isMounted || initAbortController.signal.aborted) {
+          return;
+        }
 
         if (sessionStatus.authenticated && sessionStatus.hasApiKey) {
           setSessionAuthenticated(true);
@@ -1265,15 +1286,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
 
         if (!isMounted || initAbortController.signal.aborted) return;
 
-        // 加载其他设置
-        const savedModel = localStorage.getItem('selected-model') as
-          | 'deepseek-chat'
-          | 'deepseek-coder'
-          | 'deepseek-reasoner';
-
-        if (savedModel) {
-          setSelectedModel(savedModel);
-        }
+        // 模型状态现在由useModelState Hook管理，不需要在这里初始化
 
         // 加载快速按钮配置
         const loadedButtons = loadQuickButtons();
@@ -1299,7 +1312,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
       isMounted = false;
       initAbortController.abort();
     };
-  }, []);
+  }, [handleAsyncError, loadQuickButtons]);
 
   /**
    * 清理客户端引用当 API 密钥或模型改变时
@@ -1309,7 +1322,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
     const effectAbortController = new AbortController();
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Effect] Initializing client cleanup for API key/model change');
+
     }
 
     // Cancel any ongoing requests before clearing
@@ -1339,7 +1352,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
     // 清理函数
     return () => {
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Effect] Cleaning up client references');
+
       }
 
       // 中止任何正在进行的操作
@@ -1376,7 +1389,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
   useEffect(() => {
     return () => {
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Component] Unmounting - cleaning up all resources');
+
       }
 
       // 清理 AbortController
@@ -1626,7 +1639,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
                     <select
                       value={selectedModel}
                       onChange={e =>
-                        setSelectedModel(
+                        handleModelChange(
                           e.target.value as
                             | 'deepseek-chat'
                             | 'deepseek-coder'
@@ -1910,7 +1923,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
 
             <ModelSelector
               selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
+              onModelChange={handleModelChange}
             />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

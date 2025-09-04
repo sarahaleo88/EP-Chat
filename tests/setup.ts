@@ -10,7 +10,7 @@ import { setupTemplateMocks, resetTemplateMocks } from './mocks/templates';
 
 // Set up global variables for Node.js compatibility
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+global.TextDecoder = TextDecoder as any;
 
 // 模拟环境变量
 process.env.DEEPSEEK_API_KEY = 'test-api-key';

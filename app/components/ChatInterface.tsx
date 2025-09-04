@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import {
   PaperAirplaneIcon as Send,
@@ -11,6 +11,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { sendPrompt } from '@/lib/deepseek';
 import { cn } from '@/lib/utils';
+import { DeepSeekModel } from '@/lib/types';
+
+// Dynamic imports for heavy components
+const ModelSelector = lazy(() => import('./SimpleModelSelector'));
+const LoadingSpinner = lazy(() => import('./LoadingSpinner'));
 
 // 自定义 Bot 图标组件
 const Bot = ({ className }: { className?: string }) => (
@@ -48,7 +53,7 @@ const Bot = ({ className }: { className?: string }) => (
   </svg>
 );
 
-type DeepSeekModel = 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner';
+// DeepSeekModel type imported from @/lib/types
 
 interface Message {
   id: string;
@@ -198,20 +203,9 @@ export default function ChatInterface({
         </div>
 
         {/* 模型选择 */}
-        <div className="px-4 pb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            选择模型
-          </label>
-          <select
-            value={model}
-            onChange={e => setModel(e.target.value as DeepSeekModel)}
-            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-shamrock-500 focus:border-transparent"
-          >
-            <option value="deepseek-chat">💬 DeepSeek Chat</option>
-            <option value="deepseek-coder">👨‍💻 DeepSeek Coder</option>
-            <option value="deepseek-reasoner">🧠 DeepSeek Reasoner</option>
-          </select>
-        </div>
+        <Suspense fallback={<div className="px-4 pb-4 h-16 bg-gray-50 dark:bg-gray-700 rounded-lg animate-pulse" />}>
+          <ModelSelector value={model} onChange={setModel} />
+        </Suspense>
 
         {/* 快速开始 */}
         <div className="flex-1 px-4 pb-4">

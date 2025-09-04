@@ -5,8 +5,10 @@
 
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import './globals.css';
 import '../styles/globals.scss'; // 全局样式
+import { CSPNonceProvider } from './components/CSPNonceProvider';
 
 // 字体配置
 const inter = Inter({
@@ -113,11 +115,15 @@ export const viewport: Viewport = {
  * @param children - 子组件
  * @returns JSX 元素
  */
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Get nonce from headers (set by middleware)
+  const headersList = await headers();
+  const nonce = headersList.get('x-csp-nonce') || undefined;
+
   return (
     <html lang="zh-CN" className={inter.variable} suppressHydrationWarning>
       <head>
@@ -177,11 +183,14 @@ export default function RootLayout({
 
         {/* 主要内容区域 - 使用现代主题系统 */}
         <div id="main-content" className="light">
-          {children}
+          <CSPNonceProvider nonce={nonce}>
+            {children}
+          </CSPNonceProvider>
         </div>
 
-        {/* 全局脚本 */}
+        {/* 全局脚本 - 使用 CSP nonce */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               // 主题检测和设置
@@ -191,13 +200,13 @@ export default function RootLayout({
                 document.documentElement.classList.toggle('dark', theme === 'dark');
               })();
               
-              // 性能监控 (仅开发环境)
-              if (typeof window !== 'undefined' && 'performance' in window && process.env.NODE_ENV === 'development') {
+              // 性能监控 (仅开发环境) - 环境守护
+              if (typeof window !== 'undefined' && 'performance' in window && typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
                 window.addEventListener('load', function() {
                   setTimeout(function() {
                     const perfData = performance.getEntriesByType('navigation')[0];
                     if (perfData && perfData.loadEventEnd > 0) {
-                      if (process.env.NODE_ENV === 'development') {
+                      if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
 
                       }
                     }

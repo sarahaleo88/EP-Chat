@@ -427,7 +427,7 @@ export class BudgetGuardian {
     }
     
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[BudgetGuardian] 清理完成: 删除${deletedRecords}条记录, ${deletedUsers}个用户`);
+
     }
   }
   

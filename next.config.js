@@ -103,36 +103,47 @@ const nextConfig = {
   compress: true,
   // 生产环境优化
   productionBrowserSourceMaps: false,
-  // Webpack 优化配置
+  // Advanced Webpack optimization configuration
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // 生产环境优化
+    // Production environment optimizations
     if (!dev && !isServer) {
-      // 代码分割优化
+      // Advanced code splitting optimization
       config.optimization.splitChunks = {
         chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
         cacheGroups: {
-          // 第三方库单独打包
+          // React core libraries
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'react',
+            chunks: 'all',
+            priority: 30,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          // UI libraries (Heroicons, Headless UI)
+          ui: {
+            test: /[\\/]node_modules[\\/](@heroicons|@headlessui)[\\/]/,
+            name: 'ui',
+            chunks: 'all',
+            priority: 25,
+            reuseExistingChunk: true,
+          },
+          // Utility libraries
+          utils: {
+            test: /[\\/]node_modules[\\/](crypto-js|zod|clsx|tailwind-merge)[\\/]/,
+            name: 'utils',
+            chunks: 'all',
+            priority: 20,
+            reuseExistingChunk: true,
+          },
+          // Other vendor libraries
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
             priority: 10,
-            reuseExistingChunk: true,
-          },
-          // React 相关库单独打包
-          react: {
-            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            name: 'react',
-            chunks: 'all',
-            priority: 20,
-            reuseExistingChunk: true,
-          },
-          // 工具库单独打包
-          utils: {
-            test: /[\\/]node_modules[\\/](crypto-js|zod|date-fns)[\\/]/,
-            name: 'utils',
-            chunks: 'all',
-            priority: 15,
             reuseExistingChunk: true,
           },
           // 公共代码
@@ -166,6 +177,40 @@ const nextConfig = {
       // 模块 ID 优化
       config.optimization.moduleIds = 'deterministic';
       config.optimization.chunkIds = 'deterministic';
+
+      // Advanced tree shaking for specific libraries
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Use ES modules for better tree shaking
+        'crypto-js': 'crypto-js/index.js',
+      };
+
+      // Exclude large dependencies from client bundle
+      if (!isServer) {
+        config.externals = config.externals || [];
+        // Note: Be careful with externals in Next.js as they can break functionality
+      }
+
+      // Advanced minification options
+      if (config.optimization.minimizer) {
+        config.optimization.minimizer.forEach((minimizer) => {
+          if (minimizer.constructor.name === 'TerserPlugin') {
+            minimizer.options.terserOptions = {
+              ...minimizer.options.terserOptions,
+              compress: {
+                ...minimizer.options.terserOptions.compress,
+                drop_console: true, // Remove console.log in production
+                drop_debugger: true,
+                pure_funcs: ['console.log', 'console.info', 'console.debug'],
+              },
+              mangle: {
+                ...minimizer.options.terserOptions.mangle,
+                safari10: true,
+              },
+            };
+          }
+        });
+      }
 
       // 压缩器配置
       if (config.optimization.minimizer) {
@@ -224,7 +269,22 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.deepseek.com;",
+            value: [
+              "default-src 'self'",
+              // Strict script policy - no unsafe-inline in production
+              process.env.NODE_ENV === 'production'
+                ? "script-src 'self' 'nonce-{NONCE_PLACEHOLDER}'"
+                : "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: https:",
+              "connect-src 'self' https://api.deepseek.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+              "upgrade-insecure-requests"
+            ].join('; '),
           },
           {
             key: 'Permissions-Policy',

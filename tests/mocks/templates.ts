@@ -224,7 +224,7 @@ export const mockGetTemplateOptions = vi.fn().mockImplementation(
   async (scenario: string) => {
     const templates = await mockGetTemplateRegistry(scenario);
     
-    return templates.map(template => ({
+    return templates.map((template: any) => ({
       id: template.id,
       title: template.title,
       lang: template.lang,

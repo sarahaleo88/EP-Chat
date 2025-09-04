@@ -73,6 +73,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证温度参数
+    if (typeof temperature !== 'number' || temperature < 0 || temperature > 2) {
+      return NextResponse.json(
+        { error: '温度参数必须在0-2之间' },
+        { status: 400 }
+      );
+    }
+
+    // 验证最大token数
+    if (typeof maxTokens !== 'number' || maxTokens < 1 || maxTokens > 200000) {
+      return NextResponse.json(
+        { error: '最大token数必须在1-200000之间' },
+        { status: 400 }
+      );
+    }
+
     // 验证模型类型 - 使用 Zod 运行时验证
     const modelValidation = safeValidateDeepSeekModel(model);
     if (!modelValidation.success) {

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import CryptoJS from 'crypto-js';
 
-// Encryption key from environment or fallback
-const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY || 'ep-chat-default-key-2025';
+// Encryption key from environment - MUST be set in production
+const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  throw new Error('SESSION_ENCRYPTION_KEY environment variable is required for security');
+}
 
 /**
  * Encrypts the API key using AES-256 encryption
@@ -10,6 +14,9 @@ const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY || 'ep-chat-default-ke
  * @returns Encrypted API key string
  */
 function encryptApiKey(apiKey: string): string {
+  if (!ENCRYPTION_KEY) {
+    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required');
+  }
   return CryptoJS.AES.encrypt(apiKey, ENCRYPTION_KEY).toString();
 }
 
@@ -19,6 +26,9 @@ function encryptApiKey(apiKey: string): string {
  * @returns Decrypted API key string
  */
 function decryptApiKey(encryptedKey: string): string {
+  if (!ENCRYPTION_KEY) {
+    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required');
+  }
   const bytes = CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY);
   return bytes.toString(CryptoJS.enc.Utf8);
 }

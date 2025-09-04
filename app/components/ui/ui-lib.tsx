@@ -182,10 +182,12 @@ interface ModalProps {
   onClose?: () => void;
 }
 export function Modal(props: ModalProps) {
+  const { onClose } = props;
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        props.onClose?.();
+        onClose?.();
       }
     };
 
@@ -194,7 +196,7 @@ export function Modal(props: ModalProps) {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [props.onClose]);
+  }, [onClose]);
 
   const [isMax, setMax] = useState(!!props.defaultMax);
 

@@ -4,13 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  validateCSRFToken, 
-  requiresCSRFProtection, 
+import {
+  validateCSRFToken,
+  requiresCSRFProtection,
   isCSRFExemptPath,
   createCSRFTokenWithExpiry,
   CSRF_CONSTANTS
 } from './lib/csrf';
+import { generateCSPNonce, createCSPWithNonce } from './lib/csp-nonce';
+import { securityMonitor } from './lib/security-monitor';
 
 /**
  * Middleware function to handle CSRF protection
@@ -60,15 +62,28 @@ function handleAPIMiddleware(request: NextRequest): NextResponse {
 
   // Validate CSRF token for protected requests
   if (!validateCSRFToken(request)) {
+    // Log security event for CSRF validation failure
+    securityMonitor.logCSRF(false, {
+      path: pathname,
+      method: method,
+      reason: 'Invalid or missing CSRF token'
+    }, request);
+
     console.warn(`[CSRF] Invalid or missing CSRF token for ${method} ${pathname}`);
     return NextResponse.json(
-      { 
+      {
         error: 'Invalid or missing CSRF token',
         code: 'CSRF_TOKEN_INVALID'
       },
       { status: 403 }
     );
   }
+
+  // Log successful CSRF validation
+  securityMonitor.logCSRF(true, {
+    path: pathname,
+    method: method
+  }, request);
 
   // CSRF token is valid, proceed with request
   return NextResponse.next();
@@ -159,19 +174,13 @@ function addSecurityHeaders(response: NextResponse): void {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 
-  // Content Security Policy (OWASP A03:2021 - Injection)
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Required for Next.js
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https:",
-    "connect-src 'self' https://api.deepseek.com",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
-  ].join('; ');
+  // Generate nonce for CSP (OWASP A03:2021 - Injection)
+  const nonce = generateCSPNonce();
+  const csp = createCSPWithNonce(nonce);
+
+  // Set CSP header and nonce for components
   response.headers.set('Content-Security-Policy', csp);
+  response.headers.set('x-csp-nonce', nonce);
 
   // Permissions Policy (formerly Feature Policy)
   const permissionsPolicy = [

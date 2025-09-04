@@ -146,7 +146,7 @@ export class EnhancedDeepSeekClient {
 
       if (process.env.NODE_ENV === 'development') {
         if (process.env.NODE_ENV === 'development') {
-          console.log('[Enhanced API] Token budget:', budget);
+
         }
       }
 
@@ -158,7 +158,7 @@ export class EnhancedDeepSeekClient {
 
         if (process.env.NODE_ENV === 'development') {
           if (process.env.NODE_ENV === 'development') {
-            console.log(`[Enhanced API] Truncated messages: ${messages.length} -> ${processedMessages.length}`);
+
           }
         }
       }

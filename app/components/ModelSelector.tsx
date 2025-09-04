@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useReducer, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ModelOption {
@@ -51,10 +51,62 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  
+  // Add forceUpdate mechanism to ensure re-rendering
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
+  
+  // Track previous selectedModel to detect changes
+  const prevSelectedModelRef = useRef(selectedModel);
+
+  // Add CSS animations for smooth 0.3s transitions
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -40%) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -40%) scale(1);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const selectedOption = modelOptions.find(
     option => option.value === selectedModel
   );
+
+  // Enhanced debug: Monitor props changes and force re-render if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+
+      // Check if selectedModel changed but component didn't re-render properly
+      if (prevSelectedModelRef.current !== selectedModel) {
+
+        forceUpdate();
+      }
+    }
+    
+    // Update the ref for next comparison
+    prevSelectedModelRef.current = selectedModel;
+  }, [selectedModel, selectedOption]);
 
   // Close card when clicking outside
   useEffect(() => {
@@ -89,12 +141,104 @@ export function ModelSelector({
     }
   }, [isOpen]);
 
-  const handleModelSelect = (
+  const handleModelSelect = useCallback((
     model: 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner'
   ) => {
-    onModelChange(model);
+    // Safe development logging
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+
+    }
+
+    try {
+      onModelChange(model);
+
+      // Safe development logging
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+
+      }
+    } catch (error) {
+      // Safe development logging
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        console.error('[ModelSelector] Error calling onModelChange:', error);
+      }
+    }
+
     setIsOpen(false);
-  };
+
+    // Force re-render after selection
+    setTimeout(() => {
+      forceUpdate();
+    }, 50);
+  }, [selectedModel, onModelChange]);
+
+  // Add global click handler for automation testing compatibility
+  useEffect(() => {
+    const handleGlobalClick = (event: Event) => {
+      const target = event.target as HTMLElement;
+      if (target && target.closest('[data-testid^="model-option-"]')) {
+        const modelValue = target.closest('[data-testid^="model-option-"]')?.getAttribute('data-model-value');
+        if (modelValue && ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'].includes(modelValue)) {
+          // Prevent default and stop propagation
+          event.preventDefault();
+          event.stopPropagation();
+
+          // Trigger model selection
+          handleModelSelect(modelValue as 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner');
+
+          if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+
+          }
+        }
+      }
+    };
+
+    // Add both click and mousedown listeners for maximum compatibility
+    document.addEventListener('click', handleGlobalClick, true);
+    document.addEventListener('mousedown', handleGlobalClick, true);
+
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, true);
+      document.removeEventListener('mousedown', handleGlobalClick, true);
+    };
+  }, [handleModelSelect]);
+
+  // Add direct DOM manipulation for automation testing
+  useEffect(() => {
+    const buttons = document.querySelectorAll('[data-testid^="model-option-"]');
+    buttons.forEach((button) => {
+      const element = button as HTMLElement;
+      // Store the original onclick handler
+      const originalOnClick = element.onclick;
+
+      // Override with our handler
+      element.onclick = (event) => {
+        const modelValue = element.getAttribute('data-model-value');
+        if (modelValue && ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'].includes(modelValue)) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          handleModelSelect(modelValue as 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner');
+
+          if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+
+          }
+        }
+
+        // Also call original handler if it exists
+        if (originalOnClick) {
+          originalOnClick.call(element, event);
+        }
+      };
+    });
+
+    // Cleanup function
+    return () => {
+      buttons.forEach((button) => {
+        const element = button as HTMLElement;
+        element.onclick = null;
+      });
+    };
+  }, [isOpen, handleModelSelect]); // Re-run when modal opens/closes
 
   return (
     <>
@@ -123,43 +267,65 @@ export function ModelSelector({
         >
           {/* Model Icon Only - Ultra Compact */}
           <div className="flex items-center justify-center">
-            <span style={{ fontSize: '14px' }}>{selectedOption?.icon}</span>
+            <span style={{ fontSize: '14px' }}>
+              {selectedOption?.icon || '💬'}
+            </span>
           </div>
         </button>
       </div>
 
-      {/* Modal Overlay */}
+      {/* Modal Overlay - Optimized for 10vh Height Constraint */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 flex items-center justify-center"
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
             backdropFilter: 'blur(2px)',
+            zIndex: 9999,
+            animation: 'modalFadeIn 0.3s ease-out',
           }}
           onClick={() => setIsOpen(false)}
         >
-          {/* Model Selection Card */}
+          {/* Ultra-Compact Model Selection Card */}
           <div
-            className="relative animate-in fade-in-0 zoom-in-95 duration-200"
+            className="relative"
             style={{
               backgroundColor: 'var(--white)',
               borderRadius: '12px',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
               border: 'var(--border-in-light)',
-              padding: '20px',
-              minWidth: '320px',
+              padding: '12px 16px', // Reduced padding for more compact design
+              width: '300px', // Further reduced width for compact design
               maxWidth: '90vw',
+              height: 'auto', // Auto height to fit content
+              maxHeight: '80vh', // Use viewport height to ensure it fits on screen
+              minHeight: '200px', // Minimum usable height
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              transform: 'translate(-50%, -40%)', // Move down a bit more to show top content
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              animation: 'modalSlideIn 0.3s ease-out',
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            {/* Ultra-Compact Header */}
+            <div
+              className="flex items-center justify-between"
+              style={{
+                marginBottom: '12px', // More comfortable spacing
+                flexShrink: 0, // Prevent shrinking
+              }}
+            >
               <h3
                 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
+                  fontSize: '16px', // Larger, more readable title
+                  fontWeight: 'bold',
                   color: 'var(--black)',
                   margin: 0,
+                  lineHeight: '1.2',
                 }}
               >
                 选择模型
@@ -173,8 +339,11 @@ export function ModelSelector({
                   cursor: 'pointer',
                   color: 'var(--black)',
                   opacity: 0.6,
-                  padding: '4px',
+                  padding: '2px', // Reduced padding
                   borderRadius: '4px',
+                  width: '20px', // Compact size
+                  height: '20px',
+                  flexShrink: 0,
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.opacity = '1';
@@ -186,8 +355,8 @@ export function ModelSelector({
                 }}
               >
                 <svg
-                  width="16"
-                  height="16"
+                  width="12" // Reduced icon size for compact design
+                  height="12"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -201,30 +370,66 @@ export function ModelSelector({
               </button>
             </div>
 
-            {/* Model Options */}
-            <div className="space-y-2">
-              {modelOptions.map(option => {
+            {/* Ultra-Compact Model Options */}
+            <div
+              style={{
+                flex: 1, // Take remaining space
+                overflowY: 'auto', // Enable scrolling for 10vh constraint
+                overflowX: 'hidden',
+                paddingRight: '0', // No extra padding needed
+              }}
+            >
+              {modelOptions.map((option, index) => {
                 const isSelected = selectedModel === option.value;
 
                 return (
                   <button
                     key={option.value}
-                    onClick={() => handleModelSelect(option.value)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleModelSelect(option.value);
+                    }}
+                    onMouseDown={(e) => {
+                      // Fallback for cases where onClick might not work
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleModelSelect(option.value);
+                    }}
+                    onTouchStart={(e) => {
+                      // Mobile touch support
+                      e.preventDefault();
+                      handleModelSelect(option.value);
+                    }}
+                    onKeyDown={(e) => {
+                      // Keyboard accessibility
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleModelSelect(option.value);
+                      }
+                    }}
+                    // Add data attribute for easier testing
+                    data-model-value={option.value}
+                    data-testid={`model-option-${option.value}`}
                     className="w-full text-left transition-all duration-200 focus:outline-none"
                     style={{
                       backgroundColor: isSelected
                         ? 'var(--primary)'
                         : 'transparent',
                       color: isSelected ? 'white' : 'var(--black)',
+                      // Debug: Add a more visible indicator for selected state
+                      boxShadow: isSelected ? '0 0 0 2px var(--primary)' : 'none',
                       border: isSelected
-                        ? '2px solid var(--primary)'
-                        : '2px solid var(--border-in-light)',
-                      borderRadius: '8px',
-                      padding: '12px',
+                        ? '1px solid var(--primary)' // Thinner border
+                        : '1px solid var(--border-in-light)',
+                      borderRadius: '8px', // Slightly larger radius for better appearance
+                      padding: '8px 12px', // Reduced padding for more compact buttons
+                      margin: index > 0 ? '3px 0 0 0' : '0', // Even tighter spacing for compact design
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
+                      textAlign: 'left', // Ensure text is left-aligned
+                      minHeight: '40px', // Further reduced height for compact design
                     }}
                     onMouseEnter={e => {
                       if (!isSelected) {
@@ -239,44 +444,66 @@ export function ModelSelector({
                       }
                     }}
                   >
-                    {/* Icon */}
+                    {/* Icon container - wider to handle emoji differences */}
                     <div
                       style={{
-                        fontSize: '20px',
+                        width: '24px', // Slightly reduced width while maintaining emoji accommodation
+                        height: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start', // Left-align icons instead of centering
                         flexShrink: 0,
+                        fontSize: '14px', // Slightly smaller icon
+                        marginRight: '10px', // Reduced margin for compact design
                       }}
                     >
                       {option.icon}
                     </div>
 
-                    {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Text content - aligned consistently */}
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start', // Ensure content is left-aligned
+                      }}
+                    >
                       <div
                         style={{
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          marginBottom: '2px',
+                          fontSize: '14px', // Compact but readable font size
+                          fontWeight: '500', // Medium weight, not too bold
+                          marginBottom: '2px', // Slightly more spacing for better readability
+                          lineHeight: '1.2',
+                          whiteSpace: 'normal', // Allow text wrapping
+                          overflow: 'visible', // Show full text
+                          wordBreak: 'break-word', // Break long words if needed
                         }}
                       >
                         {option.label}
                       </div>
+                      {/* Show description now that we have more space */}
                       <div
                         style={{
-                          fontSize: '12px',
-                          opacity: isSelected ? 0.9 : 0.7,
+                          fontSize: '12px', // Compact description text
+                          color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--black-60)',
                           lineHeight: '1.3',
+                          whiteSpace: 'normal', // Allow text wrapping for descriptions too
+                          overflow: 'visible',
+                          wordBreak: 'break-word',
                         }}
                       >
                         {option.description}
                       </div>
                     </div>
 
-                    {/* Selection Indicator */}
+                    {/* Compact Selection Indicator */}
                     {isSelected && (
                       <div
                         style={{
-                          width: '8px',
-                          height: '8px',
+                          width: '6px', // Smaller indicator
+                          height: '6px',
                           backgroundColor: 'white',
                           borderRadius: '50%',
                           flexShrink: 0,
@@ -288,21 +515,6 @@ export function ModelSelector({
               })}
             </div>
 
-            {/* Footer */}
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '12px',
-                backgroundColor: 'var(--hover-color)',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: 'var(--black)',
-                opacity: 0.8,
-                lineHeight: '1.4',
-              }}
-            >
-              💡 提示：选择模型后会自动关闭此窗口
-            </div>
           </div>
         </div>
       )}

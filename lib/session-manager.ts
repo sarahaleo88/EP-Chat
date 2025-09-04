@@ -1,8 +1,20 @@
 import { NextRequest } from 'next/server';
 import CryptoJS from 'crypto-js';
 
-// Encryption key from environment or fallback
-const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY || 'ep-chat-default-key-2025';
+// Encryption key from environment - MUST be set in production
+const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  console.error('[Session Manager] SESSION_ENCRYPTION_KEY environment variable is required for security');
+  // In development, use a warning but allow fallback
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('[Session Manager] Using development fallback key - NOT FOR PRODUCTION');
+  } else {
+    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required for security');
+  }
+}
+
+const ACTUAL_ENCRYPTION_KEY = ENCRYPTION_KEY || 'ep-chat-dev-fallback-key-2025';
 
 /**
  * Decrypts the encrypted API key
@@ -11,7 +23,7 @@ const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY || 'ep-chat-default-ke
  */
 export function decryptApiKey(encryptedKey: string): string | null {
   try {
-    const bytes = CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY);
+    const bytes = CryptoJS.AES.decrypt(encryptedKey, ACTUAL_ENCRYPTION_KEY);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
     return decrypted || null;
   } catch (error) {

@@ -64,7 +64,8 @@
     "prettier": "^3.0.3",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.3.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -37,8 +37,7 @@ const defaultErrorReporter: ErrorReporter = (error, context, errorId) => {
   if (process.env.NODE_ENV === 'development') {
     console.group(`🚨 Error [${errorId}]`);
     console.error('Error:', error);
-    console.log('Context:', context);
-    console.log('Timestamp:', new Date().toISOString());
+
     console.groupEnd();
   }
   
