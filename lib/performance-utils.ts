@@ -264,15 +264,23 @@ export function useMemoizedSanitization(content: string, enhanced: boolean = fal
   
   return useMemo(() => {
     const endTiming = monitor.startTiming('contentSanitization');
-    
+
     try {
       // Lazy load DOMPurify to reduce initial bundle size
       if (typeof window === 'undefined') {
-        // Server-side fallback
+        // Server-side fallback - use iterative sanitization to prevent ReDoS
+        // Remove script tags repeatedly until none remain
+        let sanitized = content;
+        let previous;
+        do {
+          previous = sanitized;
+          // Remove script tags with proper handling of malformed tags
+          sanitized = sanitized.replace(/<script[\s\S]*?<\/script\s*>/gi, '');
+        } while (sanitized !== previous);
         endTiming();
-        return content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        return sanitized;
       }
-      
+
       // Client-side sanitization would be implemented here
       // For now, return content as-is for demonstration
       endTiming();

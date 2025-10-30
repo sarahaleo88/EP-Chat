@@ -15,7 +15,6 @@ import { DeepSeekModel } from '@/lib/types';
 
 // Dynamic imports for heavy components
 const ModelSelector = lazy(() => import('./SimpleModelSelector'));
-const LoadingSpinner = lazy(() => import('./LoadingSpinner'));
 
 // 自定义 Bot 图标组件
 const Bot = ({ className }: { className?: string }) => (

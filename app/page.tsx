@@ -67,7 +67,6 @@ import { SessionManager } from '../lib/session-manager';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import ErrorBoundary from './components/ErrorBoundary';
 import { enhancePrompt } from '../lib/prompt-enhancer';
-import { getCSRFApiClient, csrfPost } from '../lib/csrf-client';
 import { useModelState } from './hooks/useModelState';
 
 // 简单的图标组件
@@ -1101,10 +1100,7 @@ ${friendlyError.retryable ? '您可以重新发送消息重试。' : '请检查�
 
         if (shouldCleanupTemplate) {
           const forceClean = await forceCleanTemplateCache();
-          const result = forceClean();
-          if (process.env.NODE_ENV === 'development') {
-
-          }
+          forceClean(); // Execute cleanup
           cleanupPerformed = true;
         }
       } catch (error) {

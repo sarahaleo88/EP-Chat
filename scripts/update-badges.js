@@ -271,12 +271,21 @@ class BadgeGenerator {
   generateBadgeUrls() {
     const baseUrl = 'https://img.shields.io';
     const repoUrl = this.packageJson.repository?.url || '';
-    const isGitHub = repoUrl.includes('github.com');
-    
+
+    // Parse URL properly to check hostname instead of substring matching
+    let isGitHub = false;
+    try {
+      const url = new URL(repoUrl.replace(/^git\+/, ''));
+      isGitHub = url.hostname === 'github.com' || url.hostname === 'www.github.com';
+    } catch (e) {
+      // Invalid URL, not a GitHub repo
+      isGitHub = false;
+    }
+
     if (isGitHub) {
       const repoPath = repoUrl.replace(/.*github\.com\//, '').replace(/\.git$/, '');
       const badgeBase = `${baseUrl}/endpoint?url=https://raw.githubusercontent.com/${repoPath}/main/.github/badge-data`;
-      
+
       return {
         vulnerabilities: `${badgeBase}/vulnerabilities.json`,
         security: `${badgeBase}/security.json`,
