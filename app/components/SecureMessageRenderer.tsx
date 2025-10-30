@@ -87,21 +87,18 @@ export default function SecureMessageRenderer({
     return escapeHTML(content);
   }, [content]);
 
-  // 处理流式内容的闪烁光标
-  const displayContent = useMemo(() => {
-    if (isStreaming && content) {
-      return sanitizedContent + '<span class="animate-pulse">▊</span>';
-    }
-    return sanitizedContent;
-  }, [sanitizedContent, isStreaming, content]);
-
   return (
-    <div
-      className={`prose prose-sm max-w-none ${className}`}
-      dangerouslySetInnerHTML={{
-        __html: displayContent
-      }}
-    />
+    <div className={`prose prose-sm max-w-none ${className} relative`}>
+      <div
+        dangerouslySetInnerHTML={{
+          __html: sanitizedContent
+        }}
+      />
+      {/* 流式输出光标 - 独立元素，避免重复渲染 */}
+      {isStreaming && content && (
+        <span className="inline-block animate-pulse ml-0.5">▊</span>
+      )}
+    </div>
   );
 }
 

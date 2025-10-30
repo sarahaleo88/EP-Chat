@@ -42,14 +42,23 @@ export default function PromptOutput({
   const contentRef = useRef<HTMLDivElement>(null);
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // 自动滚动到底部（流式输出时）
+  // 检查是否在底部
+  const isAtBottom = useCallback(() => {
+    if (!contentRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+    // 容差5px，避免浮点数精度问题
+    return scrollHeight - scrollTop - clientHeight < 5;
+  }, []);
+
+  // 自动滚动到底部（流式输出时且用户在底部）
   useEffect(() => {
-    if (isStreaming && contentRef.current) {
+    if (isStreaming && shouldAutoScroll && contentRef.current) {
       const element = contentRef.current;
       element.scrollTop = element.scrollHeight;
     }
-  }, [content, isStreaming]);
+  }, [content, isStreaming, shouldAutoScroll]);
 
   // 监听滚动位置
   useEffect(() => {
@@ -59,6 +68,10 @@ export default function PromptOutput({
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = element;
       setShowScrollTop(scrollTop > 100 && scrollHeight > clientHeight + 100);
+
+      // 检测用户是否在底部，更新自动滚动状态
+      const atBottom = scrollHeight - scrollTop - clientHeight < 5;
+      setShouldAutoScroll(atBottom);
     };
 
     element.addEventListener('scroll', handleScroll);

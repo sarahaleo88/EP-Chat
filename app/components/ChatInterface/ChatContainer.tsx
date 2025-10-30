@@ -97,7 +97,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             {/* Message content */}
             <div className="message-content">
               {message.type === 'assistant' ? (
-                <SecureMessageRenderer content={message.content} />
+                <SecureMessageRenderer
+                  content={message.content}
+                  isStreaming={message.isStreaming}
+                />
               ) : (
                 <div className="whitespace-pre-wrap">{message.content}</div>
               )}
