@@ -3,8 +3,8 @@
  * Continuous improvement framework for content templates based on user feedback and metrics
  */
 
-import { ContentTemplate, ContentSection } from './content-templates';
-import { ComprehensionMetrics, TestResult } from './comprehension-testing';
+import { ContentTemplate } from './content-templates';
+import { ComprehensionMetrics } from './comprehension-testing';
 
 export interface RefinementMetric {
   id: string;

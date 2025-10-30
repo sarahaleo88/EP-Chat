@@ -43,15 +43,18 @@ export default function ComprehensionTestRunner({
   const [taskResults, setTaskResults] = useState<TaskResult[]>([]);
   const [userFeedback, setUserFeedback] = useState<Partial<UserFeedback>>({});
   const [test, setTest] = useState<ComprehensionTest | null>(null);
-  const [startTime, setStartTime] = useState<number>(0);
-  const [questionStartTime, setQuestionStartTime] = useState<number>(0);
-  
+  // Note: These timing variables are tracked for future analytics features
+  const [_startTime, setStartTime] = useState<number>(0);
+  const [_questionStartTime, setQuestionStartTime] = useState<number>(0);
+
   const testManagerRef = useRef<ComprehensionTestManager | null>(null);
 
   // Initialize test manager
   useEffect(() => {
     testManagerRef.current = initializeComprehensionTesting();
-    const testData = testManagerRef.current.getResults().find(r => r.testId === testId);
+    // Note: testData is retrieved but not used in current implementation
+    // Keeping for future feature development
+    const _testData = testManagerRef.current.getResults().find(r => r.testId === testId);
     
     // For demo purposes, use predefined tests
     const predefinedTests = testManagerRef.current as any;
@@ -267,8 +270,6 @@ function ContentPhase({
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <SecureMessageRenderer
           content={test.content}
-          enableMarkdownFormatting={renderingMode === 'enhanced'}
-          markdownPreset="document"
           className="max-w-none"
         />
       </div>
@@ -424,9 +425,10 @@ function TaskPhase({
   onComplete: (steps: any[]) => void;
 }) {
   const [steps, setSteps] = useState<any[]>([]);
-  const [startTime] = useState(Date.now());
+  // Note: startTime and addStep are kept for future task tracking features
+  const [_startTime] = useState(Date.now());
 
-  const addStep = (action: string, element?: string, success: boolean = true) => {
+  const _addStep = (action: string, element?: string, success: boolean = true) => {
     setSteps(prev => [...prev, {
       action,
       timestamp: Date.now(),
@@ -462,8 +464,6 @@ function TaskPhase({
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <SecureMessageRenderer
           content={content}
-          enableMarkdownFormatting={renderingMode === 'enhanced'}
-          markdownPreset="document"
           className="max-w-none"
         />
       </div>

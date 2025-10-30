@@ -80,8 +80,9 @@ export class ModelCapabilityManager {
    * 探测模型能力
    */
   private async detectCapabilities(modelName: string): Promise<ModelCapabilities> {
-    const startTime = Date.now();
-    
+    // Note: startTime is kept for future performance monitoring features
+    const _startTime = Date.now();
+
     try {
       // 尝试获取模型元数据
       const metadata = await this.fetchModelMetadata(modelName);

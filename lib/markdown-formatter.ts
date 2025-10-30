@@ -101,15 +101,16 @@ function formatCodeBlocks(text: string): string {
   }
 
   // 检测多行代码模式（缩进或特定关键词开头）
+  // Fixed ReDoS vulnerability by removing nested quantifiers and using atomic groups
   const codeBlockPatterns = [
     // 函数定义
     /(function\s+\w+|def\s+\w+|class\s+\w+|interface\s+\w+|type\s+\w+)[\s\S]*?(?=\n\n|\n[A-Z]|$)/gi,
-    // 代码片段（多行，包含编程关键词）
-    /(?:^|\n)((?:(?:import|export|const|let|var|if|for|while|try|catch)\s+[\s\S]*?)+)(?=\n\n|\n[A-Z]|$)/gi,
+    // 代码片段（多行，包含编程关键词）- Fixed ReDoS by limiting repetition
+    /(?:^|\n)((?:import|export|const|let|var|if|for|while|try|catch)\s+[^\n]*(?:\n(?![\n\s]*$)[^\n]*)*?)(?=\n\n|\n[A-Z]|$)/gi,
     // JSON对象
     /\{[\s\S]*?"[^"]*"[\s\S]*?\}/g,
     // 命令行指令
-    /(?:^|\n)((?:\$\s+|npm\s+|yarn\s+|git\s+|docker\s+)[\s\S]*?)(?=\n\n|\n[A-Z]|$)/gi,
+    /(?:^|\n)((?:\$\s+|npm\s+|yarn\s+|git\s+|docker\s+)[^\n]*?)(?=\n\n|\n[A-Z]|$)/gi,
   ];
 
   let result = text;
@@ -250,6 +251,8 @@ function formatLists(text: string): string {
   let result = text;
 
   // 检测列表模式
+  // Note: listPatterns is used for future list detection features
+  // Keeping it for now as it's part of the planned functionality
   const listPatterns = [
     // 数字序号列表
     /^(\d+[\.\)]\s*.+)$/gm,

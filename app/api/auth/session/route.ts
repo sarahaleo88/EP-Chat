@@ -10,6 +10,9 @@ if (!ENCRYPTION_KEY) {
 
 /**
  * Encrypts the API key using AES-256 encryption
+ * NOTE: This is ENCRYPTION (reversible), not password hashing.
+ * AES encryption is appropriate here because we need to decrypt the API key later.
+ * For password hashing, use bcrypt/scrypt/PBKDF2/Argon2 instead.
  * @param apiKey - The API key to encrypt
  * @returns Encrypted API key string
  */
@@ -17,6 +20,7 @@ function encryptApiKey(apiKey: string): string {
   if (!ENCRYPTION_KEY) {
     throw new Error('SESSION_ENCRYPTION_KEY environment variable is required');
   }
+  // Using AES encryption (not hashing) because we need to decrypt the API key later
   return CryptoJS.AES.encrypt(apiKey, ENCRYPTION_KEY).toString();
 }
 

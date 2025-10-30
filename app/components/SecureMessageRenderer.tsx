@@ -34,8 +34,15 @@ const PURIFY_CONFIG = {
  */
 function sanitizeHTML(html: string): string {
   if (typeof window === 'undefined') {
-    // 服务端渲染时的简单清理
-    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    // 服务端渲染时的简单清理 - use iterative sanitization to prevent ReDoS
+    let sanitized = html;
+    let previous;
+    do {
+      previous = sanitized;
+      // Remove script tags with proper handling of malformed tags
+      sanitized = sanitized.replace(/<script[\s\S]*?<\/script\s*>/gi, '');
+    } while (sanitized !== previous);
+    return sanitized;
   }
 
   return DOMPurify.sanitize(html, PURIFY_CONFIG);
@@ -139,8 +146,15 @@ export function useSanitizedInput(input: string): string {
     }
 
     if (typeof window === 'undefined') {
-      // 服务端渲染时的简单清理
-      return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      // 服务端渲染时的简单清理 - use iterative sanitization to prevent ReDoS
+      let sanitized = input;
+      let previous;
+      do {
+        previous = sanitized;
+        // Remove script tags with proper handling of malformed tags
+        sanitized = sanitized.replace(/<script[\s\S]*?<\/script\s*>/gi, '');
+      } while (sanitized !== previous);
+      return sanitized;
     }
 
     // 清理用户输入，移除危险标签
