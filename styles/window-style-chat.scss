@@ -668,5 +668,293 @@
       border-color: #ccc;
     }
   }
+
+  .btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  // 扩大的设置面板
+  .settings-panel-large {
+    max-width: 700px;
+    max-height: 90vh;
+  }
+
+  // 设置标签页
+  .settings-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 0 24px;
+    background-color: #f8f9fa;
+  }
+
+  .settings-tab {
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+
+    &:hover {
+      color: #333;
+      background-color: rgba(29, 147, 171, 0.05);
+    }
+
+    &.active {
+      color: rgb(29, 147, 171);
+      border-bottom-color: rgb(29, 147, 171);
+    }
+  }
+
+  // 快速按钮配置
+  .quick-buttons-config {
+    .config-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+  }
+
+  .quick-buttons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .quick-button-card {
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    &:hover {
+      border-color: rgb(29, 147, 171);
+      box-shadow: 0 4px 12px rgba(29, 147, 171, 0.1);
+    }
+
+    &.disabled {
+      opacity: 0.6;
+      background-color: #f8f9fa;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-icon-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-selector {
+      position: relative;
+
+      .current-icon {
+        width: 44px;
+        height: 44px;
+        border: 2px solid #e5e5e5;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          border-color: rgb(29, 147, 171);
+          background-color: rgba(29, 147, 171, 0.05);
+        }
+      }
+
+      .icon-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 8px;
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 12px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        z-index: 100;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        animation: slideIn 0.2s ease-out;
+
+        .icon-option {
+          width: 36px;
+          height: 36px;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          background-color: transparent;
+          font-size: 20px;
+          cursor: pointer;
+          transition: all 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &:hover {
+            background-color: #f0f0f0;
+            transform: scale(1.1);
+          }
+
+          &.selected {
+            background-color: rgba(29, 147, 171, 0.1);
+            border-color: rgb(29, 147, 171);
+          }
+        }
+      }
+    }
+
+    .button-name-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      background-color: #f8f9fa;
+      max-width: 200px;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: rgb(29, 147, 171);
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba(29, 147, 171, 0.1);
+      }
+    }
+
+    .card-body {
+      .prompt-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 13px;
+        resize: vertical;
+        min-height: 80px;
+        background-color: #f8f9fa;
+        font-family: inherit;
+        line-height: 1.5;
+        transition: all 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: rgb(29, 147, 171);
+          background-color: #fff;
+          box-shadow: 0 0 0 3px rgba(29, 147, 171, 0.1);
+        }
+      }
+
+      .card-options {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+
+        .option-group {
+          flex: 1;
+
+          label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 6px;
+          }
+
+          select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:focus {
+              outline: none;
+              border-color: rgb(29, 147, 171);
+              background-color: #fff;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 开关样式
+  .toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+
+    input {
+      display: none;
+    }
+
+    .toggle-slider {
+      width: 44px;
+      height: 24px;
+      background-color: #ddd;
+      border-radius: 12px;
+      position: relative;
+      transition: all 0.2s;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background-color: #fff;
+        border-radius: 50%;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    input:checked + .toggle-slider {
+      background-color: rgb(29, 147, 171);
+
+      &::after {
+        transform: translateX(20px);
+      }
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+    }
+  }
 }
 
