@@ -28,6 +28,7 @@ interface GenerateRequest {
   requestId?: string;
   enableBudgetGuard?: boolean;
   enableContinuation?: boolean;
+  systemPrompt?: string; // Agent 模式：可选的系统提示词
 }
 
 /**
@@ -49,14 +50,18 @@ export async function POST(request: NextRequest) {
       model: requestModel = DEFAULT_MODEL as DeepSeekModel,
       stream = true,
       temperature = 0.7,
-      maxTokens = 128000, // 128k tokens
+      maxTokens = 8192, // DeepSeek API limit: [1, 8192]
       userId = 'anonymous',
       requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       enableBudgetGuard = process.env.EP_LONG_OUTPUT_GUARD === 'on',
       enableContinuation = process.env.EP_AUTO_CONTINUATION === 'true',
+      systemPrompt, // Agent 模式：可选的系统提示词
     } = body;
 
     model = requestModel as DeepSeekModel; // Set the model from request
+
+    // 清理 systemPrompt（去除空白）
+    const cleanedSystemPrompt = systemPrompt?.trim() || undefined;
 
     // 验证请求参数
     if (!prompt || typeof prompt !== 'string') {
@@ -81,10 +86,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证最大token数
-    if (typeof maxTokens !== 'number' || maxTokens < 1 || maxTokens > 200000) {
+    // 验证最大token数 - DeepSeek API limit is [1, 8192]
+    if (typeof maxTokens !== 'number' || maxTokens < 1 || maxTokens > 8192) {
       return NextResponse.json(
-        { error: '最大token数必须在1-200000之间' },
+        { error: '最大token数必须在1-8192之间' },
         { status: 400 }
       );
     }
@@ -167,15 +172,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取 DeepSeek 客户端
-    const client = getDeepSeekClient();
+    // 获取 DeepSeek 客户端（传递会话中的 API 密钥）
+    const client = getDeepSeekClient(apiKey);
 
-    // 发送请求到 DeepSeek API
-    const response = await client.sendPrompt(prompt, validatedModel, {
+    // 发送请求到 DeepSeek API（支持 Agent 模式的 systemPrompt）
+    const sendOptions: {
+      stream: boolean;
+      temperature: number;
+      maxTokens: number;
+      systemPrompt?: string;
+    } = {
       stream,
       temperature,
       maxTokens,
-    });
+    };
+
+    // 仅在 systemPrompt 存在时添加（避免 undefined 类型错误）
+    if (cleanedSystemPrompt) {
+      sendOptions.systemPrompt = cleanedSystemPrompt;
+    }
+
+    const response = await client.sendPrompt(prompt, validatedModel, sendOptions);
 
     // 流式响应
     if (stream) {

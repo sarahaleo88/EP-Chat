@@ -260,3 +260,94 @@ validate: ## Validate Docker configuration
 	@echo "$(BLUE)Validating Docker configuration...$(NC)"
 	@docker compose -f $(COMPOSE_FILE) config > /dev/null
 	@echo "$(GREEN)✓ Docker Compose configuration is valid$(NC)"
+
+# ============================================
+# Project Recovery from VPS
+# ============================================
+
+# VPS Configuration (modify these values)
+VPS_HOST = root@204.44.70.207
+SSH_PORT = 22
+CONTAINER_NAME = ep-enhanced-prompt
+REMOTE_DIR = /app
+LOCAL_RECOVER_DIR = ./_recovered_project
+VPS_TEMP_DIR = /root/project_recover
+
+.PHONY: recover-check
+recover-check: ## Check VPS connection and container status
+	@echo "$(BLUE)[1/6] Checking VPS connection...$(NC)"
+	@ssh -p $(SSH_PORT) $(VPS_HOST) "echo '$(GREEN)✓ Connected to VPS$(NC)'" || (echo "$(RED)✗ VPS unreachable$(NC)"; exit 1)
+	@echo "$(BLUE)Checking Docker containers on VPS...$(NC)"
+	@ssh -p $(SSH_PORT) $(VPS_HOST) "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
+
+.PHONY: recover-pull
+recover-pull: ## Extract project from Docker container on VPS
+	@echo "$(BLUE)[2/6] Extracting project from Docker container...$(NC)"
+	@ssh -p $(SSH_PORT) $(VPS_HOST) "\
+		rm -rf $(VPS_TEMP_DIR) && \
+		docker cp $(CONTAINER_NAME):$(REMOTE_DIR) $(VPS_TEMP_DIR) || \
+		(echo '$(RED)✗ docker cp failed. Check container name and path.$(NC)'; exit 1)"
+	@echo "$(GREEN)✓ Project extracted to VPS temp directory$(NC)"
+
+.PHONY: recover-package
+recover-package: ## Package recovered folder on VPS
+	@echo "$(BLUE)[3/6] Packaging recovered folder...$(NC)"
+	@ssh -p $(SSH_PORT) $(VPS_HOST) "\
+		cd /root && \
+		tar -czf project_recover.tar.gz project_recover && \
+		ls -lh project_recover.tar.gz"
+	@echo "$(GREEN)✓ Package created$(NC)"
+
+.PHONY: recover-download
+recover-download: ## Download project from VPS to local
+	@echo "$(BLUE)[4/6] Downloading project to local machine...$(NC)"
+	@rm -f ./project_recover.tar.gz
+	@scp -P $(SSH_PORT) $(VPS_HOST):/root/project_recover.tar.gz ./project_recover.tar.gz
+	@echo "$(GREEN)✓ Downloaded to local: $$(ls -lh project_recover.tar.gz | awk '{print $$5}')$(NC)"
+
+.PHONY: recover-backup
+recover-backup: ## Backup current local project before recovery
+	@echo "$(BLUE)[5/6] Creating backup of current local project...$(NC)"
+	@mkdir -p backups
+	@BACKUP_FILE="backups/pre-recovery-backup-$$(date +%Y%m%d-%H%M%S).tar.gz"; \
+	tar --exclude='node_modules' --exclude='.git' --exclude='backups' --exclude='_recovered_project' \
+		-czf "$$BACKUP_FILE" . && \
+	echo "$(GREEN)✓ Backup created: $$BACKUP_FILE$(NC)"
+
+.PHONY: recover-restore
+recover-restore: ## Extract and restore project files
+	@echo "$(BLUE)[6/6] Extracting & restoring project files...$(NC)"
+	@echo "$(YELLOW)⚠️  This will overwrite local files!$(NC)"
+	@rm -rf $(LOCAL_RECOVER_DIR)
+	@mkdir -p $(LOCAL_RECOVER_DIR)
+	@tar -xzf project_recover.tar.gz -C $(LOCAL_RECOVER_DIR)
+	@echo "$(YELLOW)Copying files to current directory...$(NC)"
+	@cp -r $(LOCAL_RECOVER_DIR)/project_recover/* ./ || (echo '$(RED)✗ Failed to restore files$(NC)'; exit 1)
+	@echo "$(GREEN)✓ Project restored successfully!$(NC)"
+	@echo "$(YELLOW)Cleaning up temporary files...$(NC)"
+	@rm -f project_recover.tar.gz
+	@rm -rf $(LOCAL_RECOVER_DIR)
+	@echo "$(GREEN)✓ Cleanup completed$(NC)"
+
+.PHONY: recover
+recover: recover-check recover-backup recover-pull recover-package recover-download recover-restore ## Full recovery: backup, pull from VPS, and restore
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "$(GREEN)✓ Project recovery completed!$(NC)"
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "$(YELLOW)Your local project has been restored to the VPS deployment version.$(NC)"
+	@echo "$(YELLOW)Previous version backed up in: backups/$(NC)"
+
+.PHONY: recover-info
+recover-info: ## Show recovery configuration
+	@echo "$(BLUE)Project Recovery Configuration$(NC)"
+	@echo "$(BLUE)=============================$(NC)"
+	@echo "VPS Host: $(VPS_HOST)"
+	@echo "SSH Port: $(SSH_PORT)"
+	@echo "Container Name: $(CONTAINER_NAME)"
+	@echo "Remote Directory: $(REMOTE_DIR)"
+	@echo "Local Recovery Directory: $(LOCAL_RECOVER_DIR)"
+	@echo ""
+	@echo "$(GREEN)Usage:$(NC)"
+	@echo "  make recover-check    # Check VPS connection and containers"
+	@echo "  make recover          # Full recovery process"
+	@echo "  make recover-info     # Show this information"

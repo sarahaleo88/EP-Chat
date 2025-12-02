@@ -34,15 +34,8 @@ const PURIFY_CONFIG = {
  */
 function sanitizeHTML(html: string): string {
   if (typeof window === 'undefined') {
-    // 服务端渲染时的简单清理 - use iterative sanitization to prevent ReDoS
-    let sanitized = html;
-    let previous;
-    do {
-      previous = sanitized;
-      // Remove script tags with proper handling of malformed tags
-      sanitized = sanitized.replace(/<script[\s\S]*?<\/script\s*>/gi, '');
-    } while (sanitized !== previous);
-    return sanitized;
+    // 服务端渲染时的简单清理
+    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
   }
 
   return DOMPurify.sanitize(html, PURIFY_CONFIG);
@@ -52,16 +45,6 @@ function sanitizeHTML(html: string): string {
  * 转义纯文本，防止HTML注入
  */
 function escapeHTML(text: string): string {
-  if (typeof window === 'undefined') {
-    // 服务端渲染时的简单转义
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;');
-  }
-
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
@@ -144,19 +127,7 @@ export function useSanitizedInput(input: string): string {
     if (!input) {
       return '';
     }
-
-    if (typeof window === 'undefined') {
-      // 服务端渲染时的简单清理 - use iterative sanitization to prevent ReDoS
-      let sanitized = input;
-      let previous;
-      do {
-        previous = sanitized;
-        // Remove script tags with proper handling of malformed tags
-        sanitized = sanitized.replace(/<script[\s\S]*?<\/script\s*>/gi, '');
-      } while (sanitized !== previous);
-      return sanitized;
-    }
-
+    
     // 清理用户输入，移除危险标签
     return DOMPurify.sanitize(input, {
       ALLOWED_TAGS: [],

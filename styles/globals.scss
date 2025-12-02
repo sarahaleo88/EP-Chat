@@ -96,8 +96,8 @@
 :root {
   @include light;
 
-  --window-width: 90vw;
-  --window-height: 90vh;
+  --window-width: 100vw;
+  --window-height: 100vh;
   --sidebar-width: 300px;
   --window-content-width: calc(100% - var(--sidebar-width));
   --message-max-width: 80%;

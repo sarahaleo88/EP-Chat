@@ -51,7 +51,7 @@ app/
 ```
 lib/
 ├── deepseek-api.ts      # DeepSeek API client
-├── prompt-enhancers.ts  # Prompt transformation
+├── prompt-enhancer.ts   # Prompt transformation
 ├── template-registry.ts # Template management
 ├── performance-*.ts     # Performance monitoring
 └── utils.ts             # Utility functions

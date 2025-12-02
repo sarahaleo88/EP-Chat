@@ -120,9 +120,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Get nonce from headers (set by middleware)
-  const headersList = await headers();
-  const nonce = headersList.get('x-csp-nonce') || undefined;
+  // Temporarily disable nonce for debugging
+  // const headersList = await headers();
+  // const nonce = headersList.get('x-csp-nonce') || undefined;
+  const nonce = undefined;
 
   return (
     <html lang="zh-CN" className={inter.variable} suppressHydrationWarning>

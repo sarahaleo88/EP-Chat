@@ -7,8 +7,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { sendPrompt } from '@/lib/deepseek';
 import '@/styles/window-style-chat.scss';
+import {
+  type QuickButtonConfig,
+  type QuickButtonMode,
+  type AgentConfig,
+  DEFAULT_QUICK_BUTTONS as IMPORTED_DEFAULT_BUTTONS,
+  mapQuickButtonsToAgents
+} from '@/types/quickButtons';
 
 type DeepSeekModel = 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner';
 
@@ -19,56 +25,27 @@ interface Message {
   timestamp: Date;
 }
 
-// 快速按钮配置接口
-interface QuickButtonConfig {
+// 内部使用的快速按钮配置接口（扩展 id 为 string）
+interface InternalQuickButtonConfig {
   id: string;
   icon: string;
   name: string;
   prompt: string;
   model: DeepSeekModel;
-  action: 'fill' | 'execute'; // 填充输入框 或 直接执行
+  action: QuickButtonMode; // fill填充 | execute执行 | agent代理模式
   enabled: boolean;
 }
 
-// 默认快速按钮配置
-const DEFAULT_QUICK_BUTTONS: QuickButtonConfig[] = [
-  {
-    id: 'code-gen',
-    icon: '🚀',
-    name: '代码生成',
-    prompt: '请帮我生成以下代码：\n\n# 需求描述\n[在此描述你的代码需求]\n\n# 技术要求\n- 语言：\n- 框架：\n- 其他要求：',
-    model: 'deepseek-coder',
-    action: 'fill',
-    enabled: true
-  },
-  {
-    id: 'doc-write',
-    icon: '📝',
-    name: '文档写作',
-    prompt: '请帮我撰写以下文档：\n\n# 文档类型\n[技术文档/用户手册/API文档/其他]\n\n# 主题\n[在此描述文档主题]\n\n# 要求\n- 格式：Markdown\n- 风格：专业、清晰',
-    model: 'deepseek-chat',
-    action: 'fill',
-    enabled: true
-  },
-  {
-    id: 'qa',
-    icon: '❓',
-    name: '问题解答',
-    prompt: '我有一个问题需要解答：\n\n# 问题\n[在此描述你的问题]\n\n# 背景\n[相关背景信息]',
-    model: 'deepseek-chat',
-    action: 'fill',
-    enabled: true
-  },
-  {
-    id: 'translate',
-    icon: '🌐',
-    name: '中英翻译',
-    prompt: '请帮我翻译以下内容：\n\n# 原文\n[在此粘贴需要翻译的内容]\n\n# 翻译方向\n中文 → 英文 / 英文 → 中文',
-    model: 'deepseek-chat',
-    action: 'fill',
-    enabled: true
-  }
-];
+// 从导入的默认配置转换为内部格式
+const DEFAULT_QUICK_BUTTONS: InternalQuickButtonConfig[] = IMPORTED_DEFAULT_BUTTONS.map(btn => ({
+  id: String(btn.id),
+  icon: btn.icon,
+  name: btn.title,
+  prompt: btn.prompt,
+  model: btn.model,
+  action: btn.mode,
+  enabled: btn.enabled
+}));
 
 // 可选图标列表
 const AVAILABLE_ICONS = ['🚀', '📝', '❓', '🌐', '💻', '🔧', '📊', '🎨', '🔍', '💡', '📁', '⚡', '🎯', '📌', '🏷️'];
@@ -76,6 +53,7 @@ const AVAILABLE_ICONS = ['🚀', '📝', '❓', '🌐', '💻', '🔧', '📊', 
 // Storage keys
 const API_KEY_STORAGE_KEY = 'ep-chat-api-key';
 const QUICK_BUTTONS_STORAGE_KEY = 'ep-chat-quick-buttons';
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'ep-chat-sidebar-collapsed';
 
 export default function WindowStyleChat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,18 +64,27 @@ export default function WindowStyleChat() {
   const [settingsTab, setSettingsTab] = useState<'general' | 'quickButtons'>('general');
   const [apiKey, setApiKey] = useState('');
   const [apiKeySaved, setApiKeySaved] = useState(false);
-  const [quickButtons, setQuickButtons] = useState<QuickButtonConfig[]>(DEFAULT_QUICK_BUTTONS);
+  const [quickButtons, setQuickButtons] = useState<InternalQuickButtonConfig[]>(DEFAULT_QUICK_BUTTONS);
   const [editingButtonId, setEditingButtonId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Agent 模式状态：当前激活的 Agent ID
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load saved settings on mount
   useEffect(() => {
-    // Load API key
+    // Load API key and create session if needed
     const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
     if (savedKey) {
       setApiKey(savedKey);
       setApiKeySaved(true);
+      // Create session cookie on page load if API key exists
+      fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: savedKey }),
+      }).catch(err => console.error('Failed to restore session:', err));
     }
 
     // Load quick buttons
@@ -110,12 +97,27 @@ export default function WindowStyleChat() {
         console.error('Failed to parse quick buttons:', e);
       }
     }
+
+    // Load sidebar collapsed state
+    const savedSidebarState = localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    if (savedSidebarState) {
+      setSidebarCollapsed(savedSidebarState === 'true');
+    }
   }, []);
 
   // Save quick buttons when changed
-  const saveQuickButtons = useCallback((buttons: QuickButtonConfig[]) => {
+  const saveQuickButtons = useCallback((buttons: InternalQuickButtonConfig[]) => {
     setQuickButtons(buttons);
     localStorage.setItem(QUICK_BUTTONS_STORAGE_KEY, JSON.stringify(buttons));
+  }, []);
+
+  // Toggle sidebar collapsed state
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      const newState = !prev;
+      localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(newState));
+      return newState;
+    });
   }, []);
 
   // Toggle settings panel
@@ -125,23 +127,44 @@ export default function WindowStyleChat() {
     setEditingButtonId(null);
   }, []);
 
-  // Save API key
-  const handleSaveApiKey = useCallback(() => {
+  // Save API key (both to localStorage and create session cookie)
+  const handleSaveApiKey = useCallback(async () => {
     if (apiKey.trim()) {
-      localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
-      setApiKeySaved(true);
+      try {
+        // Create session cookie via API
+        const response = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey: apiKey.trim() }),
+        });
+
+        if (response.ok) {
+          localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+          setApiKeySaved(true);
+        } else {
+          console.error('Failed to create session');
+        }
+      } catch (error) {
+        console.error('Error saving API key:', error);
+      }
     }
   }, [apiKey]);
 
-  // Clear API key
-  const handleClearApiKey = useCallback(() => {
+  // Clear API key (both from localStorage and destroy session)
+  const handleClearApiKey = useCallback(async () => {
+    try {
+      // Destroy session cookie via API
+      await fetch('/api/auth/session', { method: 'DELETE' });
+    } catch (error) {
+      console.error('Error clearing session:', error);
+    }
     localStorage.removeItem(API_KEY_STORAGE_KEY);
     setApiKey('');
     setApiKeySaved(false);
   }, []);
 
   // Quick button handlers
-  const updateQuickButton = useCallback((id: string, updates: Partial<QuickButtonConfig>) => {
+  const updateQuickButton = useCallback((id: string, updates: Partial<InternalQuickButtonConfig>) => {
     const newButtons = quickButtons.map(btn =>
       btn.id === id ? { ...btn, ...updates } : btn
     );
@@ -164,6 +187,19 @@ export default function WindowStyleChat() {
     scrollToBottom();
   }, [messages]);
 
+  // 获取当前激活的 Agent 配置
+  const getActiveAgent = useCallback((): AgentConfig | null => {
+    if (!activeAgentId) return null;
+    const activeButton = quickButtons.find(b => b.id === activeAgentId && b.enabled && b.action === 'agent');
+    if (!activeButton || !activeButton.prompt.trim()) return null;
+    return {
+      id: activeButton.id,
+      name: activeButton.name,
+      systemPrompt: activeButton.prompt.trim(),
+      icon: activeButton.icon,
+    };
+  }, [activeAgentId, quickButtons]);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -179,11 +215,36 @@ export default function WindowStyleChat() {
     setIsLoading(true);
 
     try {
-      const response = await sendPrompt(input, selectedModel);
+      // 获取当前激活的 Agent（如果有）
+      const activeAgent = getActiveAgent();
+
+      // Call the /api/generate route instead of calling DeepSeek directly
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: input,
+          model: selectedModel,
+          stream: false,
+          // Agent 模式：附加 systemPrompt
+          ...(activeAgent && { systemPrompt: activeAgent.systemPrompt }),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || '请求失败');
+      }
+
+      const data = await response.json();
+      const responseText = data.data || data.content || '';
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response,
+        content: responseText,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, assistantMessage]);
@@ -192,7 +253,7 @@ export default function WindowStyleChat() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '抱歉，发送消息时出现错误。请稍后重试。',
+        content: error instanceof Error ? `错误: ${error.message}` : '抱歉，发送消息时出现错误。请稍后重试。',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -208,8 +269,20 @@ export default function WindowStyleChat() {
     }
   };
 
-  const handleQuickStart = (button: QuickButtonConfig) => {
-    if (button.action === 'execute') {
+  // 快速按钮点击处理
+  const handleQuickStart = (button: InternalQuickButtonConfig) => {
+    if (button.action === 'agent') {
+      // Agent 模式：切换激活状态
+      if (activeAgentId === button.id) {
+        // 再次点击同一按钮 → 取消激活
+        setActiveAgentId(null);
+      } else {
+        // 点击不同按钮 → 激活新 Agent（自动覆盖之前的）
+        setActiveAgentId(button.id);
+        // 切换到 Agent 指定的模型
+        setSelectedModel(button.model);
+      }
+    } else if (button.action === 'execute') {
       // 直接执行：设置模型，填充输入，并发送
       setSelectedModel(button.model);
       setInput(button.prompt);
@@ -218,27 +291,68 @@ export default function WindowStyleChat() {
         handleSend();
       }, 100);
     } else {
-      // 填充输入框
+      // fill 模式：填充输入框
       setSelectedModel(button.model);
       setInput(button.prompt);
       textareaRef.current?.focus();
     }
   };
 
+  // 新建对话：重置 Agent 状态
   const handleNewChat = () => {
     setMessages([]);
     setInput('');
+    setActiveAgentId(null); // 重置 Agent 状态
   };
 
+  // 模型切换时可选重置 Agent 状态（防止语义混淆）
+  const handleModelChange = (newModel: DeepSeekModel) => {
+    setSelectedModel(newModel);
+    // 可选：切换模型时重置 Agent
+    // setActiveAgentId(null);
+  };
+
+  // 当按钮被禁用时，自动重置激活状态
+  useEffect(() => {
+    if (activeAgentId) {
+      const activeButton = quickButtons.find(b => b.id === activeAgentId);
+      if (!activeButton || !activeButton.enabled || activeButton.action !== 'agent') {
+        setActiveAgentId(null);
+      }
+    }
+  }, [quickButtons, activeAgentId]);
+
   return (
-    <div className="window window-style-chat">
+    <div className={`window window-style-chat ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* 侧边栏折叠时的展开按钮 */}
+      {sidebarCollapsed && (
+        <button
+          className="sidebar-expand-btn"
+          onClick={toggleSidebar}
+          title="展开侧边栏"
+          aria-label="展开侧边栏"
+        >
+          <span className="expand-icon">»</span>
+        </button>
+      )}
+
       {/* 侧边栏 */}
-      <div className="sidebar">
+      <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-content">
-          {/* Logo */}
-          <h1 className="logo-title">
-            🍀 EP Chat
-          </h1>
+          {/* 侧边栏头部：Logo + 折叠按钮 */}
+          <div className="sidebar-header">
+            <h1 className="logo-title">
+              🍀 EP Chat
+            </h1>
+            <button
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="折叠侧边栏"
+              aria-label="折叠侧边栏"
+            >
+              <span className="toggle-icon">«</span>
+            </button>
+          </div>
 
           {/* 新对话按钮 */}
           <div className="new-chat-container">
@@ -250,10 +364,9 @@ export default function WindowStyleChat() {
 
           {/* 模型选择 */}
           <div className="model-selector-container">
-            <label>选择模型</label>
             <select
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value as DeepSeekModel)}
+              onChange={(e) => handleModelChange(e.target.value as DeepSeekModel)}
             >
               <option value="deepseek-chat">💬 DeepSeek Chat</option>
               <option value="deepseek-coder">👨‍💻 DeepSeek Coder</option>
@@ -263,19 +376,25 @@ export default function WindowStyleChat() {
 
           {/* 快速开始 */}
           <div className="quick-start-section">
-            <h3>快速开始</h3>
             <div className="quick-buttons">
-              {quickButtons.filter(btn => btn.enabled).map((button) => (
-                <button
-                  key={button.id}
-                  onClick={() => handleQuickStart(button)}
-                  className="quick-btn"
-                  title={button.action === 'execute' ? '点击直接执行' : '点击填充输入框'}
-                >
-                  <span className="icon">{button.icon}</span>
-                  <span>{button.name}</span>
-                </button>
-              ))}
+              {quickButtons.filter(btn => btn.enabled).map((button) => {
+                const isActiveAgent = activeAgentId === button.id && button.action === 'agent';
+                return (
+                  <button
+                    key={button.id}
+                    onClick={() => handleQuickStart(button)}
+                    className={`quick-btn ${isActiveAgent ? 'agent-active' : ''}`}
+                    title={
+                      button.action === 'agent'
+                        ? (isActiveAgent ? '点击取消 Agent 模式' : '点击激活 Agent 模式')
+                        : (button.action === 'execute' ? '点击直接执行' : '点击填充输入框')
+                    }
+                  >
+                    <span className="icon">{button.icon}</span>
+                    <span>{button.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -463,8 +582,8 @@ export default function WindowStyleChat() {
                             className="prompt-input"
                             value={button.prompt}
                             onChange={(e) => updateQuickButton(button.id, { prompt: e.target.value })}
-                            placeholder="输入提示词模板..."
-                            rows={3}
+                            placeholder={button.action === 'agent' ? '输入 Agent 系统提示词...' : '输入提示词模板...'}
+                            rows={button.action === 'agent' ? 5 : 3}
                           />
 
                           <div className="card-options">
@@ -487,14 +606,21 @@ export default function WindowStyleChat() {
                               <label>执行方式</label>
                               <select
                                 value={button.action}
-                                onChange={(e) => updateQuickButton(button.id, { action: e.target.value as 'fill' | 'execute' })}
+                                onChange={(e) => updateQuickButton(button.id, { action: e.target.value as QuickButtonMode })}
                                 className="action-select"
                               >
                                 <option value="fill">📝 填充输入框</option>
                                 <option value="execute">⚡ 直接执行</option>
+                                <option value="agent">🤖 Agent 模式</option>
                               </select>
                             </div>
                           </div>
+                          {/* Agent 模式提示 */}
+                          {button.action === 'agent' && (
+                            <p className="agent-mode-hint">
+                              💡 Agent 模式：点击按钮激活后，提示词将作为系统指令，影响所有对话回复
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -518,22 +644,7 @@ export default function WindowStyleChat() {
       {/* 主内容区域 */}
       <div className="window-content">
         <div className="content-wrapper">
-          {/* 头部 - 右上角Monitor和图表图标 */}
-          <div className="chat-header">
-            <div className="header-left">
-              {/* 空白区域或logo */}
-            </div>
-            <div className="header-right">
-              <a href="#" className="monitor-link">
-                🚀 Monitor
-              </a>
-              <button className="chart-btn">
-                📊
-              </button>
-            </div>
-          </div>
-
-          {/* 消息区域 */}
+          {/* 消息区域 - 移除了顶部header以最大化显示空间 */}
           <div className="messages-area">
             {messages.length === 0 ? (
               <div className="welcome-screen">
@@ -541,8 +652,6 @@ export default function WindowStyleChat() {
                 <div className="welcome-icon-circle">
                   <span className="clover-icon">🍀</span>
                 </div>
-                <h2>开始新对话</h2>
-                <p>输入您的项目需求，我将为您生成增强的提示词，帮助您获得更好的AI回复</p>
               </div>
             ) : (
               <>
@@ -551,9 +660,6 @@ export default function WindowStyleChat() {
                     key={message.id}
                     className={`message-item ${message.role}`}
                   >
-                    <div className={`message-avatar ${message.role}-avatar`}>
-                      {message.role === 'user' ? '👤' : '🤖'}
-                    </div>
                     <div className={`message-bubble ${message.role}-bubble`}>
                       {message.content}
                     </div>
@@ -582,10 +688,6 @@ export default function WindowStyleChat() {
               >
                 ➤
               </button>
-            </div>
-            <div className="input-hints">
-              <span>按 Enter 发送，Shift + Enter 换行</span>
-              <span>Powered by DeepSeek</span>
             </div>
           </div>
         </div>

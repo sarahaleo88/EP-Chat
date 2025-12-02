@@ -182,12 +182,10 @@ interface ModalProps {
   onClose?: () => void;
 }
 export function Modal(props: ModalProps) {
-  const { onClose } = props;
-
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose?.();
+        props.onClose?.();
       }
     };
 
@@ -196,7 +194,8 @@ export function Modal(props: ModalProps) {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [isMax, setMax] = useState(!!props.defaultMax);
 

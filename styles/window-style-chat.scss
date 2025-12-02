@@ -4,16 +4,87 @@
  */
 
 .window-style-chat {
+  // 侧边栏折叠时的展开按钮
+  .sidebar-expand-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    width: 40px;
+    height: 40px;
+    background-color: rgb(45, 55, 72);
+    border: 1px solid rgba(29, 147, 171, 0.3);
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background-color: rgb(55, 65, 81);
+      border-color: rgb(29, 147, 171);
+      transform: scale(1.05);
+    }
+
+    .expand-icon {
+      font-size: 20px;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
+  // 侧边栏头部
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  // 侧边栏折叠按钮
+  .sidebar-toggle-btn {
+    width: 32px;
+    height: 32px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .toggle-icon {
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
   // 侧边栏内容容器
   .sidebar-content {
     padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   // Logo 标题
   .logo-title {
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin: 0;
     color: #ffffff;
   }
 
@@ -44,9 +115,9 @@
     }
   }
 
-  // 模型选择容器
+  // 模型选择容器 - 简洁文本样式，悬停显示按钮效果
   .model-selector-container {
-    margin-bottom: 20px;
+    margin-bottom: 8px;
 
     label {
       display: block;
@@ -57,24 +128,45 @@
 
     select {
       width: 100%;
-      padding: 10px;
-      background-color: rgba(255, 255, 255, 0.1);
+      padding: 12px 15px;
+      background-color: transparent;
       color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
+      border: none;
+      border-radius: 8px;
       font-size: 14px;
       cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+
+      // 自定义下拉箭头
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+      }
+
+      &:focus {
+        outline: none;
+        background-color: rgba(255, 255, 255, 0.15);
+      }
 
       option {
         background-color: rgb(27, 38, 42);
         color: #ffffff;
+        padding: 10px;
       }
     }
   }
 
   // 快速开始区域
   .quick-start-section {
-    margin-top: 30px;
+    margin-top: 0;
 
     h3 {
       font-size: 16px;
@@ -87,37 +179,45 @@
   .quick-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
   }
 
-  // 快速开始按钮
+  // 快速开始按钮 - 简洁文本样式，悬停显示按钮效果
   .quick-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 15px;
-    background-color: rgba(255, 255, 255, 0.05);
+    gap: 12px;
+    padding: 12px 15px;
+    background-color: transparent;
     color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
     text-align: left;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    position: relative;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.15);
     }
 
     .icon {
       font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+
+    // Agent 激活状态 - 简洁样式，与 hover 相同
+    &.agent-active {
+      background-color: rgba(255, 255, 255, 0.15);
     }
   }
 
   // 设置按钮容器
   .settings-container {
-    margin-top: auto;
-    padding-top: 20px;
+    margin-top: 20px;
+    padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -153,192 +253,149 @@
     height: 100%;
   }
 
-  // 头部
-  .chat-header {
-    padding: 20px;
-    border-bottom: 1px solid #e5e5e5;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  // 头部已移除以最大化聊天显示区域
+  // .chat-header 样式保留但不再使用
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 16px;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .monitor-link {
-      color: #ff6b35;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-
-    .chart-btn {
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 5px;
-      transition: transform 0.2s;
-
-      &:hover {
-        transform: scale(1.1);
-      }
-    }
-
-    .message-count {
-      font-size: 14px;
-      color: #666;
-    }
-  }
-
-  // 消息区域
+  // 消息区域 - 优化背景色提高文字对比度
   .messages-area {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
+    background-color: #f8fafc; // 更浅的灰白色背景，提高对比度
+    display: flex;
+    flex-direction: column;
+    align-items: center; // 消息居中，与输入框对齐
   }
 
-  // 欢迎屏幕
+  // 欢迎屏幕 - 优化排版和对比度
   .welcome-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100%;
+    width: 100%; // 确保欢迎屏幕占满宽度
     text-align: center;
+    padding: 20px;
 
     // 大的青色圆形图标容器
     .welcome-icon-circle {
-      width: 100px;
-      height: 100px;
+      width: 80px; // 稍小一点
+      height: 80px;
       border-radius: 50%;
       background-color: rgb(29, 147, 171);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
       box-shadow: 0 4px 12px rgba(29, 147, 171, 0.3);
 
       .clover-icon {
-        font-size: 48px;
+        font-size: 40px;
         filter: brightness(0) invert(1); // 使emoji变白色
       }
     }
 
     .welcome-icon {
-      font-size: 48px;
-      margin-bottom: 20px;
+      font-size: 40px;
+      margin-bottom: 16px;
     }
 
     h2 {
-      font-size: 24px;
-      margin-bottom: 10px;
-      color: #333;
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: #1e293b; // 深色确保对比度
       font-weight: 600;
     }
 
     p {
-      color: #666;
-      font-size: 14px;
+      color: #475569; // 深灰色提高可读性 (contrast ratio > 4.5:1)
+      font-size: 15px;
       max-width: 500px;
-      line-height: 1.6;
+      line-height: 1.7;
     }
   }
 
-  // 消息项
+  // 消息项 - 简洁左对齐布局
   .message-item {
     display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    margin-bottom: 12px;
+    max-width: 720px; // 与输入框宽度保持一致
+    width: 100%;
 
     &.user {
-      flex-direction: row-reverse;
+      align-items: flex-start; // 用户消息左对齐
+    }
+
+    &.assistant {
+      align-items: flex-start; // AI 消息也左对齐
     }
   }
 
-  // 消息头像
-  .message-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-
-    &.user-avatar {
-      background-color: #e5e5e5;
-    }
-
-    &.assistant-avatar {
-      background-color: rgb(29, 147, 171);
-    }
-  }
-
-  // 消息气泡
+  // 消息气泡 - 简洁无边框设计
   .message-bubble {
-    flex: 1;
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: 8px;
     white-space: pre-wrap;
     word-break: break-word;
+    line-height: 1.6;
+    font-size: 15px;
 
     &.user-bubble {
-      background-color: #f5f5f5;
+      background-color: rgb(29, 147, 171); // 主题色背景
+      color: #ffffff; // 白色文字
+      width: fit-content; // 宽度自适应内容
+      max-width: 100%; // 最大不超过父容器
     }
 
     &.assistant-bubble {
-      background-color: #ffffff;
-      border: 1px solid #e5e5e5;
+      background-color: #ffffff; // 纯白背景
+      color: #1e293b; // 深色文字确保对比度
+      width: 100%; // 占满父容器宽度，与输入框一致
     }
   }
 
-  // 输入区域
+  // 输入区域 - 统一背景，浮动输入框
   .input-area {
-    padding: 20px;
-    border-top: 1px solid #e5e5e5;
-    background-color: #ffffff;
+    padding: 54px 20px 7px; // 顶部间距大，底部间距最小，输入框紧靠底部
+    background-color: #f8fafc; // 与 messages-area 保持一致，形成统一背景
+    display: flex;
+    justify-content: center; // 输入容器居中
   }
 
   // 输入容器
   .input-container {
     position: relative;
+    max-width: 720px; // 限制最大宽度，侧边栏展开时约为2/3宽度
+    width: 100%;
 
     textarea {
       width: 100%;
-      min-height: 60px;
+      min-height: 88px; // 增加高度，容纳更多文本
       max-height: 200px;
-      padding: 15px 60px 15px 20px;
-      font-size: 14px;
-      border: 1px solid #e5e5e5;
-      border-radius: 26px;
+      padding: 18px 56px 18px 20px;
+      font-size: 15px;
+      border: 1px solid #d1d5db;
+      border-radius: 24px;
       resize: none;
       outline: none;
-      background-color: rgb(250, 250, 250);
+      background-color: #ffffff;
       font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: border-color 0.2s, box-shadow 0.2s;
 
       &::placeholder {
-        color: #999;
+        color: #9ca3af;
+      }
+
+      &:hover {
+        border-color: #9ca3af;
       }
 
       &:focus {
         border-color: rgb(29, 147, 171);
+        box-shadow: 0 2px 12px rgba(29, 147, 171, 0.15);
       }
     }
   }
@@ -346,8 +403,8 @@
   // 发送按钮
   .send-btn {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
+    right: 8px;
+    bottom: 8px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -358,29 +415,30 @@
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.15s;
 
     &.enabled {
       background-color: rgb(29, 147, 171);
 
       &:hover {
         background-color: rgb(25, 130, 150);
+        transform: scale(1.05);
       }
     }
 
     &.disabled {
-      background-color: #e5e5e5;
+      background-color: #d1d5db;
       cursor: not-allowed;
     }
   }
 
-  // 输入提示
+  // 输入提示 - 提高对比度
   .input-hints {
-    margin-top: 10px;
+    margin-top: 8px;
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: #999;
+    color: #64748b; // 深灰色提高可读性
   }
 
   // 设置面板覆盖层
@@ -955,6 +1013,18 @@
       font-weight: 500;
       color: #666;
     }
+  }
+
+  // Agent 模式提示文本
+  .agent-mode-hint {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background-color: rgba(35, 196, 131, 0.1);
+    border: 1px solid rgba(35, 196, 131, 0.3);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #23c483;
+    line-height: 1.5;
   }
 }
 

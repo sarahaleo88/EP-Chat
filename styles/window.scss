@@ -2,12 +2,12 @@
 .window {
   width: var(--window-width);
   height: var(--window-height);
-  box-shadow: var(--shadow);
-  border-radius: 10px;
   background-color: var(--white);
   overflow: hidden;
   position: relative;
   display: flex;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .window-header {
@@ -32,19 +32,19 @@
   border-right: var(--border-in-light);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: fixed;
 
-  /* Align with main content area - contained design */
-  top: 5vh; /* Match main content top margin */
-  left: 5vw; /* Add left margin to match main content */
-  height: 90vh; /* Match main content height */
+  /* Full height edge-to-edge layout */
+  top: 0;
+  left: 0;
+  height: 100vh;
   z-index: 10;
 
   /* Enhanced visual integration */
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(10px);
-  border-radius: 10px 0 0 10px; /* Round left corners to match main content */
+  border-radius: 0; /* No rounded corners for edge-to-edge */
 
   /* Improved gradient with better contrast for text visibility */
   background: linear-gradient(
@@ -73,6 +73,13 @@
     );
     pointer-events: none;
     animation: sidebar-glow 4s ease-in-out infinite;
+  }
+
+  /* Collapsed state for desktop */
+  &.collapsed {
+    transform: translateX(-100%);
+    box-shadow: none;
+    pointer-events: none;
   }
 }
 
@@ -104,12 +111,46 @@
   }
 
   /* Smooth transition for better visual flow */
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: content-fade-in 0.6s ease-out;
+}
+
+/* Sidebar collapsed state - content expands to full width */
+.sidebar-collapsed .window-content {
+  margin-left: 0;
+}
+
+/* Constrain input area width when sidebar is collapsed on wide viewports */
+.sidebar-collapsed .input-area {
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar-collapsed .input-container {
+  max-width: 720px !important; // 与展开状态保持一致
+  width: 100%;
+}
+
+/* Also center messages area when sidebar is collapsed */
+.sidebar-collapsed .messages-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar-collapsed .messages-area > * {
+  max-width: 720px;
+  width: 100%;
 }
 
 /* Enhanced mobile responsiveness - covers both 768px and 600px breakpoints */
 @media only screen and (max-width: 768px) {
+  /* Hide desktop sidebar toggle and expand buttons on mobile */
+  .sidebar-expand-btn,
+  .sidebar-toggle-btn {
+    display: none !important;
+  }
+
   /* Mobile hamburger menu button */
   .mobile-hamburger-menu {
     display: flex !important; /* Show on mobile */
@@ -162,6 +203,11 @@
       left: 0 !important;
       transform: translateX(0);     /* Slide in using transform */
     }
+
+    /* Override collapsed state on mobile - mobile uses different behavior */
+    &.collapsed {
+      transform: translateX(-100%); /* Keep original mobile behavior */
+    }
   }
 
   /* Mobile overlay backdrop when sidebar is open */
@@ -189,6 +235,11 @@
     &::before {
       display: none; /* Hide the left border on mobile */
     }
+  }
+
+  /* Override sidebar-collapsed state on mobile */
+  .sidebar-collapsed .window-content {
+    margin-left: 0 !important;
   }
 
   /* Mobile window layout - stack vertically */

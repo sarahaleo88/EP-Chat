@@ -122,38 +122,52 @@ export class DeepSeekClient {
       maxTokens?: number;
       topP?: number;
       timeout?: number;
+      systemPrompt?: string; // Agent 模式：可选的系统提示词
     } = {}
   ): Promise<Response> {
     // 输入验证
     const validatedPrompt = this.validatePrompt(prompt);
-    
+
     const {
       stream = true,
       temperature = 0.7,
-      maxTokens = 32000, // 增加到32K，但加入验证
+      maxTokens = 8192, // DeepSeek API limit: [1, 8192]
       topP = 0.9,
       timeout = 60000, // 60秒超时
+      systemPrompt,
     } = options;
 
     // 参数验证
     if (temperature < 0 || temperature > 2) {
       throw new Error('temperature参数必须在0-2之间');
     }
-    if (maxTokens < 1 || maxTokens > 128000) {
-      throw new Error('maxTokens参数必须在1-128000之间');
+    if (maxTokens < 1 || maxTokens > 8192) {
+      throw new Error('maxTokens参数必须在1-8192之间');
     }
     if (topP < 0 || topP > 1) {
       throw new Error('topP参数必须在0-1之间');
     }
 
+    // 构建消息数组（支持 Agent 模式的 systemPrompt）
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+
+    // 如果提供了 systemPrompt，添加为第一条消息
+    if (systemPrompt?.trim()) {
+      messages.push({
+        role: 'system',
+        content: systemPrompt.trim(),
+      });
+    }
+
+    // 添加用户消息
+    messages.push({
+      role: 'user',
+      content: validatedPrompt,
+    });
+
     const requestBody = {
       model,
-      messages: [
-        {
-          role: 'user',
-          content: validatedPrompt,
-        },
-      ],
+      messages,
       temperature,
       max_tokens: maxTokens,
       top_p: topP,
@@ -339,10 +353,16 @@ export class DeepSeekClient {
 let defaultClient: DeepSeekClient | null = null;
 
 /**
- * 获取默认 DeepSeek 客户端实例
+ * 获取 DeepSeek 客户端实例
+ * @param apiKey - 可选的 API 密钥，如果提供则创建新实例，否则使用默认实例
  * @returns DeepSeek 客户端实例
  */
-export function getDeepSeekClient(): DeepSeekClient {
+export function getDeepSeekClient(apiKey?: string): DeepSeekClient {
+  // 如果提供了 API 密钥，创建新实例
+  if (apiKey) {
+    return new DeepSeekClient(apiKey);
+  }
+  // 否则使用默认实例（从环境变量获取密钥）
   if (!defaultClient) {
     defaultClient = new DeepSeekClient();
   }
@@ -363,4 +383,21 @@ export async function sendPrompt(
 ): Promise<Response> {
   const client = getDeepSeekClient();
   return client.sendPrompt(prompt, model, options);
+}
+
+/**
+ * 便捷函数：发送提示并获取文本响应（非流式）
+ * @param prompt - 提示文本
+ * @param model - 模型类型
+ * @param options - 选项
+ * @returns 响应文本
+ */
+export async function sendPromptText(
+  prompt: string,
+  model: DeepSeekModel = 'deepseek-chat',
+  options?: Omit<Parameters<DeepSeekClient['sendPrompt']>[2], 'stream'>
+): Promise<string> {
+  const client = getDeepSeekClient();
+  const response = await client.sendPrompt(prompt, model, { ...options, stream: false });
+  return client.getNonStreamResponse(response);
 }
