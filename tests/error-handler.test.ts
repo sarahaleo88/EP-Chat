@@ -88,9 +88,9 @@ describe('Error Handler', () => {
         const result = formatUserFriendlyError(error);
 
         // Rate limit errors should be handled with appropriate messaging
-        expect(result.title).toBe('请求过于频繁');
+        expect(result.title).toBe('请求频率限制');
         expect(result.retryable).toBe(true);
-        expect(result.icon).toBe('⏱️');
+        expect(result.icon).toBe('🚦');
         expect(result.actionLabel).toBe('稍后重试');
       });
 
