@@ -36,7 +36,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: rm -rf node_modules package-lock.json && npm install
+      run: npm install --force
 
     - name: 🔍 Run type checking
       run: npm run type-check
@@ -72,7 +72,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: rm -rf node_modules package-lock.json && npm install
+      run: npm install --force
 
     - name: 🔨 Build application
       run: npm run build
@@ -102,7 +102,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: rm -rf node_modules package-lock.json && npm install
+      run: npm install --force
 
     - name: 🔍 Run security audit
       run: npm audit --audit-level moderate
