@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
     tags: [ 'v*' ]
+  workflow_dispatch:  # Allow manual triggering
 
 # Default permissions (least privilege)
 permissions:
@@ -14,7 +15,9 @@ jobs:
   deploy-vercel:
     name: 🌐 Deploy to Vercel
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    # Only run when VERCEL_ENABLED is 'true' or manually triggered
+    # Set VERCEL_ENABLED in Repository Settings → Secrets and variables → Variables
+    if: (vars.VERCEL_ENABLED == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
 
     steps:
     - name: 📦 Checkout repository
