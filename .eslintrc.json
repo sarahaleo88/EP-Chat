@@ -29,6 +29,15 @@
     "*.config.js",
     "*.config.ts",
     "public/sw.js",
-    "public/workbox-*.js"
+    "public/workbox-*.js",
+    "scripts/"
+  ],
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts", "tests/**/*.tsx"],
+      "rules": {
+        "@next/next/no-assign-module-variable": "off"
+      }
+    }
   ]
 }
