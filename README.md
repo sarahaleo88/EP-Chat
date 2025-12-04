@@ -881,6 +881,8 @@ EP Chat 支持渐进式 Web 应用 (PWA) 功能，可以像原生应用一样安
 
 ### 🧪 测试
 
+本项目使用 **Vitest** 进行单元测试与组件测试，完整测试套件包含 **51 个测试文件、691 个测试用例**，已全部通过。
+
 ```bash
 # 运行所有测试
 npm test
@@ -889,11 +891,13 @@ npm test
 npm run test:watch
 
 # 生成覆盖率报告
-npm run test -- --coverage
+npx vitest run --coverage
 
-# PWA 功能测试
-npm test -- tests/pwa.test.tsx
+# 运行特定测试文件
+npm test -- tests/deepseek.test.ts
 ```
+
+> 📚 更多测试细节与说明见 [docs/testing.md](./docs/testing.md)
 
 ### 🔧 开发
 
@@ -1786,6 +1790,26 @@ EP Chat supports Progressive Web App (PWA) functionality, allowing you to instal
 - ✅ Native app-like experience
 - ✅ Automatic updates
 - ✅ Push notifications ready (future feature)
+
+### 🧪 Testing
+
+This project uses **Vitest** for unit and component testing. The complete test suite includes **51 test files and 691 test cases**, all passing.
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Generate coverage report
+npx vitest run --coverage
+
+# Run specific test file
+npm test -- tests/deepseek.test.ts
+```
+
+> 📚 For more testing details, see [docs/testing.md](./docs/testing.md)
 
 ### 📊 Performance
 
