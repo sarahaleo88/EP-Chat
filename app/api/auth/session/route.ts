@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import CryptoJS from 'crypto-js';
 
-// Encryption key from environment - MUST be set in production
-const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY;
-
-if (!ENCRYPTION_KEY) {
-  throw new Error('SESSION_ENCRYPTION_KEY environment variable is required for security');
+/**
+ * Gets the encryption key from environment.
+ * This is a function to defer the check to runtime instead of build time.
+ * @throws Error if SESSION_ENCRYPTION_KEY is not set
+ */
+function getEncryptionKey(): string {
+  const key = process.env.SESSION_ENCRYPTION_KEY;
+  if (!key) {
+    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required for security');
+  }
+  return key;
 }
 
 /**
@@ -17,11 +23,9 @@ if (!ENCRYPTION_KEY) {
  * @returns Encrypted API key string
  */
 function encryptApiKey(apiKey: string): string {
-  if (!ENCRYPTION_KEY) {
-    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required');
-  }
+  const encryptionKey = getEncryptionKey();
   // Using AES encryption (not hashing) because we need to decrypt the API key later
-  return CryptoJS.AES.encrypt(apiKey, ENCRYPTION_KEY).toString();
+  return CryptoJS.AES.encrypt(apiKey, encryptionKey).toString();
 }
 
 /**
@@ -30,10 +34,8 @@ function encryptApiKey(apiKey: string): string {
  * @returns Decrypted API key string
  */
 function decryptApiKey(encryptedKey: string): string {
-  if (!ENCRYPTION_KEY) {
-    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required');
-  }
-  const bytes = CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY);
+  const encryptionKey = getEncryptionKey();
+  const bytes = CryptoJS.AES.decrypt(encryptedKey, encryptionKey);
   return bytes.toString(CryptoJS.enc.Utf8);
 }
 
