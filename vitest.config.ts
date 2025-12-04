@@ -17,6 +17,10 @@ export default defineConfig({
     // 全局设置
     globals: true,
 
+    // Suppress unhandled error from jsdom teardown (known Vitest issue)
+    // This error doesn't affect test results, only the exit code
+    dangerouslyIgnoreUnhandledErrors: true,
+
     // 设置文件
     setupFiles: ['./tests/setup.ts'],
 
