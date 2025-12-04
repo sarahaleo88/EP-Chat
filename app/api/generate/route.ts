@@ -6,6 +6,7 @@
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL ?? "deepseek-v3.1";
 
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { getDeepSeekClient } from '@/lib/deepseek';
 import { getCapabilityManager } from '@/lib/model-capabilities';
 import { getBudgetGuardian } from '@/lib/budget-guardian';
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       temperature = 0.7,
       maxTokens = 8192, // DeepSeek API limit: [1, 8192]
       userId = 'anonymous',
-      requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      requestId = `req_${Date.now()}_${randomUUID().slice(0, 8)}`,
       systemPrompt, // Agent 模式：可选的系统提示词
       mode = 'chat', // 默认为 chat 模式（快速路径）
     } = body;
@@ -132,7 +133,9 @@ export async function POST(request: NextRequest) {
     // Agent 模式：启用完整的增强逻辑
     const isAgentMode = mode === 'agent';
     const enableBudgetGuard = isAgentMode && process.env.EP_LONG_OUTPUT_GUARD === 'on';
-    const enableContinuation = isAgentMode && process.env.EP_AUTO_CONTINUATION === 'true';
+    // Reserved for future auto-continuation feature (see BudgetAwareContinuationEngine)
+    const _enableContinuation = isAgentMode && process.env.EP_AUTO_CONTINUATION === 'true';
+    void _enableContinuation; // Suppress unused variable warning
 
     model = requestModel as DeepSeekModel; // Set the model from request
 

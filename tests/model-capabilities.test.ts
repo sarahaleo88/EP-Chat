@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ModelCapabilityManager, ModelCapabilities } from '@/lib/model-capabilities';
+import { ModelCapabilityManager } from '@/lib/model-capabilities';
 
 // Mock fetch
 const mockFetch = vi.fn();

@@ -4,7 +4,7 @@
  * Following ISO/IEC 29119 testing standards
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Import modules to test
@@ -168,7 +168,8 @@ describe('Performance Tests - Sub-100ms Target', () => {
         largeArrays.push(new Array(1000).fill(Math.random()));
       }
       
-      const peakMemory = process.memoryUsage();
+      // Capture peak memory for potential future analysis
++      void process.memoryUsage();
       
       // Clean up
       largeArrays.length = 0;

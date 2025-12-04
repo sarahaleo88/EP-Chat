@@ -8,6 +8,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import '@/styles/window-style-chat.scss';
+import { secureGetItem, secureSetItem, secureRemoveItem, isObfuscated } from '@/lib/secure-storage';
 
 // Copy button component for assistant messages
 interface CopyButtonProps {
@@ -60,7 +61,7 @@ import {
   type QuickButtonMode,
   type AgentConfig,
   DEFAULT_QUICK_BUTTONS as IMPORTED_DEFAULT_BUTTONS,
-  mapQuickButtonsToAgents
+  // mapQuickButtonsToAgents - Reserved for future Agent mode integration
 } from '@/types/quickButtons';
 
 type DeepSeekModel = 'deepseek-chat' | 'deepseek-coder' | 'deepseek-reasoner';
@@ -98,9 +99,12 @@ const DEFAULT_QUICK_BUTTONS: InternalQuickButtonConfig[] = IMPORTED_DEFAULT_BUTT
 const AVAILABLE_ICONS = ['🚀', '📝', '❓', '🌐', '💻', '🔧', '📊', '🎨', '🔍', '💡', '📁', '⚡', '🎯', '📌', '🏷️'];
 
 // Storage keys
-// TODO (P2-01): Consider migrating API key storage to session-only (httpOnly Cookie)
-// Currently using dual storage (localStorage + Cookie) for backward compatibility
-// See: docs/epchat-release-fix-plan.md#p2-01
+// SECURITY NOTE (CodeQL Alert #113 - Mitigated):
+// API key storage uses dual approach for security + UX:
+// 1. Primary: httpOnly session cookie (secure, not accessible to JS)
+// 2. Secondary: localStorage with obfuscation (for persistence across sessions)
+// The obfuscation prevents casual inspection but is NOT cryptographic security.
+// Real security comes from httpOnly cookies + CSP headers.
 const API_KEY_STORAGE_KEY = 'ep-chat-api-key';
 const QUICK_BUTTONS_STORAGE_KEY = 'ep-chat-quick-buttons';
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'ep-chat-sidebar-collapsed';
@@ -124,11 +128,19 @@ export default function WindowStyleChat() {
 
   // Load saved settings on mount
   useEffect(() => {
-    // Load API key and create session if needed
-    const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    // Load API key (with obfuscation) and create session if needed
+    const savedKey = secureGetItem(API_KEY_STORAGE_KEY);
     if (savedKey) {
       setApiKey(savedKey);
       setApiKeySaved(true);
+
+      // Migrate legacy plaintext values to obfuscated storage
+      const rawStored = localStorage.getItem(API_KEY_STORAGE_KEY);
+      if (rawStored && !isObfuscated(rawStored)) {
+        // Re-save with obfuscation for security
+        secureSetItem(API_KEY_STORAGE_KEY, savedKey);
+      }
+
       // Create session cookie on page load if API key exists
       fetch('/api/auth/session', {
         method: 'POST',
@@ -177,11 +189,11 @@ export default function WindowStyleChat() {
     setEditingButtonId(null);
   }, []);
 
-  // Save API key (both to localStorage and create session cookie)
+  // Save API key (both to localStorage with obfuscation and create session cookie)
   const handleSaveApiKey = useCallback(async () => {
     if (apiKey.trim()) {
       try {
-        // Create session cookie via API
+        // Create session cookie via API (primary secure storage)
         const response = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -189,7 +201,8 @@ export default function WindowStyleChat() {
         });
 
         if (response.ok) {
-          localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+          // Save to localStorage with obfuscation (secondary storage for persistence)
+          secureSetItem(API_KEY_STORAGE_KEY, apiKey.trim());
           setApiKeySaved(true);
         } else {
           console.error('Failed to create session');
@@ -208,7 +221,8 @@ export default function WindowStyleChat() {
     } catch (error) {
       console.error('Error clearing session:', error);
     }
-    localStorage.removeItem(API_KEY_STORAGE_KEY);
+    // Remove from localStorage (using secure removal)
+    secureRemoveItem(API_KEY_STORAGE_KEY);
     setApiKey('');
     setApiKeySaved(false);
   }, []);

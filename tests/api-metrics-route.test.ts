@@ -3,7 +3,7 @@
  * Metrics collection API tests
  */
 
-import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Import once at the top to avoid re-registration issues

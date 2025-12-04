@@ -4,8 +4,8 @@
  * Following ISO/IEC 29119 testing standards
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { NextRequest, NextResponse } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
 // Import modules to test
 import { generateCSRFToken, validateCSRFToken } from '@/lib/csrf';

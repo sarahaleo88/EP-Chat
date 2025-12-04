@@ -20,12 +20,8 @@ const DIRECTORIES = [
 const EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'];
 
 // Console methods to remove (keep error and warn)
-const CONSOLE_METHODS_TO_REMOVE = [
-  'console.log',
-  'console.debug',
-  'console.info',
-  'console.trace'
-];
+// Note: These methods are handled by regex patterns in cleanConsoleLogsFromContent
+// const CONSOLE_METHODS_TO_REMOVE = ['console.log', 'console.debug', 'console.info', 'console.trace'];
 
 // Console methods to keep
 const CONSOLE_METHODS_TO_KEEP = [

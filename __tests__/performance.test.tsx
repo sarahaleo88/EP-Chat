@@ -4,13 +4,12 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { SecureEnhancedMessageRenderer } from '@/app/components/SecureEnhancedMessageRenderer';
-import { 
-  PerformanceMonitor, 
-  ContentCache, 
-  PerformanceTesting,
-  BundleOptimization 
+import {
+  PerformanceMonitor,
+  ContentCache,
+  BundleOptimization
 } from '@/lib/performance-utils';
 
 // Mock performance.now for consistent testing

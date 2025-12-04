@@ -196,22 +196,17 @@ export function performanceMonitor(target: any, propertyName: string, descriptor
   
   descriptor.value = async function (...args: any[]) {
     const startTime = performance.now();
-    
+
     try {
       const result = await method.apply(this, args);
-      const endTime = performance.now();
-      const duration = Math.round(endTime - startTime);
-      
-      // Log performance in development
-      if (process.env.NODE_ENV === 'development') {
+      // Duration calculation reserved for future performance logging
+      void (performance.now() - startTime);
 
-      }
-      
       return result;
     } catch (error) {
       const endTime = performance.now();
       const duration = Math.round(endTime - startTime);
-      
+
       console.error(`[Performance] ${target.constructor.name}.${propertyName} failed after ${duration}ms:`, error);
       throw error;
     }

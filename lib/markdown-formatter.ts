@@ -250,10 +250,9 @@ function formatLists(text: string): string {
 
   const result = text;
 
-  // 检测列表模式
-  // Note: listPatterns is used for future list detection features
-  // Keeping it for now as it's part of the planned functionality
-  const listPatterns = [
+  // 检测列表模式 - Reserved for future list detection features
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _listPatterns = [
     // 数字序号列表
     /^(\d+[\.\)]\s*.+)$/gm,
     // 破折号或点开头的项目

@@ -4,7 +4,7 @@
  * Uses standalone mock implementations to avoid global mock clearing issues
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Mock environment variables

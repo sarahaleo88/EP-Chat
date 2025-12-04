@@ -168,6 +168,9 @@ We track and improve our security posture through:
 - [Security Baseline Compliance](./docs/SECURITY_BASELINE.md)
 - [Architecture & Threat Model](./docs/ARCHITECTURE.md)
 - [Dependency Management](./docs/DEPENDENCY_MANAGEMENT.md)
+- [GitHub Security Settings Checklist](./docs/security/github-settings-checklist.md) ⭐ **NEW**
+- [Secret Rotation Policy](./docs/security/secret-rotation-policy.md)
+- [CI Security Checks](./docs/security/ci-security-checks.md)
 
 ### External Resources
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)

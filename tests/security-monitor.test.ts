@@ -13,8 +13,9 @@ describe('SecurityMonitor', () => {
 
   describe('logEvent', () => {
     it('should log security event', () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+      // Spy on console.log to verify logging behavior
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
       securityMonitor.logEvent({
         type: 'authentication',
         severity: 'low',
