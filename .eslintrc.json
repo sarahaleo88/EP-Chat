@@ -27,6 +27,8 @@
     "dist/",
     "coverage/",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    "public/sw.js",
+    "public/workbox-*.js"
   ]
 }
