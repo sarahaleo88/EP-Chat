@@ -26,7 +26,7 @@
     "@augmentcode/auggie": "^0.10.1",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
-    "@next/swc-darwin-arm64": "15.4.4",
+    "@next/swc-darwin-arm64": "16.0.7",
     "autoprefixer": "^10.4.16",
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
