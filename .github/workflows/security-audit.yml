@@ -124,12 +124,13 @@ jobs:
         
     - name: Commit badge data (main branch only)
       if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      continue-on-error: true  # Don't fail workflow if push is blocked by branch protection
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add .github/badge-data/
         git diff --staged --quiet || git commit -m "🤖 Update security badge data [skip ci]"
-        git push
+        git push || echo "::warning::Unable to push badge data (branch protection may be enabled)"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
