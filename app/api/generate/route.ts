@@ -29,6 +29,76 @@ interface GenerateRequest {
   enableBudgetGuard?: boolean;
   enableContinuation?: boolean;
   systemPrompt?: string; // Agent 模式：可选的系统提示词
+  mode?: 'chat' | 'agent'; // 模式：chat=快速路径，agent=完整增强路径
+}
+
+// 导入 DeepSeekClient 类型
+import type { DeepSeekClient } from '@/lib/deepseek';
+
+/**
+ * 创建流式响应（复用逻辑，避免代码重复）
+ */
+function createStreamResponse(
+  client: DeepSeekClient,
+  response: Response,
+  model: DeepSeekModel
+): Response {
+  const encoder = new TextEncoder();
+  const DONE_MESSAGE = encoder.encode('data: [DONE]\n\n');
+  const STOP_MESSAGE = encoder.encode('data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n');
+
+  const encodeChunk = (content: string): Uint8Array => {
+    const escaped = content
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
+    return encoder.encode(`data: {"choices":[{"index":0,"delta":{"content":"${escaped}"},"finish_reason":null}]}\n\n`);
+  };
+
+  const readable = new ReadableStream({
+    start(controller) {
+      client.handleStreamResponse(
+        response,
+        (content: string) => {
+          controller.enqueue(encodeChunk(content));
+        },
+        () => {
+          controller.enqueue(STOP_MESSAGE);
+          controller.enqueue(DONE_MESSAGE);
+          controller.close();
+        },
+        (error: Error) => {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('流处理错误:', error);
+          }
+          const friendlyError = formatUserFriendlyError(error, model);
+          const errorData = {
+            error: {
+              message: `${friendlyError.title}: ${friendlyError.message}`,
+              type: 'stream_error',
+              suggestion: friendlyError.suggestion,
+              retryable: friendlyError.retryable,
+            },
+          };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`));
+          controller.close();
+        }
+      );
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
 
 /**
@@ -53,10 +123,16 @@ export async function POST(request: NextRequest) {
       maxTokens = 8192, // DeepSeek API limit: [1, 8192]
       userId = 'anonymous',
       requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      enableBudgetGuard = process.env.EP_LONG_OUTPUT_GUARD === 'on',
-      enableContinuation = process.env.EP_AUTO_CONTINUATION === 'true',
       systemPrompt, // Agent 模式：可选的系统提示词
+      mode = 'chat', // 默认为 chat 模式（快速路径）
     } = body;
+
+    // 根据模式决定是否启用预算守护和续写
+    // Chat 模式：跳过能力协商和预算检查，实现快速响应
+    // Agent 模式：启用完整的增强逻辑
+    const isAgentMode = mode === 'agent';
+    const enableBudgetGuard = isAgentMode && process.env.EP_LONG_OUTPUT_GUARD === 'on';
+    const enableContinuation = isAgentMode && process.env.EP_AUTO_CONTINUATION === 'true';
 
     model = requestModel as DeepSeekModel; // Set the model from request
 
@@ -122,15 +198,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 初始化能力协商和预算系统
+    // 获取 DeepSeek 客户端（始终需要）
+    const client = getDeepSeekClient(apiKey);
+
+    // 构建发送选项
+    const sendOptions: {
+      stream: boolean;
+      temperature: number;
+      maxTokens: number;
+      systemPrompt?: string;
+    } = {
+      stream,
+      temperature,
+      maxTokens,
+    };
+
+    // 仅在 systemPrompt 存在时添加（避免 undefined 类型错误）
+    if (cleanedSystemPrompt) {
+      sendOptions.systemPrompt = cleanedSystemPrompt;
+    }
+
+    // ========== 模式分流 ==========
+    // Chat 模式：快速路径，直接调用 DeepSeek API，跳过能力协商和预算检查
+    // Agent 模式：完整路径，包含能力协商、预算检查等增强功能
+
+    if (!isAgentMode) {
+      // ========== Chat 模式：快速路径 ==========
+      // 直接调用 DeepSeek API，无额外处理
+      const response = await client.sendPrompt(prompt, validatedModel, sendOptions);
+
+      // 流式响应
+      if (stream) {
+        return createStreamResponse(client, response, validatedModel);
+      } else {
+        // 非流式响应
+        const content = await client.getNonStreamResponse(response);
+        return NextResponse.json({
+          success: true,
+          data: content,
+          model: validatedModel,
+          mode: 'chat',
+          usage: {
+            prompt_tokens: Math.ceil(prompt.length / 4),
+            completion_tokens: Math.ceil(content.length / 4),
+            total_tokens: Math.ceil((prompt.length + content.length) / 4),
+          },
+        });
+      }
+    }
+
+    // ========== Agent 模式：完整路径 ==========
+    // 初始化管理器
     const capabilityManager = getCapabilityManager(apiKey);
     const budgetGuardian = getBudgetGuardian();
 
-    // 获取模型能力
-    const capabilities = await capabilityManager.getCapabilities(validatedModel);
-
-    // 估算输入token数
-    const inputTokens = estimateTokens(prompt);
+    // 并行执行：能力获取 + token 估算
+    const [capabilities, inputTokens] = await Promise.all([
+      capabilityManager.getCapabilities(validatedModel),
+      Promise.resolve(estimateTokens(prompt)),
+    ]);
 
     // 计算最优输出token数
     const optimalMaxTokens = capabilityManager.calculateOptimalMaxTokens(
@@ -172,103 +298,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取 DeepSeek 客户端（传递会话中的 API 密钥）
-    const client = getDeepSeekClient(apiKey);
-
-    // 发送请求到 DeepSeek API（支持 Agent 模式的 systemPrompt）
-    const sendOptions: {
-      stream: boolean;
-      temperature: number;
-      maxTokens: number;
-      systemPrompt?: string;
-    } = {
-      stream,
-      temperature,
-      maxTokens,
-    };
-
-    // 仅在 systemPrompt 存在时添加（避免 undefined 类型错误）
-    if (cleanedSystemPrompt) {
-      sendOptions.systemPrompt = cleanedSystemPrompt;
-    }
-
+    // Agent 模式：发送请求到 DeepSeek API
     const response = await client.sendPrompt(prompt, validatedModel, sendOptions);
 
-    // 流式响应
+    // 流式响应 - 使用复用的辅助函数
     if (stream) {
-      // 创建可读流
-      const readable = new ReadableStream({
-        start(controller) {
-          client.handleStreamResponse(
-            response,
-            // onChunk
-            (content: string) => {
-              const data = {
-                choices: [
-                  {
-                    index: 0,
-                    delta: { content },
-                    finish_reason: null,
-                  },
-                ],
-              };
-              controller.enqueue(
-                new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`)
-              );
-            },
-            // onComplete
-            () => {
-              const data = {
-                choices: [
-                  {
-                    index: 0,
-                    delta: {},
-                    finish_reason: 'stop',
-                  },
-                ],
-              };
-              controller.enqueue(
-                new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`)
-              );
-              controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-              controller.close();
-            },
-            // onError
-            (error: Error) => {
-              if (process.env.NODE_ENV === 'development') {
-                console.error('流处理错误:', error);
-              }
-              // 使用用户友好的错误格式化
-              const friendlyError = formatUserFriendlyError(error, validatedModel);
-              const errorData = {
-                error: {
-                  message: `${friendlyError.title}: ${friendlyError.message}`,
-                  type: 'stream_error',
-                  suggestion: friendlyError.suggestion,
-                  retryable: friendlyError.retryable,
-                },
-              };
-              controller.enqueue(
-                new TextEncoder().encode(
-                  `data: ${JSON.stringify(errorData)}\n\n`
-                )
-              );
-              controller.close();
-            }
-          );
-        },
-      });
-
-      return new Response(readable, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
+      return createStreamResponse(client, response, validatedModel);
     } else {
       // 非流式响应
       const content = await client.getNonStreamResponse(response);
@@ -277,8 +312,9 @@ export async function POST(request: NextRequest) {
         success: true,
         data: content,
         model: validatedModel,
+        mode: 'agent',
         usage: {
-          prompt_tokens: Math.ceil(prompt.length / 4), // 粗略估算
+          prompt_tokens: Math.ceil(prompt.length / 4),
           completion_tokens: Math.ceil(content.length / 4),
           total_tokens: Math.ceil((prompt.length + content.length) / 4),
         },

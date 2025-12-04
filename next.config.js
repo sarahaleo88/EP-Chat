@@ -4,7 +4,8 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // ESLint enabled during builds - warnings won't block, only errors
+    ignoreDuringBuilds: false,
   },
 };
 

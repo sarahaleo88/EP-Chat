@@ -271,7 +271,7 @@ export class ComprehensionTestManager {
 
   private evaluateAnswer(question: ComprehensionQuestion, answer: string | string[]): boolean {
     if (Array.isArray(question.correctAnswer)) {
-      if (!Array.isArray(answer)) return false;
+      if (!Array.isArray(answer)) {return false;}
       return question.correctAnswer.every(correct => answer.includes(correct)) &&
              answer.every(ans => question.correctAnswer.includes(ans));
     } else {
@@ -685,12 +685,12 @@ export class ComprehensionAnalytics {
   }
 
   private static calculateImprovement(baseline: number, enhanced: number): number {
-    if (baseline === 0) return 0;
+    if (baseline === 0) {return 0;}
     return ((enhanced - baseline) / baseline) * 100;
   }
 
   private static calculateReduction(baseline: number, enhanced: number): number {
-    if (baseline === 0) return 0;
+    if (baseline === 0) {return 0;}
     return ((baseline - enhanced) / baseline) * 100;
   }
 }

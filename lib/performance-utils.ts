@@ -72,7 +72,7 @@ export class PerformanceMonitor {
 
   getAverageTime(operation: string): number {
     const metrics = this.metrics.get(operation) || [];
-    if (metrics.length === 0) return 0;
+    if (metrics.length === 0) {return 0;}
     
     const total = metrics.reduce((sum, metric) => sum + metric.duration, 0);
     return total / metrics.length;
@@ -80,7 +80,7 @@ export class PerformanceMonitor {
 
   getPercentile(operation: string, percentile: number): number {
     const metrics = this.metrics.get(operation) || [];
-    if (metrics.length === 0) return 0;
+    if (metrics.length === 0) {return 0;}
     
     const sorted = metrics.map(m => m.duration).sort((a, b) => a - b);
     const index = Math.ceil((percentile / 100) * sorted.length) - 1;
@@ -287,10 +287,13 @@ export function useMemoizedSanitization(content: string, enhanced: boolean = fal
       return content;
     } catch (error) {
       endTiming();
+      // eslint-disable-next-line no-console
       console.error('Content sanitization failed:', error);
       return content;
     }
-  }, [content, enhanced, monitor]);
+    // Note: 'enhanced' is reserved for future enhanced sanitization mode
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, monitor]);
 }
 
 /**
@@ -400,7 +403,7 @@ export function useIntersectionObserver(
   
   useEffect(() => {
     const target = targetRef.current;
-    if (!target) return;
+    if (!target) {return;}
     
     const observer = new IntersectionObserver((entries) => {
       const entry = entries[0];
@@ -486,16 +489,16 @@ export const BundleOptimization = {
    * Lazy load content analysis
    */
   async loadContentAnalysis() {
-    const module = await import('./content-templates');
-    return module.analyzeContentForTemplate;
+    const contentModule = await import('./content-templates');
+    return contentModule.analyzeContentForTemplate;
   },
-  
+
   /**
    * Lazy load accessibility utilities
    */
   async loadAccessibilityUtils() {
-    const module = await import('./accessibility-utils');
-    return module;
+    const a11yModule = await import('./accessibility-utils');
+    return a11yModule;
   }
 };
 

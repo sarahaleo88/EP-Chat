@@ -204,7 +204,7 @@ function ContentSectionRenderer({
   onCopy 
 }: ContentSectionRendererProps) {
   const getSectionIcon = () => {
-    if (section.icon) return section.icon;
+    if (section.icon) {return section.icon;}
     
     switch (section.type) {
       case 'summary': return '📋';

@@ -5,6 +5,27 @@ All notable changes to EP Chat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-12-04
+
+### 🛡️ Security Fixes
+
+- **Fixed**: 修复所有 npm audit 报告的安全漏洞（0 vulnerabilities）
+- **Enhanced**: 开发环境会话密钥使用随机生成替代固定值
+
+### 🍀 Brand Compliance
+
+- **Removed**: 删除所有第三方 AI 模型品牌图标，消除品牌侵权风险
+  - 删除 deepseek.svg（DeepSeek 品牌图标）
+  - 之前已删除：chatgpt, openai, claude, gemini, grok, meta, mistral 等品牌图标
+- **Added**: 新增 `app/icons/llm-icons/clover.svg` 四叶草图标作为中性模型图标
+- **Verified**: 模型选择器使用 emoji 图标（💬👨‍💻🧠），不依赖品牌 SVG 文件
+
+### 📋 Documentation
+
+- **Added**: `docs/release/ep-chat-pre-release-tasks.md` 发布前修复清单
+
+---
+
 ## [1.0.1] - 2025-08-28
 
 ### 🔧 Bug Fixes & Improvements

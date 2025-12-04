@@ -1,20 +1,72 @@
 import { NextRequest } from 'next/server';
 import CryptoJS from 'crypto-js';
 
-// Encryption key from environment - MUST be set in production
+// Encryption key from environment - MUST be set
 const ENCRYPTION_KEY = process.env.SESSION_ENCRYPTION_KEY;
 
-if (!ENCRYPTION_KEY) {
-  console.error('[Session Manager] SESSION_ENCRYPTION_KEY environment variable is required for security');
-  // In development, use a warning but allow fallback
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('[Session Manager] Using development fallback key - NOT FOR PRODUCTION');
-  } else {
-    throw new Error('SESSION_ENCRYPTION_KEY environment variable is required for security');
+// Cache for randomly generated dev key (per-process)
+let _randomDevKey: string | null = null;
+
+/**
+ * Generate a cryptographically random key for development/test environments.
+ * This key is regenerated each time the process restarts.
+ */
+function generateRandomDevKey(): string {
+  if (_randomDevKey) {
+    return _randomDevKey;
   }
+  // Generate 32 random bytes and convert to hex (64 chars)
+  const randomBytes = CryptoJS.lib.WordArray.random(32);
+  _randomDevKey = randomBytes.toString(CryptoJS.enc.Hex).slice(0, 32);
+  return _randomDevKey;
 }
 
-const ACTUAL_ENCRYPTION_KEY = ENCRYPTION_KEY || 'ep-chat-dev-fallback-key-2025';
+/**
+ * Get the encryption key, with clear error handling for missing configuration.
+ * In development mode, provides a clear warning and generates a random per-process key.
+ * In production mode, throws an error if key is not configured.
+ */
+function getEncryptionKey(): string {
+  if (ENCRYPTION_KEY) {
+    return ENCRYPTION_KEY;
+  }
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isTest = process.env.NODE_ENV === 'test';
+
+  if (isDevelopment || isTest) {
+    // Only log warning once per session
+    if (typeof globalThis !== 'undefined' && !(globalThis as any).__EP_SESSION_KEY_WARNING__) {
+      console.warn(
+        '\n⚠️  [Session Manager] SESSION_ENCRYPTION_KEY is not set.\n' +
+        '   For development, add to your .env.local file:\n' +
+        '   SESSION_ENCRYPTION_KEY=your-32-char-secret-key-here!!\n' +
+        '   Using randomly generated temporary key for this session.\n' +
+        '   Note: Sessions will not persist across server restarts.\n'
+      );
+      (globalThis as any).__EP_SESSION_KEY_WARNING__ = true;
+    }
+    // Generate a random key for this process (not persisted)
+    // This ensures development works without explicit configuration
+    // but does not use a predictable/fixed key
+    return generateRandomDevKey();
+  }
+
+  // Production environment - must have key configured
+  throw new Error(
+    '[Session Manager] SECURITY ERROR: SESSION_ENCRYPTION_KEY environment variable is required.\n' +
+    'Please set this in your production environment configuration.'
+  );
+}
+
+// Lazy initialization of encryption key
+let _encryptionKey: string | null = null;
+function getActualEncryptionKey(): string {
+  if (_encryptionKey === null) {
+    _encryptionKey = getEncryptionKey();
+  }
+  return _encryptionKey;
+}
 
 /**
  * Decrypts the encrypted API key
@@ -23,7 +75,7 @@ const ACTUAL_ENCRYPTION_KEY = ENCRYPTION_KEY || 'ep-chat-dev-fallback-key-2025';
  */
 export function decryptApiKey(encryptedKey: string): string | null {
   try {
-    const bytes = CryptoJS.AES.decrypt(encryptedKey, ACTUAL_ENCRYPTION_KEY);
+    const bytes = CryptoJS.AES.decrypt(encryptedKey, getActualEncryptionKey());
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
     return decrypted || null;
   } catch (error) {

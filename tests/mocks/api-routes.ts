@@ -363,9 +363,11 @@ export function setupAPIRouteMocks() {
 }
 
 /**
- * Reset all API route mocks
+ * Reset all API route mocks - only clears call history, preserves implementations
  */
 export function resetAPIRouteMocks() {
+  // Use mockReset to clear call history but preserve implementation
+  // Note: mockClear() only clears call history, which is what we want
   mockCSRFTokenRoute.GET.mockClear();
   mockCSRFTokenRoute.POST.mockClear();
   mockHealthRoute.GET.mockClear();
@@ -374,4 +376,51 @@ export function resetAPIRouteMocks() {
   mockPreflightRoute.POST.mockClear();
   mockErrorScenarios.malformedJson.mockClear();
   mockErrorScenarios.networkTimeout.mockClear();
+}
+
+/**
+ * Create fresh mock implementations - use this if mocks need to be recreated
+ */
+export function createFreshMocks() {
+  // Re-apply implementations after they've been cleared
+  mockCSRFTokenRoute.GET.mockImplementation(async (request?: NextRequest) => {
+    const token = 'mock-csrf-token-' + Date.now();
+    const expires = Date.now() + 24 * 60 * 60 * 1000;
+
+    const response = NextResponse.json({
+      token,
+      expires,
+      success: true,
+    });
+
+    response.cookies.set('csrf-token', `${token}:${expires}`, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60,
+    });
+
+    return response;
+  });
+
+  mockCSRFTokenRoute.POST.mockImplementation(async (request: NextRequest) => {
+    const token = 'refreshed-csrf-token-' + Date.now();
+    const expires = Date.now() + 24 * 60 * 60 * 1000;
+
+    const response = NextResponse.json({
+      token,
+      expires,
+      success: true,
+      refreshed: true,
+    });
+
+    response.cookies.set('csrf-token', `${token}:${expires}`, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60,
+    });
+
+    return response;
+  });
 }

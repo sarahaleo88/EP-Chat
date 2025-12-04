@@ -43,17 +43,95 @@ export interface ModelMetadata {
 export class ModelCapabilityManager {
   private capabilities: Map<string, ModelCapabilities> = new Map();
   private refreshInterval: NodeJS.Timeout | null = null;
+  private pendingDetections: Map<string, Promise<ModelCapabilities>> = new Map();
   private readonly REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15分钟刷新一次
   private readonly CACHE_TTL_MS = 30 * 60 * 1000; // 30分钟缓存过期
+  // 性能优化：软过期时间，在此时间内返回缓存但后台刷新
+  private readonly SOFT_TTL_MS = 20 * 60 * 1000; // 20分钟软过期
 
   constructor(private apiKey: string, private baseUrl: string = 'https://api.deepseek.com/v1') {}
 
   /**
-   * 获取模型能力（带缓存和回退）
+   * 获取模型能力（性能优化版：乐观回退 + 后台刷新）
+   *
+   * 策略：
+   * 1. 如果有缓存且未过期，立即返回
+   * 2. 如果缓存软过期（20-30分钟），返回缓存但后台异步刷新
+   * 3. 如果无缓存，立即返回回退配置，后台异步探测
+   *
+   * 这确保了 getCapabilities 永远不会阻塞请求
    */
   async getCapabilities(modelName: string): Promise<ModelCapabilities> {
     const cached = this.capabilities.get(modelName);
-    
+    const now = Date.now();
+
+    // 情况1：缓存有效且未软过期，直接返回
+    if (cached && now - cached.lastUpdated < this.SOFT_TTL_MS) {
+      return cached;
+    }
+
+    // 情况2：缓存软过期但未硬过期，返回缓存但后台刷新
+    if (cached && now - cached.lastUpdated < this.CACHE_TTL_MS) {
+      // 后台异步刷新，不阻塞当前请求
+      this.refreshCapabilitiesAsync(modelName);
+      return cached;
+    }
+
+    // 情况3：无缓存或已硬过期
+    // 性能优化：立即返回回退配置，后台异步探测
+    const fallback = this.getFallbackCapabilities(modelName);
+
+    // 如果没有缓存，先设置回退配置
+    if (!cached) {
+      this.capabilities.set(modelName, fallback);
+    }
+
+    // 后台异步探测
+    this.refreshCapabilitiesAsync(modelName);
+
+    // 立即返回回退配置，不阻塞
+    return fallback;
+  }
+
+  /**
+   * 后台异步刷新能力（不阻塞调用者）
+   */
+  private refreshCapabilitiesAsync(modelName: string): void {
+    // 避免重复探测
+    if (this.pendingDetections.has(modelName)) {
+      return;
+    }
+
+    const detectionPromise = this.detectCapabilities(modelName)
+      .then(detected => {
+        this.capabilities.set(modelName, detected);
+        return detected;
+      })
+      .catch(error => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`[Capability] Background detection failed for ${modelName}:`, error);
+        }
+        // 探测失败时保持现有缓存或使用回退
+        const existing = this.capabilities.get(modelName);
+        if (!existing || existing.source === 'fallback') {
+          const fallback = this.getFallbackCapabilities(modelName);
+          this.capabilities.set(modelName, fallback);
+        }
+        return this.capabilities.get(modelName)!;
+      })
+      .finally(() => {
+        this.pendingDetections.delete(modelName);
+      });
+
+    this.pendingDetections.set(modelName, detectionPromise);
+  }
+
+  /**
+   * 同步获取能力（用于需要阻塞等待的场景，如预热）
+   */
+  async getCapabilitiesSync(modelName: string): Promise<ModelCapabilities> {
+    const cached = this.capabilities.get(modelName);
+
     // 检查缓存是否有效
     if (cached && Date.now() - cached.lastUpdated < this.CACHE_TTL_MS) {
       return cached;
@@ -68,12 +146,22 @@ export class ModelCapabilityManager {
       if (process.env.NODE_ENV === 'development') {
         console.warn(`[Capability] Detection failed for ${modelName}:`, error);
       }
-      
+
       // 使用回退配置
       const fallback = this.getFallbackCapabilities(modelName);
       this.capabilities.set(modelName, fallback);
       return fallback;
     }
+  }
+
+  /**
+   * 预热常用模型的能力缓存（应用启动时调用）
+   */
+  async warmup(models: string[] = ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner']): Promise<void> {
+    // 并行预热所有模型
+    await Promise.allSettled(
+      models.map(model => this.getCapabilitiesSync(model))
+    );
   }
 
   /**

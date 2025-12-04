@@ -23,7 +23,7 @@ export class AriaLiveRegionManager {
   }
 
   initialize() {
-    if (typeof document === 'undefined') return;
+    if (typeof document === 'undefined') {return;}
 
     // Create polite live region for non-urgent announcements
     if (!this.politeRegion) {
@@ -284,7 +284,7 @@ export const FocusManagementUtils = {
     const lastElement = focusableElements[focusableElements.length - 1];
 
     const handleTabKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') return;
+      if (event.key !== 'Tab') {return;}
 
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {

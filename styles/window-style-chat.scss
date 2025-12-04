@@ -341,6 +341,7 @@
     word-break: break-word;
     line-height: 1.6;
     font-size: 15px;
+    position: relative; // Required for copy button positioning
 
     &.user-bubble {
       background-color: rgb(29, 147, 171); // 主题色背景
@@ -353,6 +354,11 @@
       background-color: #ffffff; // 纯白背景
       color: #1e293b; // 深色文字确保对比度
       width: 100%; // 占满父容器宽度，与输入框一致
+      padding-bottom: 40px; // Extra space for copy button
+
+      &:hover .copy-btn {
+        opacity: 0.7;
+      }
     }
   }
 
@@ -1025,6 +1031,85 @@
     font-size: 12px;
     color: #23c483;
     line-height: 1.5;
+  }
+
+  // Enable text selection for message content with subtle highlight
+  .selectable-text {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
+
+    // Subtle selection highlight - muted slate blue (matches system style)
+    &::selection {
+      background-color: rgba(120, 150, 190, 0.45);
+      color: inherit;
+    }
+
+    &::-moz-selection {
+      background-color: rgba(120, 150, 190, 0.45);
+      color: inherit;
+    }
+  }
+
+  // Copy button styles - icon only, no tooltip
+  .copy-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background-color: rgba(29, 147, 171, 0.1);
+    color: rgb(29, 147, 171);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 10;
+
+    &:hover {
+      background-color: rgba(29, 147, 171, 0.2);
+      opacity: 1;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &.copied {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      opacity: 1;
+    }
+
+    .copy-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+  }
+
+  // Mobile-specific adjustments for copy button
+  @media only screen and (max-width: 768px) {
+    .copy-btn {
+      opacity: 0.6; // Always slightly visible on mobile
+      width: 36px;
+      height: 36px;
+
+      .copy-icon {
+        font-size: 16px;
+      }
+    }
+
+    .message-bubble {
+      &.assistant-bubble {
+        padding-bottom: 44px;
+      }
+    }
   }
 }
 

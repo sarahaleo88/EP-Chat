@@ -90,7 +90,7 @@ export class CSRFApiClient {
    * Check if request method requires CSRF token
    */
   private requiresCSRFToken(method?: string): boolean {
-    if (!method) return false;
+    if (!method) {return false;}
     const protectedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     return protectedMethods.includes(method.toUpperCase());
   }

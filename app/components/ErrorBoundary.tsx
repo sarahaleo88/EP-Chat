@@ -145,9 +145,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Log error in development
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.group(`🚨 Error Boundary Caught Error [${this.state.errorId}]`);
+      // eslint-disable-next-line no-console
       console.error('Error:', error);
+      // eslint-disable-next-line no-console
       console.error('Error Info:', errorInfo);
+      // eslint-disable-next-line no-console
       console.groupEnd();
     }
   }

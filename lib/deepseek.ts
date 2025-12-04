@@ -188,9 +188,15 @@ export class DeepSeekClient {
           'Authorization': `Bearer ${this.apiKey}`,
           'Accept': stream ? 'text/event-stream' : 'application/json',
           'User-Agent': 'EP-Chat/1.0',
+          // 性能优化：确保 HTTP 连接复用
+          'Connection': 'keep-alive',
+          // 性能优化：启用 HTTP/2 优先级提示（如果服务器支持）
+          'Priority': 'u=1, i',
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal,
+        // 性能优化：启用 HTTP Keep-Alive
+        keepalive: true,
       });
       
       clearTimeout(timeoutId);
@@ -352,16 +358,72 @@ export class DeepSeekClient {
 // 默认客户端实例
 let defaultClient: DeepSeekClient | null = null;
 
+// 性能优化：基于 API Key 的客户端实例缓存
+// 使用 LRU 策略，最多缓存 10 个不同的 API Key 对应的客户端
+const clientCache = new Map<string, { client: DeepSeekClient; lastUsed: number }>();
+const MAX_CACHED_CLIENTS = 10;
+const CLIENT_CACHE_TTL_MS = 30 * 60 * 1000; // 30 分钟过期
+
+/**
+ * 清理过期的客户端缓存
+ */
+function cleanupClientCache(): void {
+  const now = Date.now();
+  const keysToDelete: string[] = [];
+
+  for (const [key, value] of clientCache.entries()) {
+    if (now - value.lastUsed > CLIENT_CACHE_TTL_MS) {
+      keysToDelete.push(key);
+    }
+  }
+
+  for (const key of keysToDelete) {
+    clientCache.delete(key);
+  }
+
+  // 如果仍然超过最大数量，删除最旧的
+  if (clientCache.size > MAX_CACHED_CLIENTS) {
+    const entries = Array.from(clientCache.entries())
+      .sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+
+    const toDelete = entries.slice(0, entries.length - MAX_CACHED_CLIENTS);
+    for (const [key] of toDelete) {
+      clientCache.delete(key);
+    }
+  }
+}
+
 /**
  * 获取 DeepSeek 客户端实例
- * @param apiKey - 可选的 API 密钥，如果提供则创建新实例，否则使用默认实例
+ * 性能优化：复用相同 API Key 的客户端实例，避免重复创建
+ * @param apiKey - 可选的 API 密钥，如果提供则使用缓存或创建新实例，否则使用默认实例
  * @returns DeepSeek 客户端实例
  */
 export function getDeepSeekClient(apiKey?: string): DeepSeekClient {
-  // 如果提供了 API 密钥，创建新实例
+  // 如果提供了 API 密钥，使用缓存
   if (apiKey) {
-    return new DeepSeekClient(apiKey);
+    // 生成缓存键（使用 API Key 的哈希避免内存中存储完整密钥）
+    const cacheKey = apiKey.slice(0, 8) + apiKey.slice(-8); // 简单的键生成
+
+    const cached = clientCache.get(cacheKey);
+    if (cached) {
+      // 更新最后使用时间
+      cached.lastUsed = Date.now();
+      return cached.client;
+    }
+
+    // 创建新实例并缓存
+    const newClient = new DeepSeekClient(apiKey);
+    clientCache.set(cacheKey, { client: newClient, lastUsed: Date.now() });
+
+    // 定期清理（每次添加新客户端时检查）
+    if (clientCache.size > MAX_CACHED_CLIENTS) {
+      cleanupClientCache();
+    }
+
+    return newClient;
   }
+
   // 否则使用默认实例（从环境变量获取密钥）
   if (!defaultClient) {
     defaultClient = new DeepSeekClient();

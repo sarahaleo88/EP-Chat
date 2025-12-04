@@ -145,9 +145,8 @@ export class EnhancedDeepSeekClient {
       const budget = this.tokenManager.calculateBudget(messages, maxTokens);
 
       if (process.env.NODE_ENV === 'development') {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Enhanced API] Token budget:', budget);
-        }
+        // eslint-disable-next-line no-console
+        console.log('[Enhanced API] Token budget:', budget);
       }
 
       // 如果需要截断，先处理消息历史
@@ -157,9 +156,8 @@ export class EnhancedDeepSeekClient {
         processedMessages = this.tokenManager.truncateMessages(messages, targetTokens);
 
         if (process.env.NODE_ENV === 'development') {
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`[Enhanced API] Truncated messages: ${messages.length} -> ${processedMessages.length}`);
-          }
+          // eslint-disable-next-line no-console
+          console.log(`[Enhanced API] Truncated messages: ${messages.length} -> ${processedMessages.length}`);
         }
       }
 

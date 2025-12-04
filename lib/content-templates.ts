@@ -104,8 +104,8 @@ function analyzeMessageContent(content: string): ContentAnalysis {
   
   // Determine complexity
   let complexity: ContentAnalysis['complexity'] = 'simple';
-  if (wordCount > 100) complexity = 'medium';
-  if (wordCount > 300 || content.split('\n').length > 10) complexity = 'complex';
+  if (wordCount > 100) {complexity = 'medium';}
+  if (wordCount > 300 || content.split('\n').length > 10) {complexity = 'complex';}
   
   // Extract key topics (simplified)
   const keyTopics = extractKeyTopics(content);
@@ -351,7 +351,7 @@ function extractNonCodeContent(content: string): string {
 }
 
 function generateCodeSummary(codeBlocks: string[], topics: string[]): string {
-  if (codeBlocks.length === 0) return 'Code solution provided';
+  if (codeBlocks.length === 0) {return 'Code solution provided';}
 
   const language = detectLanguage(codeBlocks[0] || '');
   const topicsStr = topics.length > 0 ? ` for ${topics.join(', ')}` : '';
@@ -545,10 +545,10 @@ function createErrorTemplate(content: string, analysis: ContentAnalysis, model?:
  * Helper functions for error template
  */
 function detectErrorType(content: string): string {
-  if (content.toLowerCase().includes('api')) return 'API';
-  if (content.toLowerCase().includes('network')) return 'Network';
-  if (content.toLowerCase().includes('timeout')) return 'Timeout';
-  if (content.toLowerCase().includes('auth')) return 'Authentication';
+  if (content.toLowerCase().includes('api')) {return 'API';}
+  if (content.toLowerCase().includes('network')) {return 'Network';}
+  if (content.toLowerCase().includes('timeout')) {return 'Timeout';}
+  if (content.toLowerCase().includes('auth')) {return 'Authentication';}
   return 'System';
 }
 

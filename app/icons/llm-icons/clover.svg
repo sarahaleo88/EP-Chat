@@ -1,0 +1,17 @@
+<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- EP-Chat 四叶草图标 - 中性模型图标 -->
+  <rect width="30" height="30" rx="6" fill="#E7F8FF"/>
+  <g transform="translate(15,15)">
+    <!-- 上叶 -->
+    <ellipse cx="0" cy="-5.5" rx="4" ry="4.5" fill="#22c55e"/>
+    <!-- 右叶 -->
+    <ellipse cx="5.5" cy="0" rx="4.5" ry="4" fill="#22c55e"/>
+    <!-- 下叶 -->
+    <ellipse cx="0" cy="5.5" rx="4" ry="4.5" fill="#22c55e"/>
+    <!-- 左叶 -->
+    <ellipse cx="-5.5" cy="0" rx="4.5" ry="4" fill="#22c55e"/>
+    <!-- 中心 -->
+    <circle cx="0" cy="0" r="2" fill="#16a34a"/>
+  </g>
+</svg>
+

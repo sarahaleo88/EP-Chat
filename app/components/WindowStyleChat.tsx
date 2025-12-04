@@ -8,6 +8,53 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import '@/styles/window-style-chat.scss';
+
+// Copy button component for assistant messages
+interface CopyButtonProps {
+  content: string;
+}
+
+function CopyButton({ content }: CopyButtonProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (fallbackErr) {
+        console.error('Failed to copy:', fallbackErr);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  return (
+    <button
+      className={`copy-btn ${copied ? 'copied' : ''}`}
+      onClick={handleCopy}
+      aria-label="Copy"
+    >
+      {copied ? (
+        <span className="copy-icon">✓</span>
+      ) : (
+        <span className="copy-icon">📋</span>
+      )}
+    </button>
+  );
+}
 import {
   type QuickButtonConfig,
   type QuickButtonMode,
@@ -51,6 +98,9 @@ const DEFAULT_QUICK_BUTTONS: InternalQuickButtonConfig[] = IMPORTED_DEFAULT_BUTT
 const AVAILABLE_ICONS = ['🚀', '📝', '❓', '🌐', '💻', '🔧', '📊', '🎨', '🔍', '💡', '📁', '⚡', '🎯', '📌', '🏷️'];
 
 // Storage keys
+// TODO (P2-01): Consider migrating API key storage to session-only (httpOnly Cookie)
+// Currently using dual storage (localStorage + Cookie) for backward compatibility
+// See: docs/epchat-release-fix-plan.md#p2-01
 const API_KEY_STORAGE_KEY = 'ep-chat-api-key';
 const QUICK_BUTTONS_STORAGE_KEY = 'ep-chat-quick-buttons';
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'ep-chat-sidebar-collapsed';
@@ -189,9 +239,9 @@ export default function WindowStyleChat() {
 
   // 获取当前激活的 Agent 配置
   const getActiveAgent = useCallback((): AgentConfig | null => {
-    if (!activeAgentId) return null;
+    if (!activeAgentId) {return null;}
     const activeButton = quickButtons.find(b => b.id === activeAgentId && b.enabled && b.action === 'agent');
-    if (!activeButton || !activeButton.prompt.trim()) return null;
+    if (!activeButton || !activeButton.prompt.trim()) {return null;}
     return {
       id: activeButton.id,
       name: activeButton.name,
@@ -201,7 +251,7 @@ export default function WindowStyleChat() {
   }, [activeAgentId, quickButtons]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) {return;}
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -214,11 +264,24 @@ export default function WindowStyleChat() {
     setInput('');
     setIsLoading(true);
 
+    // 创建助手消息占位符（用于流式更新）
+    const assistantMessageId = (Date.now() + 1).toString();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
       // 获取当前激活的 Agent（如果有）
       const activeAgent = getActiveAgent();
 
-      // Call the /api/generate route instead of calling DeepSeek directly
+      // 判断模式：有 activeAgent 为 agent 模式，否则为 chat 模式
+      const mode = activeAgent ? 'agent' : 'chat';
+
+      // Call the /api/generate route with streaming enabled
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -227,7 +290,8 @@ export default function WindowStyleChat() {
         body: JSON.stringify({
           prompt: input,
           model: selectedModel,
-          stream: false,
+          stream: true,  // 启用流式响应
+          mode,  // 传递模式参数
           // Agent 模式：附加 systemPrompt
           ...(activeAgent && { systemPrompt: activeAgent.systemPrompt }),
         }),
@@ -238,25 +302,77 @@ export default function WindowStyleChat() {
         throw new Error(errorData.message || errorData.error || '请求失败');
       }
 
-      const data = await response.json();
-      const responseText = data.data || data.content || '';
+      // 处理流式响应
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('无法读取响应流');
+      }
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: responseText,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {break;}
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || trimmedLine === 'data: [DONE]') {continue;}
+
+          if (trimmedLine.startsWith('data: ')) {
+            try {
+              const jsonStr = trimmedLine.slice(6);
+              const data = JSON.parse(jsonStr);
+
+              // 检查是否有错误
+              if (data.error) {
+                throw new Error(data.error.message || '流式响应错误');
+              }
+
+              const content = data.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulatedContent += content;
+                // 更新消息内容
+                setMessages(prev => prev.map(msg =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: accumulatedContent }
+                    : msg
+                ));
+              }
+
+              // 检查是否完成
+              if (data.choices?.[0]?.finish_reason) {
+                break;
+              }
+            } catch (parseError) {
+              // 忽略解析错误，继续处理下一行
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('解析流数据失败:', parseError);
+              }
+            }
+          }
+        }
+      }
+
+      // 如果没有收到任何内容，显示错误
+      if (!accumulatedContent) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: '抱歉，没有收到有效的响应内容。' }
+            : msg
+        ));
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: error instanceof Error ? `错误: ${error.message}` : '抱歉，发送消息时出现错误。请稍后重试。',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // 更新占位消息为错误消息
+      setMessages(prev => prev.map(msg =>
+        msg.id === assistantMessageId
+          ? { ...msg, content: error instanceof Error ? `错误: ${error.message}` : '抱歉，发送消息时出现错误。请稍后重试。' }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -660,8 +776,11 @@ export default function WindowStyleChat() {
                     key={message.id}
                     className={`message-item ${message.role}`}
                   >
-                    <div className={`message-bubble ${message.role}-bubble`}>
+                    <div className={`message-bubble ${message.role}-bubble selectable-text`}>
                       {message.content}
+                      {message.role === 'assistant' && message.content && (
+                        <CopyButton content={message.content} />
+                      )}
                     </div>
                   </div>
                 ))}

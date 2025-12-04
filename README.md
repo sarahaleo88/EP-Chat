@@ -8,7 +8,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![DeepSeek](https://img.shields.io/badge/DeepSeek-API-green?logo=openai&logoColor=white)](https://platform.deepseek.com/)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-API-green)](https://platform.deepseek.com/)
 
 <!-- Build & Quality -->
 [![Build Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sarahaleo88/EP-Chat/main/.github/badge-data/build.json)](https://github.com/sarahaleo88/EP-Chat/actions)

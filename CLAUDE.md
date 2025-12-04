@@ -1,199 +1,236 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working on this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-**EP Chat (Enhanced Prompt)** is an ultra-lightweight prompt enhancement tool designed specifically for Claude Code. It converts natural language requirements into structured prompts, helping Claude Code generate complete project code in one go.
+**EP Chat (Enhanced Prompt)** is an ultra-lightweight prompt enhancement tool designed for Claude Code. It converts natural language requirements into structured prompts using DeepSeek API.
 
-**Key Features:**
-- ⚡ Ultra-fast response (no history, no file uploads, streaming SSR)
-- 🧩 Extensible template system (JSON template library + renderer)
-- 🔒 Single dependency: **DeepSeek API** (chat|coder|reasoner models)
-- �� Unified shamrock (four-leaf clover) icon theme (favicon/loading/UI)
-- 🌐 Bilingual support (Chinese/English)
-- 📱 Perfect mobile adaptation (Android/iOS fully optimized)
-- ⚡ Long text processing optimization (intelligent timeout management + streaming response)
-
-## Architecture Overview
-
-This is a **single codebase Next.js application** with no separate backend servers.
+**Architecture:** Single Next.js 15 application with App Router (no separate backend servers)
 
 **Tech Stack:**
-- **Frontend Framework**: Next.js 15 (App Router / SSR & SSG)
-- **UI Framework**: React 18 + TypeScript 5 + Tailwind CSS 3
-- **State Management**: React Context (lightweight)
-- **Styling**: Tailwind CSS + Headless UI + SCSS
-- **API Integration**: \`lib/deepseek.ts\` (single integration point)
-- **Build Tool**: Next.js native turbo compilation
-- **Testing**: Vitest + React Testing Library
-- **Deployment**: Multi-stage Dockerfile + docker-compose.yml
+- Next.js 15 (App Router / SSR & SSG)
+- React 18 + TypeScript 5 + Tailwind CSS 3
+- DeepSeek API integration (`lib/deepseek.ts`)
+- Vitest + React Testing Library
+- Docker + docker-compose deployment
 
-## Key Files and Directories (All Actually Exist)
+## Key Commands
 
-### Main Application
-- \`app/page.tsx\` — Main page component (loads WindowStyleChat)
-- \`app/layout.tsx\` — Root layout with metadata, fonts, and global providers
-- \`app/components/WindowStyleChat.tsx\` — Main chat interface component
-- \`app/components/CSPNonceProvider.tsx\` — Security provider for CSP compliance
+### Development
+```bash
+npm run dev              # Start dev server (http://localhost:3000)
+npm run build            # Production build
+npm run start            # Start production server
+npm run lint             # ESLint check
+npm run type-check       # TypeScript validation
+```
 
-### API Integration
-- \`lib/deepseek.ts\` — DeepSeek API integration adapter layer
-- \`lib/deepseek-api.ts\` — Low-level API client
-- \`lib/prompt-enhancer.ts\` — Prompt enhancement and template rendering logic
-- \`lib/template-registry.ts\` — Template management system
+### Testing
+```bash
+npm test                 # Run all tests with Vitest
+npm run test:watch       # Watch mode
+npm test -- --coverage   # Coverage report
+npm test -- path/to/test # Run specific test file
+```
 
-### Templates
-- \`templates/\` — Prompt template library directory
-- \`templates/code/\` — Code generation templates (tools, utilities, components)
-- \`templates/web/\` — Web application templates (full apps, frontend components)
-- \`templates/schema.json\` — Template schema definition
+### Docker
+```bash
+# Using Makefile (recommended)
+make help                # Show all commands
+make dev                 # Build → Start → Logs
+make deploy              # Full deployment
+make health              # Health check
+make logs                # View logs
 
-### Configuration
-- \`next.config.js\` — Next.js configuration (minimal, clean)
-- \`package.json\` — Project dependencies and npm scripts
-- \`tsconfig.json\` — TypeScript compiler options
-- \`tailwind.config.js\` — Tailwind CSS customization
+# Manual commands
+docker compose up -d     # Start services
+docker compose down      # Stop services
+docker compose logs -f   # Follow logs
+```
 
-### Styles
-- \`styles/globals.scss\` — Global SCSS styles
-- \`styles/window-style-chat.scss\` — Chat interface specific styles
-- \`app/globals.css\` — Global CSS imports
+### Stress Testing
+```bash
+npm run stress-test      # Long text generation test
+npm run performance-test # Performance benchmarks
+```
+
+## Architecture & Structure
+
+### Core Directories
+- **`app/`** - Next.js App Router (pages, layouts, API routes, components)
+- **`lib/`** - Core utilities and business logic
+- **`templates/`** - JSON template library (code/, web/)
+- **`tests/`** - Vitest unit and integration tests
+- **`styles/`** - SCSS stylesheets
+
+### Key Files
+- **`lib/deepseek.ts`** - Primary DeepSeek API integration layer (ALWAYS use this, not direct API calls)
+- **`lib/template-registry.ts`** - Template loading, caching, validation
+- **`lib/types.ts`** - Zod-based type definitions with runtime validation
+- **`app/page.tsx`** - Main page (loads WindowStyleChat)
+- **`app/components/WindowStyleChat.tsx`** - Main chat interface
+- **`app/api/generate/route.ts`** - Prompt generation API with streaming
+
+### API Routes
+- `/api/generate` - Main prompt generation (streaming SSE)
+- `/api/health` - Health check
+- `/api/csrf-token` - CSRF protection
+- `/api/metrics` - Metrics collection
+- `/api/security-metrics` - Security monitoring
 
 ## Development Guidelines
 
 ### API Integration
-- Always use the \`lib/deepseek.ts\` adapter layer instead of making direct API calls in components
-- Requires \`DEEPSEEK_API_KEY\` environment variable to be set
-- Supports three models: \`deepseek-chat\`, \`deepseek-coder\`, \`deepseek-reasoner\`
-- Streaming responses are handled automatically
-
-### UI Theme
-- Primary theme: Shamrock green (🍀) color scheme
-- Maintain consistency with Tailwind color palette, fonts, and component styles
-- All icons and branding use the four-leaf clover (shamrock) motif
+- **Always use `lib/deepseek.ts`** adapter layer (never direct API calls in components)
+- Supports three models: `deepseek-chat`, `deepseek-coder`, `deepseek-reasoner`
+- Streaming responses handled automatically via SSE
+- Environment variable required: `DEEPSEEK_API_KEY`
 
 ### Component Architecture
-- All components use App Router "use client" mode
-- Pay attention to client/server boundaries
-- Use React Context for lightweight state management
-- No Redux, Zustand, or other heavy state management libraries
+- **Server components by default** (App Router)
+- Use `'use client'` directive only when needed (state, hooks, browser APIs)
+- React Context for lightweight state management (no Redux/Zustand)
+- TypeScript strict mode with path aliases (`@/lib`, `@/components`)
 
 ### Template System
-- Templates are JSON files located in \`templates/\` directory
-- Loaded through the template registry system
-- No separate backend service for template management
-- Templates are categorized by type (code/web)
+- Templates are JSON files in `templates/` directory
+- Loaded via `lib/template-registry.ts` with caching
+- Categorized by type: `code/` and `web/`
+- Schema validation in `templates/schema.json`
 
-## What This Project IS NOT
+### Security
+- Input validation with Zod schemas (`lib/types.ts`)
+- CSRF protection via `lib/csrf.ts`
+- Content Security Policy (CSP) with nonce provider
+- Session management via `lib/session-manager.ts`
+- Never commit API keys (use `.env` files, excluded from git)
 
-❌ **NOT a translation tool** - No "MySmartTranslate (MST)" or any translation product
-❌ **NO translation features** - No document/webpage/GitHub link translation
-❌ **NO file upload** - No document processing, no file format conversion
-❌ **NO separate backend** - No \`simple-backend.js\`, no \`backend/\` directory, no \`frontend/\` directory
-❌ **NO start-dev.sh** - Use \`npm run dev\` instead
-❌ **NO Express or FastAPI** - This is a Next.js application with API routes
-❌ **NO user authentication** - No login system, no user management
-❌ **NO translation history** - No vocabulary management, no favorites
-❌ **NO beige theme** - Theme is shamrock green, not beige
+### Testing
+- **Always use test-runner sub-agent** for running tests (see `.claude/CLAUDE.md`)
+- No mocks - test against real implementations
+- Coverage thresholds: 95% lines/functions/statements, 90% branches
+- Tests must be verbose for debugging
 
-## Alignment with README
-
-- Project name, positioning, and features match README description
-- Tech stack versions match README (Next.js 15 / React 18 / TS 5 / Tailwind 3)
-- All referenced files and directories actually exist in the repository
-- No references to non-existent features or files
-
-## Quick Start
-
-\`\`\`bash
-# Clone the repository
-git clone https://github.com/sarahaleo88/EP-Chat.git
-cd EP-Chat
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env and add your DEEPSEEK_API_KEY
-
-# Start development server
-npm run dev
-
-# Access the application
-open http://localhost:3000
-\`\`\`
-
-## Available Scripts
-
-\`\`\`bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run test         # Run tests with Vitest
-npm run type-check   # TypeScript type checking
-\`\`\`
-
-## Core Functionality
-
-### 1. Prompt Enhancement
-- Converts natural language requirements to structured prompts
-- Template-based generation system
-- Supports code and web app generation scenarios
-
-### 2. DeepSeek Model Integration
-- Three model options: chat (general), coder (code-focused), reasoner (reasoning-focused)
-- Streaming response support for real-time output
-- Intelligent timeout management for long text generation
-
-### 3. Template System
-- JSON-based template library
-- Extensible template registry
-- Category-based organization (code/web)
-- Easy to add new templates
-
-### 4. User Interface
-- Window-style chat interface (inspired by ai.saraha.cc)
-- Sidebar with model selector and quick start buttons
-- Message area with streaming response display
-- Responsive design for mobile and desktop
+### Styling
+- **Theme:** Shamrock green (🍀) - NOT beige, NOT any other color
+- Tailwind CSS + SCSS for global styles
+- Responsive design with mobile/PWA support
+- Path: `styles/globals.scss`, `styles/window-style-chat.scss`
 
 ## Important Notes
 
-- **Single Codebase**: This is a Next.js application with API routes, not a separate frontend/backend architecture
-- **DeepSeek Only**: The only external API dependency is DeepSeek API
-- **No File Operations**: No file uploads, no document processing, no file storage
-- **Stateless**: No history, no sessions, no persistent storage (by design for speed)
-- **Template-Driven**: All prompt generation is template-based
+### What This Project IS
+✅ Next.js 15 single-codebase application
+✅ Prompt enhancement tool for Claude Code
+✅ DeepSeek API as only external dependency
+✅ Stateless (no history, no sessions, by design)
+✅ Shamrock green theme throughout
+
+### What This Project IS NOT
+❌ NOT a translation tool (no "MySmartTranslate")
+❌ NO separate backend (`simple-backend.js`, `backend/`, `frontend/` do not exist)
+❌ NO file uploads or document processing
+❌ NO user authentication or login system
+❌ NO `start-dev.sh` script (use `npm run dev`)
+❌ NOT Express or FastAPI (Next.js API routes only)
+
+### Environment Configuration
+Required in `.env` file:
+```env
+DEEPSEEK_API_KEY=your_api_key_here
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Optional configurations:
+- Redis caching: `REDIS_URL`, `REDIS_PASSWORD`
+- Long-text timeouts: `STREAMING_TIMEOUT`, `CHUNK_INTERVAL_TIMEOUT`, `CONTINUATION_TIMEOUT`
+- Security: `CORS_ORIGINS`, `RATE_LIMIT_PER_MINUTE`, `CSP_ENABLED`
+
+### Configuration Files
+- `next.config.js` - Next.js configuration (minimal)
+- `tsconfig.json` - TypeScript with path aliases
+- `tailwind.config.js` - Shamrock theme colors
+- `vitest.config.ts` - Test runner setup
+- `Dockerfile` - 3-stage multi-stage build
+- `docker-compose.yml` - Container orchestration
+
+### Common Tasks
+
+**Add new template:**
+1. Create JSON file in `templates/code/` or `templates/web/`
+2. Follow schema in `templates/schema.json`
+3. Template registry auto-loads files
+
+**Extend API functionality:**
+1. Modify `lib/deepseek.ts` for client changes
+2. Update `app/api/generate/route.ts` for endpoint logic
+3. Add types to `lib/types.ts` with Zod validation
+
+**Add new component:**
+1. Create in `app/components/`
+2. Use `'use client'` only if needed
+3. Follow existing naming patterns
+4. Add tests in `tests/`
+
+## Sub-Agent Usage
+
+See `.claude/CLAUDE.md` for detailed sub-agent usage rules:
+- Use **file-analyzer** for reading verbose files/logs
+- Use **code-analyzer** for code analysis, bug research, logic tracing
+- Use **test-runner** for executing tests and analyzing results
+
+## Docker Architecture
+
+**3-Stage Build:**
+1. **Dependencies** - Install production deps
+2. **Builder** - Compile TypeScript, build Next.js (standalone)
+3. **Runtime** - Final optimized image (~703MB), non-root user (nextjs:nodejs)
+
+**Key Features:**
+- ✅ Proper module resolution (TypeScript paths)
+- ✅ Security hardening (non-root, minimal privileges)
+- ✅ Health checks via `/api/health`
+- ✅ Environment-based configuration
+
+## PWA Features
+
+- Installable on desktop/mobile
+- Offline functionality with service worker
+- Caching strategy: network-first with cache fallback
+- Test PWA: `npm test -- tests/pwa.test.tsx`
 
 ## Troubleshooting
 
-### Common Issues
+**Port conflict (3000):**
+```bash
+lsof -ti:3000 | xargs kill -9
+# Or change port: PORT=3001 npm run dev
+```
 
-1. **Port 3000 already in use**
-   \`\`\`bash
-   # Kill process on port 3000
-   lsof -ti:3000 | xargs kill -9
-   \`\`\`
+**Build errors:**
+```bash
+rm -rf .next node_modules
+npm install
+npm run build
+```
 
-2. **DeepSeek API errors**
-   - Verify DEEPSEEK_API_KEY is set correctly
-   - Check API key validity at https://platform.deepseek.com/api_keys
-   - Ensure sufficient API credits
+**Docker issues:**
+```bash
+make clean-all        # Clean Docker cache
+docker system prune -a
+```
 
-3. **Build errors**
-   \`\`\`bash
-   # Clean build cache
-   rm -rf .next node_modules
-   npm install
-   npm run build
-   \`\`\`
+**DeepSeek API errors:**
+- Verify `DEEPSEEK_API_KEY` in `.env`
+- Check API credits at https://platform.deepseek.com/api_keys
+- Test connection: `curl -H "Authorization: Bearer $DEEPSEEK_API_KEY" https://api.deepseek.com/v1/models`
 
 ## Additional Resources
 
-- **README.md** - Comprehensive project documentation
-- **CHANGELOG.md** - Version history and changes
-- **SECURITY.md** - Security policies and reporting
-- **docs/** - Additional documentation (Docker, deployment, etc.)
+- **README.md** - Comprehensive documentation (bilingual)
+- **`.claude/CLAUDE.md`** - Developer philosophy and sub-agent rules
+- **`docs/ARCHITECTURE.md`** - Detailed system architecture
+- **`SECURITY.md`** - Security policies
+- **`docs/DOCKER_DEPLOYMENT_TROUBLESHOOTING.md`** - Docker troubleshooting

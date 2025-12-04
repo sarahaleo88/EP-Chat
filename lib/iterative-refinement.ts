@@ -282,7 +282,7 @@ export class IterativeRefinementManager {
 
   private checkOptimizationTriggers(templateType: string): void {
     const performance = this.templatePerformance.get(templateType);
-    if (!performance) return;
+    if (!performance) {return;}
 
     // Trigger optimization if performance is below thresholds
     const needsOptimization = 
@@ -298,6 +298,7 @@ export class IterativeRefinementManager {
 
   private scheduleOptimization(templateType: string): void {
     // In a real implementation, this would trigger an optimization job
+    // eslint-disable-next-line no-console
     console.log(`Scheduling optimization for template type: ${templateType}`);
     
     // Emit event for optimization system
@@ -412,7 +413,7 @@ export class IterativeRefinementManager {
     const change = current - previous;
     const threshold = Math.abs(target * 0.05); // 5% of target
 
-    if (Math.abs(change) < threshold) return 'stable';
+    if (Math.abs(change) < threshold) {return 'stable';}
     
     // For metrics where lower is better (cognitive load, error rate)
     const lowerIsBetter = target < 5;
@@ -427,8 +428,8 @@ export class IterativeRefinementManager {
   private calculatePriority(value: number, target: number): 'high' | 'medium' | 'low' {
     const deviation = Math.abs(value - target) / target;
 
-    if (deviation > 0.3) return 'high';
-    if (deviation > 0.15) return 'medium';
+    if (deviation > 0.3) {return 'high';}
+    if (deviation > 0.15) {return 'medium';}
     return 'low';
   }
 
@@ -529,16 +530,16 @@ export class IterativeRefinementManager {
     // Simplified impact estimation based on current performance gaps
     let impact = 0;
     
-    if (performance.averageMetrics.scanabilityScore < 6) impact += 3;
-    if (performance.averageMetrics.cognitiveLoadScore > 6) impact += 3;
-    if (performance.userSatisfaction < 7) impact += 2;
+    if (performance.averageMetrics.scanabilityScore < 6) {impact += 3;}
+    if (performance.averageMetrics.cognitiveLoadScore > 6) {impact += 3;}
+    if (performance.userSatisfaction < 7) {impact += 2;}
     
     return Math.min(10, impact + suggestions.length);
   }
 
   private estimateEffort(suggestions: string[]): 'low' | 'medium' | 'high' {
-    if (suggestions.length <= 2) return 'low';
-    if (suggestions.length <= 4) return 'medium';
+    if (suggestions.length <= 2) {return 'low';}
+    if (suggestions.length <= 4) {return 'medium';}
     return 'high';
   }
 }

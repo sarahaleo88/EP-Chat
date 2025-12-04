@@ -117,7 +117,7 @@ function formatCodeBlocks(text: string): string {
   
   codeBlockPatterns.forEach(pattern => {
     result = result.replace(pattern, (match, code) => {
-      if (!code) return match;
+      if (!code) {return match;}
       
       // 检测语言类型
       const language = detectCodeLanguage(code);
@@ -198,7 +198,7 @@ function formatInlineCode(text: string): string {
  */
 function isInsideCodeBlock(fullText: string, target: string): boolean {
   const index = fullText.indexOf(target);
-  if (index === -1) return false;
+  if (index === -1) {return false;}
   
   const beforeText = fullText.substring(0, index);
   const codeBlockStarts = (beforeText.match(/```/g) || []).length;
@@ -248,7 +248,7 @@ function formatLists(text: string): string {
     return text;
   }
 
-  let result = text;
+  const result = text;
 
   // 检测列表模式
   // Note: listPatterns is used for future list detection features

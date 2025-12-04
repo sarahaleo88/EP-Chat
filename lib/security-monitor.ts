@@ -268,7 +268,7 @@ class SecurityMonitor {
    * Extract client IP from request
    */
   private getClientIP(request?: Request): string | undefined {
-    if (!request) return undefined;
+    if (!request) {return undefined;}
     
     return request.headers.get('x-forwarded-for') ||
            request.headers.get('x-real-ip') ||

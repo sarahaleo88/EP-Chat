@@ -118,7 +118,7 @@ function trackPerformanceMetrics(
  * Calculate performance score (0-100)
  */
 function calculatePerformanceScore(): number {
-  if (performanceMetrics.requestCount === 0) return 100;
+  if (performanceMetrics.requestCount === 0) {return 100;}
   
   const fastRequestRatio = performanceMetrics.fastRequests / performanceMetrics.requestCount;
   const avgResponseTimeScore = Math.max(0, 100 - (performanceMetrics.averageResponseTime / 2));
