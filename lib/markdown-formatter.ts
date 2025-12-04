@@ -251,7 +251,7 @@ function formatLists(text: string): string {
   const result = text;
 
   // 检测列表模式 - Reserved for future list detection features
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line no-unused-vars
   const _listPatterns = [
     // 数字序号列表
     /^(\d+[\.\)]\s*.+)$/gm,

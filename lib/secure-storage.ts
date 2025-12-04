@@ -31,8 +31,10 @@ const OBFUSCATION_KEY = 'EP-Chat-2025-Secure';
  * @returns Obfuscated string safe for localStorage
  */
 export function obfuscateValue(value: string): string {
-  if (!value) return '';
-  
+  if (!value) {
+    return '';
+  }
+
   try {
     // XOR with key
     const xored = value.split('').map((char, i) => {
@@ -55,8 +57,10 @@ export function obfuscateValue(value: string): string {
  * @returns Original plaintext value
  */
 export function deobfuscateValue(obfuscated: string): string {
-  if (!obfuscated) return '';
-  
+  if (!obfuscated) {
+    return '';
+  }
+
   try {
     // Base64 decode
     const decoded = atob(obfuscated);
@@ -81,8 +85,10 @@ export function deobfuscateValue(obfuscated: string): string {
  * @returns true if the value appears to be obfuscated
  */
 export function isObfuscated(value: string): boolean {
-  if (!value) return false;
-  
+  if (!value) {
+    return false;
+  }
+
   // Check if it's valid base64
   try {
     const decoded = atob(value);
@@ -100,8 +106,10 @@ export function isObfuscated(value: string): boolean {
  * @param value - The value to store
  */
 export function secureSetItem(key: string, value: string): void {
-  if (typeof window === 'undefined') return;
-  
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   const obfuscated = obfuscateValue(value);
   localStorage.setItem(key, obfuscated);
 }
@@ -114,10 +122,14 @@ export function secureSetItem(key: string, value: string): void {
  * @returns The deobfuscated value, or null if not found
  */
 export function secureGetItem(key: string): string | null {
-  if (typeof window === 'undefined') return null;
-  
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   const stored = localStorage.getItem(key);
-  if (!stored) return null;
+  if (!stored) {
+    return null;
+  }
   
   // Check if it's obfuscated or legacy plaintext
   if (isObfuscated(stored)) {
@@ -135,7 +147,9 @@ export function secureGetItem(key: string): string | null {
  * @param key - The localStorage key to remove
  */
 export function secureRemoveItem(key: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   localStorage.removeItem(key);
 }
 
