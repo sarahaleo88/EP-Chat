@@ -101,13 +101,13 @@ describe('SecurityMonitor', () => {
   describe('logInputValidation', () => {
     it('should log valid input', () => {
       expect(() => {
-        securityMonitor.logInputValidation(true, { field: 'email' });
+        securityMonitor.logInputValidation(true, 'test@example.com', { field: 'email' });
       }).not.toThrow();
     });
 
     it('should log invalid input', () => {
       expect(() => {
-        securityMonitor.logInputValidation(false, { field: 'email', error: 'invalid format' });
+        securityMonitor.logInputValidation(false, 'invalid-email', { field: 'email', error: 'invalid format' });
       }).not.toThrow();
     });
   });
@@ -115,7 +115,7 @@ describe('SecurityMonitor', () => {
   describe('logRateLimit', () => {
     it('should log rate limit event', () => {
       expect(() => {
-        securityMonitor.logRateLimit({ ip: '192.168.1.1', limit: 100, current: 101 });
+        securityMonitor.logRateLimit(true, { ip: '192.168.1.1', limit: 100, current: 101 });
       }).not.toThrow();
     });
   });
@@ -123,7 +123,7 @@ describe('SecurityMonitor', () => {
   describe('logSuspiciousActivity', () => {
     it('should log suspicious activity', () => {
       expect(() => {
-        securityMonitor.logSuspiciousActivity({ pattern: 'sql_injection_attempt', payload: 'SELECT *' });
+        securityMonitor.logSuspiciousActivity('sql_injection_attempt', { pattern: 'sql_injection_attempt', payload: 'SELECT *' });
       }).not.toThrow();
     });
   });

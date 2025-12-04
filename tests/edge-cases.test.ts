@@ -60,13 +60,14 @@ describe('Edge Cases and Error Conditions', () => {
     it('should handle memory pressure gracefully', () => {
       // Simulate memory pressure
       const originalMemoryUsage = process.memoryUsage;
-      process.memoryUsage = vi.fn().mockReturnValue({
+      const mockMemoryUsage = vi.fn().mockReturnValue({
         rss: 1024 * 1024 * 1024, // 1GB
         heapTotal: 512 * 1024 * 1024, // 512MB
         heapUsed: 480 * 1024 * 1024, // 480MB (93.75% usage)
         external: 10 * 1024 * 1024, // 10MB
         arrayBuffers: 5 * 1024 * 1024, // 5MB
-      });
+      }) as unknown as typeof process.memoryUsage;
+      process.memoryUsage = mockMemoryUsage;
 
       const memUsage = process.memoryUsage();
       const heapUsedMB = memUsage.heapUsed / 1024 / 1024;
@@ -321,8 +322,8 @@ describe('Edge Cases and Error Conditions', () => {
       }
       
       expect(arrays.length).toBe(100);
-      expect(arrays[0][0]).toBe(0);
-      expect(arrays[99][0]).toBe(99);
+      expect(arrays[0]?.[0]).toBe(0);
+      expect(arrays[99]?.[0]).toBe(99);
       
       // Clear arrays
       arrays.length = 0;

@@ -116,8 +116,8 @@ describe('DeepSeekClient', () => {
       const client = new DeepSeekClient('sk-test-key');
       await client.sendPrompt('Hello', 'deepseek-chat', { systemPrompt: 'You are a helpful assistant' });
 
-      const callArgs = mockFetch.mock.calls[0];
-      const body = JSON.parse(callArgs[1].body);
+      const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(callArgs[1].body as string);
       expect(body.messages).toHaveLength(2);
       expect(body.messages[0]).toEqual({ role: 'system', content: 'You are a helpful assistant' });
     });

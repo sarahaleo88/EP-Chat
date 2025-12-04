@@ -83,15 +83,15 @@ describe('Error Handler', () => {
         expect(result.actionLabel).toBe('检查设置');
       });
 
-      it('should format quota exceeded errors', () => {
-        const error = new MockOptimizedApiError(ApiErrorType.QUOTA_EXCEEDED, 'Quota exceeded');
+      it('should format rate limit errors', () => {
+        const error = new MockOptimizedApiError(ApiErrorType.RATE_LIMIT, 'Rate limit exceeded');
         const result = formatUserFriendlyError(error);
 
-        // This error type might not be specifically handled, so it falls back to generic error
-        expect(result.title).toBe('操作失败');
+        // Rate limit errors should be handled with appropriate messaging
+        expect(result.title).toBe('请求过于频繁');
         expect(result.retryable).toBe(true);
-        expect(result.icon).toBe('⚠️');
-        expect(result.actionLabel).toBe('重试');
+        expect(result.icon).toBe('⏱️');
+        expect(result.actionLabel).toBe('稍后重试');
       });
 
       it('should format 400 API errors', () => {

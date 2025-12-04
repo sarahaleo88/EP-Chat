@@ -6,6 +6,16 @@
 import { z } from 'zod';
 
 /**
+ * Type for environment warnings input - allows undefined values
+ */
+interface EnvironmentWarningsInput {
+  NODE_ENV?: 'development' | 'production' | 'test' | undefined;
+  DEEPSEEK_API_KEY?: string | undefined;
+  PROM_ENABLED?: string | undefined;
+  NEXT_TELEMETRY_DISABLED?: string | undefined;
+}
+
+/**
  * DeepSeek API Request Validation Schema
  */
 export const DeepSeekRequestSchema = z.object({
@@ -91,11 +101,11 @@ export class RuntimeValidator {
     try {
       const validated = DeepSeekRequestSchema.parse(data);
       return { success: true, data: validated };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          errors: error.issues.map(err => `${err.path.join('.')}: ${err.message}`),
+          errors: error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`),
         };
       }
       return { success: false, errors: ['Unknown validation error'] };
@@ -115,11 +125,11 @@ export class RuntimeValidator {
       const validated = TemplateConfigSchema.parse(data);
       const warnings = this.generateTemplateWarnings(validated);
       return { success: true, data: validated, warnings };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          errors: error.issues.map(err => `${err.path.join('.')}: ${err.message}`),
+          errors: error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`),
         };
       }
       return { success: false, errors: ['Unknown validation error'] };
@@ -136,18 +146,18 @@ export class RuntimeValidator {
   } {
     try {
       const validated = CSRFTokenSchema.parse(data);
-      
+
       // Additional runtime checks
       if (validated.expires <= Date.now()) {
         return { success: false, errors: ['Token has expired'] };
       }
-      
+
       return { success: true, data: validated };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          errors: error.issues.map(err => `${err.path.join('.')}: ${err.message}`),
+          errors: error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`),
         };
       }
       return { success: false, errors: ['Unknown validation error'] };
@@ -165,11 +175,11 @@ export class RuntimeValidator {
     try {
       const validated = APIResponseSchema.parse(data);
       return { success: true, data: validated };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          errors: error.issues.map(err => `${err.path.join('.')}: ${err.message}`),
+          errors: error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`),
         };
       }
       return { success: false, errors: ['Unknown validation error'] };
@@ -181,19 +191,26 @@ export class RuntimeValidator {
    */
   static validateEnvironment(): {
     success: boolean;
-    data?: any;
+    data?: z.infer<typeof EnvironmentSchema>;
     errors?: string[];
     warnings?: string[];
   } {
     try {
       const validated = EnvironmentSchema.partial().parse(process.env);
-      const warnings = this.generateEnvironmentWarnings(validated);
-      return { success: true, data: validated, warnings };
-    } catch (error) {
+      // Cast to the expected type for generateEnvironmentWarnings
+      const envForWarnings: EnvironmentWarningsInput = {
+        NODE_ENV: validated.NODE_ENV,
+        DEEPSEEK_API_KEY: validated.DEEPSEEK_API_KEY,
+        PROM_ENABLED: validated.PROM_ENABLED,
+        NEXT_TELEMETRY_DISABLED: validated.NEXT_TELEMETRY_DISABLED,
+      };
+      const warnings = this.generateEnvironmentWarnings(envForWarnings);
+      return { success: true, data: validated as z.infer<typeof EnvironmentSchema>, warnings };
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          errors: error.issues.map(err => `${err.path.join('.')}: ${err.message}`),
+          errors: error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`),
         };
       }
       return { success: false, errors: ['Unknown validation error'] };
@@ -232,7 +249,7 @@ export class RuntimeValidator {
   /**
    * Generate environment warnings
    */
-  private static generateEnvironmentWarnings(env: any): string[] {
+  private static generateEnvironmentWarnings(env: EnvironmentWarningsInput): string[] {
     const warnings: string[] = [];
 
     // Check for missing API key in production
@@ -264,7 +281,7 @@ export function assertType<T>(
 ): asserts value is T {
   const result = schema.safeParse(value);
   if (!result.success) {
-    const errors = result.error.issues.map(err => `${err.path.join('.')}: ${err.message}`);
+    const errors = result.error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`);
     throw new TypeError(errorMessage || `Type assertion failed: ${errors.join(', ')}`);
   }
 }
@@ -280,7 +297,7 @@ export function safeCast<T>(
   if (result.success) {
     return { success: true, data: result.data };
   } else {
-    const errors = result.error.issues.map(err => `${err.path.join('.')}: ${err.message}`);
+    const errors = result.error.issues.map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`);
     return { success: false, error: errors.join(', ') };
   }
 }

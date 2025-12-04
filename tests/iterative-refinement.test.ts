@@ -28,11 +28,12 @@ describe('IterativeRefinementManager', () => {
         templateType: 'code',
         timestamp: Date.now(),
         metrics: {
-          readabilityScore: 0.8,
-          structureScore: 0.9,
-          completenessScore: 0.85,
-          accuracyScore: 0.95,
-          overallScore: 0.875,
+          scanabilityScore: 8.0,
+          cognitiveLoadScore: 3.0,
+          taskCompletionTime: 5000,
+          accuracyScore: 95,
+          userSatisfactionScore: 8.5,
+          errorRate: 5,
         },
         userFeedback: {
           rating: 4,

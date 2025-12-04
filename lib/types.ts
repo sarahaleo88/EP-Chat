@@ -171,10 +171,10 @@ export interface I18nTexts {
 export const validateDeepSeekModel = (model: unknown): DeepSeekModel => {
   try {
     return DeepSeekModelSchema.parse(model);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       throw new EpError(
-        `Invalid DeepSeek model: ${error.issues.map(e => e.message).join(', ')}`,
+        `Invalid DeepSeek model: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`,
         'INVALID_MODEL',
         { model, errors: error.issues }
       );
@@ -186,10 +186,10 @@ export const validateDeepSeekModel = (model: unknown): DeepSeekModel => {
 export const validateTemplateConfig = (config: unknown): TemplateConfig => {
   try {
     return TemplateConfigSchema.parse(config);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       throw new EpError(
-        `Invalid template configuration: ${error.issues.map(e => e.message).join(', ')}`,
+        `Invalid template configuration: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`,
         'INVALID_TEMPLATE_CONFIG',
         { config, errors: error.issues }
       );
@@ -201,10 +201,10 @@ export const validateTemplateConfig = (config: unknown): TemplateConfig => {
 export const validateEpPromptSpec = (spec: unknown): EpPromptSpec => {
   try {
     return EpPromptSpecSchema.parse(spec);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       throw new EpError(
-        `Invalid prompt specification: ${error.issues.map(e => e.message).join(', ')}`,
+        `Invalid prompt specification: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`,
         'INVALID_PROMPT_SPEC',
         { spec, errors: error.issues }
       );
@@ -216,10 +216,10 @@ export const validateEpPromptSpec = (spec: unknown): EpPromptSpec => {
 export const validateApiResponse = (response: unknown): ApiResponse => {
   try {
     return ApiResponseSchema.parse(response);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       throw new EpError(
-        `Invalid API response: ${error.issues.map(e => e.message).join(', ')}`,
+        `Invalid API response: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`,
         'INVALID_API_RESPONSE',
         { response, errors: error.issues }
       );
@@ -231,10 +231,10 @@ export const validateApiResponse = (response: unknown): ApiResponse => {
 export const validateStreamResponse = (response: unknown): StreamResponse => {
   try {
     return StreamResponseSchema.parse(response);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       throw new EpError(
-        `Invalid stream response: ${error.issues.map(e => e.message).join(', ')}`,
+        `Invalid stream response: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`,
         'INVALID_STREAM_RESPONSE',
         { response, errors: error.issues }
       );

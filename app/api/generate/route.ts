@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: '无效的模型类型',
-          details: modelValidation.error.issues.map(e => e.message).join(', ')
+          details: modelValidation.error.issues.map((e: { message: string }) => e.message).join(', ')
         },
         { status: 400 }
       );

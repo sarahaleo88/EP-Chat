@@ -19,8 +19,25 @@ const DEFAULT_OPTIONS: PromptGenerationOptions = {
   temperature: 0.7,
 };
 
+// Define the type for I18N texts
+interface PromptGeneratorI18nTexts {
+  metaHeader: string;
+  scenario: string;
+  language: string;
+  mode: string;
+  model: string;
+  template: string;
+  userInput: string;
+  techStack: string;
+  features: string;
+  inputOutput: string;
+  codeRules: string;
+  promptInstruction: string;
+  tokenWarning: string;
+}
+
 // 国际化文本
-const I18N_TEXTS = {
+const I18N_TEXTS: Record<Language, PromptGeneratorI18nTexts> = {
   zh: {
     metaHeader: 'EP 增强提示元数据',
     scenario: '场景',
@@ -91,7 +108,7 @@ function generateTemplateSpec(
   spec += `- Framework: ${template.spec.tech.framework}\n\n`;
 
   spec += `## ${texts.features}\n`;
-  template.spec.features.forEach((feature, index) => {
+  template.spec.features.forEach((feature: string, index: number) => {
     spec += `${index + 1}. ${feature}\n`;
   });
   spec += '\n';
@@ -101,7 +118,7 @@ function generateTemplateSpec(
   spec += `- Output: ${template.spec.io.output}\n\n`;
 
   spec += `## ${texts.codeRules}\n`;
-  template.spec.codeRules.forEach((rule, index) => {
+  template.spec.codeRules.forEach((rule: string, index: number) => {
     spec += `${index + 1}. ${rule}\n`;
   });
   spec += '\n';

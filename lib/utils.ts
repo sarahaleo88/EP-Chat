@@ -166,7 +166,9 @@ export function getI18nText(
   key: string,
   fallback: string = key
 ): string {
-  return texts[lang]?.[key] || texts.en?.[key] || fallback;
+  const langTexts = texts[lang];
+  const enTexts = texts.en;
+  return langTexts?.[key] ?? enTexts?.[key] ?? fallback;
 }
 
 /**

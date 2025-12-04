@@ -111,7 +111,7 @@ describe('Performance Tests - Sub-100ms Target', () => {
         const promptSpec = {
           scenario: 'code' as const,
           lang: 'zh' as const,
-          mode: 'detailed' as const,
+          mode: 'full' as const,
           template,
           userInput: 'Create a TypeScript function',
           model: 'deepseek-chat' as const,
@@ -137,11 +137,11 @@ describe('Performance Tests - Sub-100ms Target', () => {
       const template = getMockTemplate('code', 'zh', 'detailed');
       if (template) {
         const largeInput = 'A'.repeat(5000); // 5KB input
-        
+
         const promptSpec = {
           scenario: 'code' as const,
           lang: 'zh' as const,
-          mode: 'detailed' as const,
+          mode: 'full' as const,
           template,
           userInput: largeInput,
           model: 'deepseek-chat' as const,
@@ -272,8 +272,9 @@ describe('Security Tests - OWASP Compliance', () => {
 
     it('should use constant-time comparison', () => {
       // Test timing attack resistance with known tokens
-      const token1 = 'test-token-for-timing-analysis-1';
-      const token2 = 'test-token-for-timing-analysis-2';
+      const token1: string = 'test-token-for-timing-analysis-1';
+      const token2: string = 'test-token-for-timing-analysis-2';
+      const token1Copy: string = token1;
 
       // Test timing attack resistance
       const iterations = 50; // Reduced for faster testing
@@ -283,7 +284,7 @@ describe('Security Tests - OWASP Compliance', () => {
       for (let i = 0; i < iterations; i++) {
         // Compare identical tokens
         const start1 = performance.now();
-        const result1 = token1 === token1;
+        const result1 = token1 === token1Copy;
         const end1 = performance.now();
         times1.push(end1 - start1);
 

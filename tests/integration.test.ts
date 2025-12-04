@@ -80,7 +80,7 @@ describe('Integration Tests - Complete Workflows', () => {
     it('should complete full template loading and prompt generation', async () => {
       // Load template - loadTemplate throws on failure, so we test with try/catch
       try {
-        const template = await loadTemplate('code', 'zh', 'detailed');
+        const template = await loadTemplate('code', 'default');
         expect(template).toBeDefined();
         expect(template.scenario).toBe('code');
 
@@ -88,7 +88,7 @@ describe('Integration Tests - Complete Workflows', () => {
         const promptSpec = {
           scenario: 'code' as const,
           lang: 'zh' as const,
-          mode: 'detailed' as const,
+          mode: 'full' as const,
           template,
           userInput: 'Create a TypeScript function',
           model: 'deepseek-chat' as const,
@@ -109,7 +109,7 @@ describe('Integration Tests - Complete Workflows', () => {
     it('should handle template loading failures gracefully', async () => {
       // Try to load non-existent template - loadTemplate throws an error
       try {
-        await loadTemplate('nonexistent' as any, 'zh', 'detailed');
+        await loadTemplate('nonexistent' as any, 'invalid-template');
         // If we reach here, the function didn't throw as expected
         expect.fail('Expected loadTemplate to throw an error');
       } catch (error) {
@@ -120,18 +120,18 @@ describe('Integration Tests - Complete Workflows', () => {
     });
 
     it('should generate prompts for different scenarios', async () => {
-      const scenarios = ['code', 'writing', 'analysis'] as const;
+      const scenarios = ['code', 'web'] as const;
       let loadedCount = 0;
 
       for (const scenario of scenarios) {
         try {
-          const template = await loadTemplate(scenario, 'zh', 'detailed');
+          const template = await loadTemplate(scenario, 'default');
           if (template) {
             loadedCount++;
             const promptSpec = {
               scenario,
               lang: 'zh' as const,
-              mode: 'detailed' as const,
+              mode: 'full' as const,
               template,
               userInput: `Test input for ${scenario}`,
               model: 'deepseek-chat' as const,
@@ -194,8 +194,8 @@ describe('Integration Tests - Complete Workflows', () => {
   describe('Performance Integration Tests', () => {
     it('should handle concurrent template loading', async () => {
       // Test concurrent template loading - may fail in test environment without actual templates
-      const promises = Array.from({ length: 10 }, (_, i) =>
-        loadTemplate('code', 'zh', 'detailed').catch(err => null)
+      const promises = Array.from({ length: 10 }, () =>
+        loadTemplate('code', 'default').catch(() => null)
       );
 
       const results = await Promise.all(promises);
@@ -212,14 +212,14 @@ describe('Integration Tests - Complete Workflows', () => {
 
     it('should handle large prompt generation', async () => {
       try {
-        const template = await loadTemplate('code', 'zh', 'detailed');
+        const template = await loadTemplate('code', 'default');
         if (template) {
           const largeInput = 'A'.repeat(10000); // 10KB input
 
           const promptSpec = {
             scenario: 'code' as const,
             lang: 'zh' as const,
-            mode: 'detailed' as const,
+            mode: 'full' as const,
             template,
             userInput: largeInput,
             model: 'deepseek-chat' as const,
@@ -245,7 +245,7 @@ describe('Integration Tests - Complete Workflows', () => {
       );
 
       expect(largeArrays.length).toBe(100);
-      expect(largeArrays[0].length).toBe(1000);
+      expect(largeArrays[0]?.length).toBe(1000);
 
       // Clean up
       largeArrays.length = 0;
@@ -351,7 +351,7 @@ describe('Integration Tests - Complete Workflows', () => {
 
       try {
         // 1. Load template
-        const template = await loadTemplate('code', 'zh', 'detailed');
+        const template = await loadTemplate('code', 'default');
         expect(template).toBeDefined();
 
         if (template) {
@@ -359,7 +359,7 @@ describe('Integration Tests - Complete Workflows', () => {
           const promptSpec = {
             scenario: 'code' as const,
             lang: 'zh' as const,
-            mode: 'detailed' as const,
+            mode: 'full' as const,
             template,
             userInput,
             model: 'deepseek-chat' as const,
@@ -378,7 +378,7 @@ describe('Integration Tests - Complete Workflows', () => {
             }],
           };
 
-          expect(mockResponse.choices[0].message.content).toContain('React component');
+          expect(mockResponse.choices[0]?.message.content).toContain('React component');
         }
       } catch (error) {
         // Template loading may fail in test environment without actual template files
@@ -391,7 +391,7 @@ describe('Integration Tests - Complete Workflows', () => {
       // Test error handling at each stage
       try {
         // 1. Template loading error - loadTemplate throws on failure
-        const template = await loadTemplate('invalid' as any, 'zh', 'detailed');
+        await loadTemplate('invalid' as any, 'invalid-template');
         // If we reach here, the function didn't throw as expected
         expect.fail('Expected loadTemplate to throw an error');
       } catch (error) {

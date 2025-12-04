@@ -35,7 +35,7 @@ describe('TemplateSelector', () => {
 
     it('should have displayName or name', async () => {
       const module = await import('@/app/components/TemplateSelector');
-      const TemplateSelector = module.default;
+      const TemplateSelector = module.default as React.FC & { displayName?: string };
 
       // Function components have a name property
       expect(TemplateSelector.name || TemplateSelector.displayName).toBeDefined();

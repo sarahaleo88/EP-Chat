@@ -14,7 +14,7 @@ export const mockTemplates = {
     title: 'TypeScript 代码生成模板',
     scenario: 'code' as const,
     lang: 'zh' as const,
-    mode: 'detailed' as const,
+    mode: 'full' as const,
     spec: {
       tech: {
         language: 'TypeScript',
@@ -37,7 +37,7 @@ export const mockTemplates = {
     title: 'TypeScript Code Generation Template',
     scenario: 'code' as const,
     lang: 'en' as const,
-    mode: 'detailed' as const,
+    mode: 'full' as const,
     spec: {
       tech: {
         language: 'TypeScript',
@@ -60,7 +60,7 @@ export const mockTemplates = {
     title: 'TypeScript 简洁代码模板',
     scenario: 'code' as const,
     lang: 'zh' as const,
-    mode: 'concise' as const,
+    mode: 'minimal' as const,
     spec: {
       tech: {
         language: 'TypeScript',
@@ -77,49 +77,58 @@ export const mockTemplates = {
   'writing/zh/detailed': {
     schemaVersion: '1.0.0',
     title: '技术写作模板',
-    scenario: 'writing' as const,
+    scenario: 'web' as const,
     lang: 'zh' as const,
-    mode: 'detailed' as const,
+    mode: 'full' as const,
     spec: {
-      style: {
-        tone: 'professional',
-        format: 'markdown',
+      tech: {
+        language: 'Markdown',
+        framework: 'N/A',
       },
       features: ['结构化', '详细说明', '示例代码'],
-      structure: ['引言', '主体', '结论'],
-      guidelines: ['使用清晰的标题', '提供具体示例'],
+      io: {
+        input: 'string',
+        output: 'string',
+      },
+      codeRules: ['使用清晰的标题', '提供具体示例'],
     },
   },
   'writing/en/detailed': {
     schemaVersion: '1.0.0',
     title: 'Technical Writing Template',
-    scenario: 'writing' as const,
+    scenario: 'web' as const,
     lang: 'en' as const,
-    mode: 'detailed' as const,
+    mode: 'full' as const,
     spec: {
-      style: {
-        tone: 'professional',
-        format: 'markdown',
+      tech: {
+        language: 'Markdown',
+        framework: 'N/A',
       },
       features: ['Structured', 'Detailed', 'Examples'],
-      structure: ['Introduction', 'Body', 'Conclusion'],
-      guidelines: ['Use clear headings', 'Provide examples'],
+      io: {
+        input: 'string',
+        output: 'string',
+      },
+      codeRules: ['Use clear headings', 'Provide examples'],
     },
   },
   'analysis/zh/detailed': {
     schemaVersion: '1.0.0',
     title: '数据分析模板',
-    scenario: 'analysis' as const,
+    scenario: 'code' as const,
     lang: 'zh' as const,
-    mode: 'detailed' as const,
+    mode: 'full' as const,
     spec: {
-      methodology: {
-        approach: 'quantitative',
-        tools: ['Python', 'pandas', 'matplotlib'],
+      tech: {
+        language: 'Python',
+        framework: 'pandas',
       },
       features: ['数据清洗', '统计分析', '可视化'],
-      steps: ['数据收集', '数据处理', '分析', '报告'],
-      deliverables: ['分析报告', '图表', '建议'],
+      io: {
+        input: 'CSV/JSON',
+        output: 'Report',
+      },
+      codeRules: ['数据收集', '数据处理', '分析', '报告'],
     },
   },
 };
