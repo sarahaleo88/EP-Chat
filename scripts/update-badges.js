@@ -335,9 +335,10 @@ if (require.main === module) {
     .then((results) => {
       console.log('\n📊 Badge Generation Results:');
       console.table(results);
-      
-      const urls = generator.updateReadmeBadges();
-      
+
+      // Update README badges and log result
+      generator.updateReadmeBadges();
+
       console.log('\n💡 To use dynamic badges in your README, replace static badge URLs with the generated ones above.');
       console.log('💡 Run this script regularly or set up GitHub Actions to keep badges updated.');
     })

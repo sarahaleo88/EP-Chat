@@ -67,9 +67,10 @@ class CleanBuilder {
    * Verify dependencies are properly installed
    */
   verifyDependencies() {
-    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    // Read package.json to ensure it exists and is valid
+    JSON.parse(fs.readFileSync('package.json', 'utf8'));
     const lockfileExists = fs.existsSync('package-lock.json');
-    
+
     if (!lockfileExists) {
       console.log('   Generating package-lock.json...');
       execSync('npm install --package-lock-only', { stdio: 'inherit' });

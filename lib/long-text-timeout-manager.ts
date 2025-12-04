@@ -149,7 +149,9 @@ export class LongTextTimeoutManager {
       this.activeTimeouts.set(requestId, timeoutId);
     };
 
-    const resetTimeout = () => {
+    // resetTimeout function - reserved for future chunk-level timeout reset
+    // eslint-disable-next-line no-unused-vars
+    const _resetTimeout = () => {
       if (timeoutId) {
         globalThis.clearTimeout(timeoutId);
       }
