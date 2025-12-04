@@ -72,13 +72,20 @@ const I18N_TEXTS: Record<Language, PromptGeneratorI18nTexts> = {
 };
 
 /**
+ * Get I18N texts for a language with fallback to English
+ */
+function getI18nTexts(lang: Language): PromptGeneratorI18nTexts {
+  return I18N_TEXTS[lang] ?? I18N_TEXTS.en;
+}
+
+/**
  * 生成 EP 元数据头部
  * @param spec - 提示规范
  * @param lang - 语言
  * @returns 元数据字符串
  */
 function generateMetadataHeader(spec: EpPromptSpec, lang: Language): string {
-  const texts = I18N_TEXTS[lang];
+  const texts = getI18nTexts(lang);
 
   return `[EP_META]
 ${texts.metaHeader}
@@ -101,7 +108,7 @@ function generateTemplateSpec(
   template: TemplateConfig,
   lang: Language
 ): string {
-  const texts = I18N_TEXTS[lang];
+  const texts = getI18nTexts(lang);
 
   let spec = `## ${texts.techStack}\n`;
   spec += `- ${texts.language}: ${template.spec.tech.language}\n`;
@@ -133,7 +140,7 @@ function generateTemplateSpec(
  * @returns 用户输入字符串
  */
 function generateUserInputSection(userInput: string, lang: Language): string {
-  const texts = I18N_TEXTS[lang];
+  const texts = getI18nTexts(lang);
 
   return `## ${texts.userInput}\n${userInput.trim()}\n\n`;
 }
@@ -145,7 +152,7 @@ function generateUserInputSection(userInput: string, lang: Language): string {
  * @returns 指令字符串
  */
 function generateFinalInstruction(spec: EpPromptSpec, lang: Language): string {
-  const texts = I18N_TEXTS[lang];
+  const texts = getI18nTexts(lang);
 
   let instruction = `## ${texts.promptInstruction}\n\n`;
 
