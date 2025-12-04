@@ -26,8 +26,8 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
-      run: npm ci
-      
+      run: npm ci --omit=optional
+
     - name: Run security audit
       run: |
         echo "::group::Security Audit"

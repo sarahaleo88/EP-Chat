@@ -27,7 +27,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: npm ci
+      run: npm ci --omit=optional
 
     - name: 🔨 Build application
       run: npm run build
@@ -123,7 +123,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: npm ci
+      run: npm ci --omit=optional
 
     - name: 🔨 Build release assets
       run: |
