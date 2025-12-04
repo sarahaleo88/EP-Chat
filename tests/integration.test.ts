@@ -4,7 +4,7 @@
  * Following ISO/IEC 29119 testing standards
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Import modules to test

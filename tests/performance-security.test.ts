@@ -169,7 +169,7 @@ describe('Performance Tests - Sub-100ms Target', () => {
       }
       
       // Capture peak memory for potential future analysis
-+      void process.memoryUsage();
+      void process.memoryUsage();
       
       // Clean up
       largeArrays.length = 0;
