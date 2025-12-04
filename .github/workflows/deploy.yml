@@ -27,7 +27,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: npm install --ignore-scripts --no-optional
+      run: rm -rf node_modules package-lock.json && npm install
 
     - name: 🔨 Build application
       run: npm run build
@@ -123,7 +123,7 @@ jobs:
         cache: 'npm'
 
     - name: 📥 Install dependencies
-      run: npm install --ignore-scripts --no-optional
+      run: rm -rf node_modules package-lock.json && npm install
 
     - name: 🔨 Build release assets
       run: |
