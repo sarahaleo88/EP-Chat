@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BudgetGuardian, CostEstimate } from '@/lib/budget-guardian';
-import { ModelCapabilities } from '@/lib/model-capabilities';
+import { BudgetGuardian } from '@/lib/budget-guardian';
+import type { ModelCapabilities } from '@/lib/model-capabilities';
 
 describe('BudgetGuardian', () => {
   let guardian: BudgetGuardian;

@@ -48,7 +48,8 @@ import {
   DeepSeekApiError,
 } from './deepseek-api';
 import { performanceLogger } from './performance-logger';
-import { longTextTimeoutManager, TimeoutContext } from './long-text-timeout-manager';
+// Reserved for future long-text timeout integration
+// import { longTextTimeoutManager, TimeoutContext } from './long-text-timeout-manager';
 
 /**
  * 缓存条目接口

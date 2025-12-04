@@ -31,17 +31,37 @@ const PURIFY_CONFIG = {
 
 /**
  * 清理HTML内容，防止XSS
+ *
+ * SECURITY NOTE (CodeQL Alert #110 - Mitigated):
+ * Server-side sanitization uses multiple regex patterns to catch various
+ * script tag formats. This is a defense-in-depth measure - the primary
+ * security comes from DOMPurify on the client side.
+ *
+ * For server-rendered content, we strip dangerous tags but recommend
+ * re-sanitizing on the client when possible.
  */
 function sanitizeHTML(html: string): string {
   if (typeof window === 'undefined') {
-    // 服务端渲染时的简单清理 - use iterative sanitization to prevent ReDoS
+    // Server-side fallback - use multiple patterns for robustness
     let sanitized = html;
     let previous;
+
+    // Iterative sanitization to handle nested/malformed tags
     do {
       previous = sanitized;
-      // Remove script tags with proper handling of malformed tags
-      sanitized = sanitized.replace(/<script[\s\S]*?<\/script\s*>/gi, '');
+      // Pattern 1: Standard script tags
+      sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      // Pattern 2: Script tags with whitespace variations in closing tag
+      sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script[\s\t\n\r]*>/gi, '');
+      // Pattern 3: Self-closing or malformed script tags
+      sanitized = sanitized.replace(/<script\b[^>]*\/?>/gi, '');
+      // Pattern 4: Event handlers (onclick, onerror, etc.)
+      sanitized = sanitized.replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '');
+      sanitized = sanitized.replace(/\bon\w+\s*=\s*[^\s>]+/gi, '');
+      // Pattern 5: javascript: URLs
+      sanitized = sanitized.replace(/javascript\s*:/gi, '');
     } while (sanitized !== previous);
+
     return sanitized;
   }
 

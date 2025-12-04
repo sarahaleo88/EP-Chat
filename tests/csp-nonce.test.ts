@@ -3,7 +3,7 @@
  * Comprehensive test suite for lib/csp-nonce.ts
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { generateCSPNonce, createCSPWithNonce, getNonceFromHeaders } from '@/lib/csp-nonce';
 
 describe('generateCSPNonce', () => {
