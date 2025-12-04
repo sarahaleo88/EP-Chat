@@ -26,6 +26,17 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "next"
         update-types: ["version-update:semver-major"]
+      # Ignore major version updates requiring manual migration (added 2025-12-04)
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "husky"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@headlessui/react"
+        update-types: ["version-update:semver-major"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -40,6 +51,14 @@ updates:
     labels:
       - "github-actions"
       - "auto-update"
+    ignore:
+      # Ignore major version updates requiring runner v2.327.1+ (added 2025-12-04)
+      - dependency-name: "actions/checkout"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "actions/setup-node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "github/codeql-action"
+        update-types: ["version-update:semver-major"]
 
   # Enable version updates for Docker
   - package-ecosystem: "docker"
@@ -54,3 +73,7 @@ updates:
     labels:
       - "docker"
       - "auto-update"
+    ignore:
+      # Ignore Node.js major version updates (stay on LTS) (added 2025-12-04)
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
