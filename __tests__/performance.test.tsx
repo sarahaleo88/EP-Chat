@@ -18,7 +18,9 @@ const mockPerformanceNow = jest.fn();
 Object.defineProperty(window, 'performance', {
   value: {
     now: mockPerformanceNow
-  }
+  },
+  writable: true,
+  configurable: true,
 });
 
 // Mock IntersectionObserver

@@ -65,6 +65,7 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 // 模拟 matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
+  configurable: true,
   value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
@@ -86,6 +87,8 @@ const localStorageMock = {
 };
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
+  writable: true,
+  configurable: true,
 });
 
 // 模拟 sessionStorage
@@ -97,6 +100,8 @@ const sessionStorageMock = {
 };
 Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,
+  writable: true,
+  configurable: true,
 });
 
 // Enhanced clipboard API mock with proper error handling

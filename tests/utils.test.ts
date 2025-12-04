@@ -325,6 +325,7 @@ describe('Utility Functions', () => {
       Object.defineProperty(global, 'window', {
         value: { innerWidth: 600 },
         writable: true,
+        configurable: true,
       });
       expect(isMobile()).toBe(true);
     });
@@ -333,6 +334,7 @@ describe('Utility Functions', () => {
       Object.defineProperty(global, 'window', {
         value: { innerWidth: 1024 },
         writable: true,
+        configurable: true,
       });
       expect(isMobile()).toBe(false);
     });
@@ -354,10 +356,12 @@ describe('Utility Functions', () => {
       Object.defineProperty(global, 'navigator', {
         value: { language: 'zh-CN' },
         writable: true,
+        configurable: true,
       });
       Object.defineProperty(global, 'window', {
         value: {},
         writable: true,
+        configurable: true,
       });
       expect(getPreferredLanguage()).toBe('zh');
     });
@@ -366,10 +370,12 @@ describe('Utility Functions', () => {
       Object.defineProperty(global, 'navigator', {
         value: { language: 'en-US' },
         writable: true,
+        configurable: true,
       });
       Object.defineProperty(global, 'window', {
         value: {},
         writable: true,
+        configurable: true,
       });
       expect(getPreferredLanguage()).toBe('en');
     });

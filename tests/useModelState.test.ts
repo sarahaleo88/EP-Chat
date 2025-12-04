@@ -26,11 +26,14 @@ const localStorageMock = (() => {
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
+  writable: true,
+  configurable: true,
 });
 
 Object.defineProperty(window, 'location', {
   value: { hostname: 'localhost' },
   writable: true,
+  configurable: true,
 });
 
 describe('useModelState', () => {

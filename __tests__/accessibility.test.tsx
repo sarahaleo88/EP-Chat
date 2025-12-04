@@ -21,7 +21,9 @@ expect.extend(toHaveNoViolations);
 Object.defineProperty(window, 'performance', {
   value: {
     now: jest.fn(() => Date.now())
-  }
+  },
+  writable: true,
+  configurable: true,
 });
 
 describe('Enhanced Message Renderer Accessibility', () => {
