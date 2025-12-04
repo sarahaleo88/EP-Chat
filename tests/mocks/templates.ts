@@ -182,12 +182,24 @@ export const mockValidateTemplate = vi.fn().mockImplementation((template: any) =
   const errors = [];
   const warnings = [];
   
-  if (!template.schemaVersion) errors.push('Missing schemaVersion');
-  if (!template.title) errors.push('Missing title');
-  if (!template.scenario) errors.push('Missing scenario');
-  if (!template.lang) errors.push('Missing lang');
-  if (!template.mode) errors.push('Missing mode');
-  if (!template.spec) errors.push('Missing spec');
+  if (!template.schemaVersion) {
+    errors.push('Missing schemaVersion');
+  }
+  if (!template.title) {
+    errors.push('Missing title');
+  }
+  if (!template.scenario) {
+    errors.push('Missing scenario');
+  }
+  if (!template.lang) {
+    errors.push('Missing lang');
+  }
+  if (!template.mode) {
+    errors.push('Missing mode');
+  }
+  if (!template.spec) {
+    errors.push('Missing spec');
+  }
   
   if (!template.spec?.features?.length) {
     warnings.push('No features defined');
