@@ -10,7 +10,8 @@ import { randomUUID } from 'crypto';
 import { getDeepSeekClient } from '@/lib/deepseek';
 import { getCapabilityManager } from '@/lib/model-capabilities';
 import { getBudgetGuardian } from '@/lib/budget-guardian';
-import { BudgetAwareContinuationEngine } from '@/lib/budget-aware-continuation';
+// BudgetAwareContinuationEngine reserved for future continuation feature
+// import { BudgetAwareContinuationEngine } from '@/lib/budget-aware-continuation';
 import { formatUserFriendlyError } from '@/lib/error-handler';
 import { estimateTokens } from '@/lib/utils';
 import type { DeepSeekModel } from '@/lib/types';

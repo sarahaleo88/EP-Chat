@@ -127,9 +127,11 @@ export class EnhancedDeepSeekClient {
       onComplete,
       onError,
       onContinuation,
-      enableAutoRetry = true,
+      // enableAutoRetry reserved for future retry logic
+      enableAutoRetry: _enableAutoRetry = true,
       maxContinuations = 5,
     } = options;
+    void _enableAutoRetry; // Mark as intentionally unused for now
 
     const requestId = performanceLogger.startRequest('enhanced-deepseek-stream', this.model);
     const startTime = Date.now();
@@ -256,7 +258,8 @@ export class EnhancedDeepSeekClient {
       });
 
     } catch (error) {
-      const duration = Date.now() - startTime;
+      const errorDuration = Date.now() - startTime;
+      void errorDuration; // Duration tracked via performanceLogger
       performanceLogger.endRequest(requestId, false, {
         errorType: error instanceof EnhancedApiError ? error.type : 'unknown',
         model: this.model,
