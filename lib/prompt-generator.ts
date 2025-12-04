@@ -71,11 +71,29 @@ const I18N_TEXTS: Record<Language, PromptGeneratorI18nTexts> = {
   },
 };
 
+// Default English texts for fallback
+const DEFAULT_TEXTS: PromptGeneratorI18nTexts = {
+  metaHeader: 'EP Enhanced Prompt Metadata',
+  scenario: 'Scenario',
+  language: 'Language',
+  mode: 'Mode',
+  model: 'Model',
+  template: 'Template',
+  userInput: 'User Input',
+  techStack: 'Tech Stack',
+  features: 'Features',
+  inputOutput: 'Input/Output',
+  codeRules: 'Code Rules',
+  promptInstruction:
+    'Please generate complete project code based on the above information',
+  tokenWarning: 'Warning: Prompt length may exceed model limits',
+};
+
 /**
  * Get I18N texts for a language with fallback to English
  */
 function getI18nTexts(lang: Language): PromptGeneratorI18nTexts {
-  return I18N_TEXTS[lang] ?? I18N_TEXTS.en;
+  return I18N_TEXTS[lang] ?? DEFAULT_TEXTS;
 }
 
 /**

@@ -328,7 +328,7 @@ export function withValidation<T>(
     try {
       const body = await request.json();
       const validation = safeCast(body, schema);
-      
+
       if (!validation.success) {
         return new Response(
           JSON.stringify({
@@ -342,8 +342,10 @@ export function withValidation<T>(
           }
         );
       }
-      
-      return await handler(validation.data, request);
+
+      // Type assertion is safe here because we've checked validation.success
+      const validatedData = validation.data as T;
+      return await handler(validatedData, request);
     } catch (error) {
       return new Response(
         JSON.stringify({
