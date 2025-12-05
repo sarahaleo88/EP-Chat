@@ -91,11 +91,17 @@ function createStreamResponse(
     },
   });
 
+  // 🚀 P1-3: Optimized streaming response headers
   return new Response(readable, {
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Connection': 'keep-alive',
+      // Disable buffering for immediate chunk delivery
+      'X-Accel-Buffering': 'no',
+      // Enable chunked transfer for streaming
+      'Transfer-Encoding': 'chunked',
+      // CORS headers
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST',
       'Access-Control-Allow-Headers': 'Content-Type',

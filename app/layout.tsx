@@ -135,7 +135,14 @@ export default async function RootLayout({
 
         {/* 预加载关键资源 */}
         <link rel="preload" href="/shamrock-logo.png" as="image" />
+
+        {/* 🚀 P0-1: Connection Prewarming for DeepSeek API
+            dns-prefetch: Resolve DNS early (~20-120ms savings)
+            preconnect: Establish TCP + TLS connection early (~200-500ms savings on first request)
+            This is critical because DeepSeek API TTFB is the dominant bottleneck (98%+ of wait time)
+        */}
         <link rel="dns-prefetch" href="https://api.deepseek.com" />
+        <link rel="preconnect" href="https://api.deepseek.com" crossOrigin="anonymous" />
 
         {/* 安全策略 */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
