@@ -275,7 +275,8 @@ export class PerformanceOptimizer {
 
     // Keep recent messages and summarize older ones
     const recentMessages = messages.slice(-this.config.messageBufferSize);
-    const olderMessages = messages.slice(0, -this.config.messageBufferSize);
+    // Note: olderMessages could be used for future summarization/compression
+    // const olderMessages = messages.slice(0, -this.config.messageBufferSize);
 
     // In a real implementation, you might:
     // - Summarize older messages

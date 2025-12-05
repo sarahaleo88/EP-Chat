@@ -89,9 +89,10 @@ export function PerformanceMonitor({
     return `${value.toFixed(1)}%`;
   };
 
-  const getStatusColor = (met: boolean): string => {
-    return met ? '#22c55e' : '#ef4444';
-  };
+  // getStatusColor reserved for future color-coded status indicators
+  // const getStatusColor = (met: boolean): string => {
+  //   return met ? '#22c55e' : '#ef4444';
+  // };
 
   const getStatusIcon = (met: boolean): string => {
     return met ? '✅' : '❌';

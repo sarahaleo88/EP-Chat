@@ -8,7 +8,8 @@ import {
   performanceLogger,
   type PerformanceMetrics,
 } from './performance-logger';
-import { convertToDeepSeekMessages, truncateMessages } from './deepseek-api';
+// Reserved for future message processing features
+// import { convertToDeepSeekMessages, truncateMessages } from './deepseek-api';
 
 export interface PerformanceTestResult {
   testName: string;
