@@ -236,6 +236,6 @@ When evaluating whether to defer a major version upgrade:
 
 ---
 
-**Document Owner**: EP Chat Maintainers  
-**Next Review**: March 2025
+**Document Owner**: EP Chat Maintainers
+**Next Review**: March 2026
 
