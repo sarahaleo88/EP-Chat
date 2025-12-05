@@ -60,7 +60,8 @@ describe('Performance Evaluator', () => {
 
   describe('PerformanceTestResult interface', () => {
     it('should be usable as type', async () => {
-      const { PerformanceEvaluator } = await import('@/lib/performance-evaluator');
+      const performanceModule = await import('@/lib/performance-evaluator');
+      void performanceModule; // Verify module loads correctly
 
       // Type check - if this compiles, the interface is correctly exported
       const testResult: any = {

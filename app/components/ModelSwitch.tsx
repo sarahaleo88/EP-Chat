@@ -176,7 +176,8 @@ export function CompactModelSwitch({
   disabled = false,
   className,
 }: ModelSwitchProps) {
-  const currentOption = MODEL_OPTIONS.find(option => option.id === model);
+  // currentOption reserved for future model display features
+  // const currentOption = MODEL_OPTIONS.find(option => option.id === model);
 
   return (
     <div className={cn('flex items-center space-x-2', className)}>

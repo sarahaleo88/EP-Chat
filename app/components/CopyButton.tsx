@@ -153,16 +153,17 @@ export function CopyButton({
     ...style,
   };
 
-  // Hover effect for icon variant
-  const hoverStyle =
-    variant === 'icon'
-      ? {
-          ':hover': {
-            backgroundColor: 'var(--hover-color)',
-            transform: 'scale(1.1)',
-          },
-        }
-      : {};
+  // Hover effect for icon variant - reserved for future CSS-in-JS implementation
+  // Note: Pseudo-selectors like :hover don't work in inline styles
+  // const hoverStyle =
+  //   variant === 'icon'
+  //     ? {
+  //         ':hover': {
+  //           backgroundColor: 'var(--hover-color)',
+  //           transform: 'scale(1.1)',
+  //         },
+  //       }
+  //     : {};
 
   return (
     <button

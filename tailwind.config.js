@@ -52,6 +52,8 @@ module.exports = {
         'spin-slow': 'spin 3s linear infinite',
         'pulse-soft': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'bounce-soft': 'bounce 1s infinite',
+        'fade-in': 'fade-in 0.5s ease-out',
+        'slide-up': 'slide-up 0.3s ease-out',
       },
       keyframes: {
         'fade-in': {
@@ -62,10 +64,6 @@ module.exports = {
           '0%': { transform: 'translateY(100%)' },
           '100%': { transform: 'translateY(0)' },
         },
-      },
-      animation: {
-        'fade-in': 'fade-in 0.5s ease-out',
-        'slide-up': 'slide-up 0.3s ease-out',
       },
       spacing: {
         18: '4.5rem',
