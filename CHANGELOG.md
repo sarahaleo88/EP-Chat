@@ -5,6 +5,47 @@ All notable changes to EP Chat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-12-06
+
+### 🎉 Official Stable Release
+
+EP Chat v1.3.0 marks the first officially versioned stable release following semantic versioning standards. This release consolidates all improvements from the v1.0.x series and establishes a clean versioning baseline for future development.
+
+### ✨ Release Highlights
+
+- **Semantic Versioning**: Adopted proper SemVer (1.3.0) replacing the informal `v1.0.0-epchat-initial-release` tag
+- **GHCR Docker Images**: Automated Docker image publishing to `ghcr.io/sarahaleo88/ep-chat:v1.3.0`
+- **Security Compliance**: Full OpenSSF Security Baseline compliance maintained
+- **Production Ready**: Comprehensive testing (51 test files, 691 test cases) all passing
+
+### 📦 What's Included
+
+This release encompasses all features and fixes from v1.0.0 through v1.0.2:
+
+#### From v1.0.2 (2025-12-04)
+- Security vulnerability fixes (0 npm audit vulnerabilities)
+- Development environment session key randomization
+- Brand compliance (removal of third-party AI model icons)
+
+#### From v1.0.1 (2025-08-28)
+- Mobile UI enhancements (Android browser compatibility)
+- Performance optimizations (long-text timeout handling)
+- Touch interaction improvements
+
+#### From v1.0.0 (2025-07-28)
+- Core prompt enhancement engine with DeepSeek integration
+- Modern responsive UI with PWA support
+- Comprehensive security controls (XSS, CSRF, CSP)
+- Full documentation and governance framework
+
+### 🔧 Technical Details
+
+- **Docker Image**: `ghcr.io/sarahaleo88/ep-chat:v1.3.0`
+- **Node.js**: Requires 18.x or 22.x LTS
+- **Package Version**: 1.3.0
+
+---
+
 ## [1.0.2] - 2025-12-04
 
 ### 🛡️ Security Fixes
@@ -234,25 +275,26 @@ Special thanks to:
 
 ### Upcoming Releases
 
-#### [1.1.0] - Planned October 2025
+#### [1.4.0] - Planned March 2026
 - Enhanced template system with custom categories
 - Multi-model support (Claude, GPT, Gemini)
 - Advanced caching strategies
 - Performance dashboard improvements
 
-#### [1.2.0] - Planned January 2026
+#### [1.5.0] - Planned June 2026
 - Plugin system for extensibility
 - Advanced prompt analytics
 - Team collaboration features
 - Enterprise authentication options
 
 ### Support Timeline
-- **v1.0.x**: Active support until January 2027, maintenance until July 2028
-- **v1.1.x**: Active support until April 2027, maintenance until October 2028
-- **v1.2.x**: Active support until July 2027, maintenance until January 2029
+- **v1.3.x**: Active support until December 2027, maintenance until June 2028
+- **v1.2.x**: Security updates only until June 2026
+- **v1.1.x**: Security updates only until March 2026
+- **v1.0.x**: End of life (no longer supported)
 
 ---
 
-**Changelog Format**: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)  
-**Versioning**: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)  
-**Last Updated**: July 28, 2025
+**Changelog Format**: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+**Versioning**: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+**Last Updated**: December 6, 2025
