@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import os from 'os';
 
 /**
  * GET /api/health
@@ -37,7 +38,7 @@ export async function GET(request?: NextRequest) {
           external: Math.round(process.memoryUsage().external / 1024 / 1024),
         },
         cpu: {
-          loadAverage: process.platform !== 'win32' ? (process as any).loadavg() : [0, 0, 0],
+          loadAverage: process.platform !== 'win32' ? os.loadavg() : [0, 0, 0],
         },
       },
       checks: healthChecks,
