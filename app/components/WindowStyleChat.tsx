@@ -284,9 +284,13 @@ export default function WindowStyleChat() {
     setEditingButtonId(null);
   }, []);
 
+  // State for API key save status feedback
+  const [apiKeySaveError, setApiKeySaveError] = useState<string | null>(null);
+
   // Save API key (both to localStorage with obfuscation and create session cookie)
   const handleSaveApiKey = useCallback(async () => {
     if (apiKey.trim()) {
+      setApiKeySaveError(null); // Clear any previous error
       try {
         // Create session cookie via API (primary secure storage)
         const response = await fetch('/api/auth/session', {
@@ -299,11 +303,17 @@ export default function WindowStyleChat() {
           // Save to localStorage with obfuscation (secondary storage for persistence)
           secureSetItem(API_KEY_STORAGE_KEY, apiKey.trim());
           setApiKeySaved(true);
+          setApiKeySaveError(null);
         } else {
-          console.error('Failed to create session');
+          // Parse error response for better feedback
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData.error || `保存失败 (HTTP ${response.status})`;
+          console.error('Failed to create session:', errorMsg);
+          setApiKeySaveError(errorMsg);
         }
       } catch (error) {
         console.error('Error saving API key:', error);
+        setApiKeySaveError('网络错误，请检查连接后重试');
       }
     }
   }, [apiKey]);
@@ -783,7 +793,10 @@ export default function WindowStyleChat() {
                         <input
                           type="password"
                           value={apiKey}
-                          onChange={(e) => setApiKey(e.target.value)}
+                          onChange={(e) => {
+                            setApiKey(e.target.value);
+                            setApiKeySaveError(null); // Clear error when user types
+                          }}
                           placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
                           className="api-key-input"
                         />
@@ -794,6 +807,21 @@ export default function WindowStyleChat() {
                         >
                           保存
                         </button>
+                      </div>
+                    )}
+
+                    {/* Display save error if any */}
+                    {apiKeySaveError && (
+                      <div className="api-key-error" style={{
+                        color: '#dc3545',
+                        fontSize: '0.85rem',
+                        marginTop: '0.5rem',
+                        padding: '0.5rem',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(220, 53, 69, 0.3)'
+                      }}>
+                        ⚠️ {apiKeySaveError}
                       </div>
                     )}
 

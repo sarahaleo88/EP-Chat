@@ -85,8 +85,22 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('[Session API] Error creating session:', error);
+
+    // Provide more specific error message for configuration issues
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'Internal server error';
+
+    // Check if it's a configuration error (missing SESSION_ENCRYPTION_KEY)
+    const isConfigError = errorMessage.includes('SESSION_ENCRYPTION_KEY');
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: isConfigError
+          ? 'Server configuration error: SESSION_ENCRYPTION_KEY not set'
+          : 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     );
   }
