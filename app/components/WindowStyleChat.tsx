@@ -362,6 +362,21 @@ export default function WindowStyleChat() {
   const handleSend = async () => {
     if (!input.trim() || isLoading) {return;}
 
+    // 🔑 BYOK模式：检查 API Key 是否已配置
+    if (!apiKeySaved) {
+      // 显示提示消息并打开设置面板
+      const systemMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: '⚠️ **请先配置 API 密钥**\n\n您还没有配置 DeepSeek API 密钥。请点击左下角的「设置」按钮，在「通用设置」中输入您的 API Key 后再使用。\n\n💡 获取 API Key: [DeepSeek 控制台](https://platform.deepseek.com/api_keys)',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, systemMessage]);
+      setShowSettings(true);
+      setSettingsTab('general');
+      return;
+    }
+
     // 🚀 P1-1: Pre-build request body BEFORE UI updates to reduce serialization latency
     // This moves JSON.stringify() to before React state updates, saving ~2-5ms
     const activeAgent = getActiveAgent();

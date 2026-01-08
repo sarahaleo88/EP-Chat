@@ -193,17 +193,16 @@ export async function POST(request: NextRequest) {
     }
     validatedModel = modelValidation.data;
 
-    // 获取API密钥 - 优先从会话获取，回退到环境变量
-    let apiKey = getApiKeyFromSession(request);
-
-    // 如果会话中没有API密钥，回退到环境变量（向后兼容）
-    if (!apiKey) {
-      apiKey = process.env.DEEPSEEK_API_KEY || null;
-    }
+    // 获取API密钥 - 仅从用户会话获取（BYOK模式）
+    const apiKey = getApiKeyFromSession(request);
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API密钥未配置。请在设置中配置您的DeepSeek API密钥。' },
+        {
+          error: 'API密钥未配置',
+          message: '请先在设置中配置您的 DeepSeek API 密钥后再使用。',
+          code: 'API_KEY_NOT_CONFIGURED'
+        },
         { status: 401 }
       );
     }
@@ -381,18 +380,15 @@ export async function OPTIONS() {
  */
 export async function GET(request: NextRequest) {
   try {
-    // 检查API密钥 - 优先从会话获取，回退到环境变量
-    let apiKey = getApiKeyFromSession(request);
-
-    if (!apiKey) {
-      apiKey = process.env.DEEPSEEK_API_KEY || null;
-    }
+    // 检查API密钥 - 仅从用户会话获取（BYOK模式）
+    const apiKey = getApiKeyFromSession(request);
 
     if (!apiKey) {
       return NextResponse.json(
         {
-          status: 'error',
-          message: 'API密钥未配置。请在设置中配置您的DeepSeek API密钥。',
+          status: 'not_configured',
+          message: '请先在设置中配置您的 DeepSeek API 密钥。',
+          code: 'API_KEY_NOT_CONFIGURED'
         },
         { status: 401 }
       );
@@ -404,6 +400,7 @@ export async function GET(request: NextRequest) {
       message: 'EP 生成 API 运行正常',
       timestamp: new Date().toISOString(),
       models: ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'],
+      apiKeyConfigured: true,
     });
   } catch (error) {
     const friendlyError = formatUserFriendlyError(error);
